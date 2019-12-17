@@ -1,5 +1,8 @@
-## macOS temporary files
+## macOS temporary files:
 .DS_Store
+
+## Build folder for latex auxiliary files:
+build/
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
