@@ -12,6 +12,9 @@
 \input{notation} % short-hand notation and macros
 
 
+\usepackage[nottoc]{tocbibind}
+\setcitestyle{numbers}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
@@ -20,15 +23,26 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
-\doublespacing
+%\doublespacing
 \tableofcontents
-\singlespacing
+%\singlespacing
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% Main document
 
 \chapter{Introduction}
 
 \chapter{Background}
+
+\input{sections/background/session_types.tex}
+\clearpage
+
+\input{sections/background/scribble.tex}
+\clearpage
+
+\input{sections/background/codegen.tex}
+\clearpage
+
+\input{sections/background/typescript.tex}
 
 \chapter{Project Plan}
 \section{Theory}
@@ -41,6 +55,9 @@
 
 
 \clearpage
+
+\bibliographystyle{acm}
+\bibliography{interim}
 
 \end{document}
 %%% Local Variables: 

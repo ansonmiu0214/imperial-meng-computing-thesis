@@ -1,0 +1,29 @@
+\section{Session Types}
+
+\subsection{Overview}
+\begin{itemize}
+\item Motivate different ways of modelling concurrency (shared memory, message passing), narrow focus to message passing
+\item Outline relevance of process algebra and session types as the relevant typing discipline
+\item Outline existing implementations of session types in practice
+\end{itemize}
+
+\subsection{Process Calculus}
+\begin{itemize}
+\item Introduce asynchronous pi calculus
+\item Motivate how this can model interaction between concurrent processes through reduction rule in operational semantics
+\end{itemize}
+
+\subsection{Binary Session Types}
+\begin{itemize}
+\item Introduce synchronous pi calculus with branching and selection
+\item Motivate with travel agency example
+\item Introduce binary session types, notion of duality and subtyping for well-typed binary proesses
+\item Guarantees for well-typed sessions?
+\end{itemize}
+
+\subsection{Multiparty session types}
+\begin{itemize}
+\item Motivate the extension from BST to MPST (example of battleship game, existing distributed protocols that involve multiple participants?)
+\item Introduce global type, projection
+\item How does the notion of compatibility (which used to be duality) adapt to MPST?
+\end{itemize}

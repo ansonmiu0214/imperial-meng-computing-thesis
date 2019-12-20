@@ -1,0 +1,59 @@
+\section{The Scribble Language}
+
+\subsection{Overview}
+\begin{itemize}
+\item Introduce Scribble language as implementation of MPST
+\end{itemize}
+
+\subsection{Protocol Specification}
+\begin{itemize}
+\item Show parallels between Scribble protocol and MPST global type
+\end{itemize}
+
+\subsection{Endpoint Finite State Machines}
+\begin{itemize}
+\item Show parallels between Scribble protocol-to-EFSM and MPST global-to-local projections
+\item Formalise syntax and properties of EFSM derived from well-formed protocols
+\end{itemize}
+
+\begin{figure}[!hb]
+\doublespacing
+\[
+\begin{array}{rlr}
+
+\text{EFSM} ::= & \mathbb{R} \times \mathbb{L} \times \mathbb{T} \times \Sigma \times \mathbb{S} \times \delta & \text{Endpoint FSM} \\
+
+\mathbb{R} ::= & r,~r',~\dots & \text{Role Identifiers} \\
+
+\mathbb{L} ::= & l,~l',~\dots & \text{Message Label Identifiers} \\
+
+\mathbb{T} ::= & \tt{int},~\tt{bool},~T,~T',~\dots & \text{Payload Format Types} \\
+
+\Sigma ::= & & \text{Actions} \\
+     & r!l(\tilde{T}) \quad \text{where } \tilde{T} \subseteq \mathbb{T} & \text{Output} \\
+\mid & r?l(\tilde{T}) \quad \text{where } \tilde{T} \subseteq \mathbb{T} & \text{Input} \\
+
+\mathbb{S} ::= & S,~S',\dots & \text{State Identifiers} \\
+
+\delta ::= & \mathbb{S} \times \Sigma \rightharpoonup \mathbb{S} & \text{State Transition Function} \\
+
+\end{array}
+\]
+\singlespacing
+\caption{Syntax for Endpoint FSM}
+\end{figure}
+
+\begin{figure}[!hb]
+\doublespacing
+\[
+\begin{array}{rl}
+
+\texttt{initial}_{\mathbb{R}, \mathbb{L}, \mathbb{T}, \Sigma, \mathbb{S}, \delta}(S) \iff & \nexists S' \in \mathbb{S},\alpha \in \Sigma.~\delta(S',\alpha) = S \\
+\texttt{terminal}_{\mathbb{R}, \mathbb{L}, \mathbb{T}, \Sigma, \mathbb{S}, \delta}(S) \iff & \delta(S) = \emptyset \\
+\texttt{output}_{\mathbb{R}, \mathbb{L}, \mathbb{T}, \Sigma, \mathbb{S}, \delta}(S) \iff & \delta(S) = \{\,\alpha \in \Sigma \mid \exists r \in \mathbb{R}, l \in \mathbb{L}, \tilde{T} \subseteq{\mathbb{T}}.~\alpha = r!l(\tilde{T})\,\} \\
+\texttt{input}_{\mathbb{R}, \mathbb{L}, \mathbb{T}, \Sigma, \mathbb{S}, \delta}(S) \iff & \delta(S) = \{\,\alpha \in \Sigma \mid \exists r \in \mathbb{R}, l \in \mathbb{L}, \tilde{T} \subseteq{\mathbb{T}}.~\alpha = r?l(\tilde{T})\,\} \\
+\end{array}
+\]
+\singlespacing
+\caption{Types of EFSM States}
+\end{figure}

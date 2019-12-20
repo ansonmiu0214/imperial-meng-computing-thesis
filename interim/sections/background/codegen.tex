@@ -1,0 +1,41 @@
+\section{Code Generation}
+
+\subsection{Overview}
+\begin{itemize}
+\item Motivate the practical implementation of session types in programming
+\item What needs to be verified - I/O behaviour (introduce the term behaviour typing) and linear channel usage
+\end{itemize}
+
+\subsection{Static Session Typing}
+\begin{itemize}
+\item PureScript implementation that addresses the 2 criteria statically
+\item \begin{itemize}
+\item Relevance for web development
+\item Static behavioural typing
+\item Static channel linearity by construction
+\item Pros - type dependencies (expressing dependent types)
+\item Cons
+\end{itemize}
+\item Other initiatives -- creating language with first-class channel primitives (e.g. SILL)
+\end{itemize}
+
+PureScript - \cite{PS2019}
+
+\subsection{Runtime Monitors}
+
+\subsection{Hybrid Session Verification}
+\begin{itemize}
+\item How the aforementioned 2 approaches motivated hybrid session verification
+\item Workflow using Scribble toolchain 
+\item Static behavioural typing, dynamic channel usage runtime checks
+\item Pros - Abstract I/O interfaces
+\item Pros - Input futures for `complex communication patterns' motivated by SMTP example
+\item Cons - ``practical compromise'' as outlined in paper
+\end{itemize}
+
+Java - \cite{HY2016}
+
+\subsection{Comparison}
+\begin{itemize}
+\item Comparison table between the 3 approaches for how they deal with behavioural typing 
+\end{itemize}
