@@ -1,13 +1,22 @@
 \section{Session Types}
 
 \subsection{Overview}
-\begin{itemize}
-\item Motivate different ways of modelling concurrency (shared memory, message passing), narrow focus to message passing
-\item Outline relevance of process algebra and session types as the relevant typing discipline
-\item Outline existing implementations of session types in practice
-\end{itemize}
+% Motivate different ways of modelling concurrency, narrow the focus to message passing
+Web applications are one of many examples of distributed systems in practice. Distributed systems are built upon the interaction between concurrent processes, which can be implemented using the two main communication abstractions in \term{shared memory} and \term{message passing}. 
 
-\subsection{Process Calculus}
+Shared memory provides processes with the impression of a logical single large monolithic memory but requires programmers to understand consistency models in order to correctly reason about the consistency of shared state.
+
+Message passing interprets the interaction between processes as the exchange of messages, and best describes the communication transports found in web applications, ranging from the stateless request-response client-server interactions via HTTP to full-duplex communication channels via the WebSocket protocol \cite{WebSocketRFC}.
+
+% Outline relevance of process algebra and session types as the relevant typing discipline
+The process algebra $\pi$-calculus introduced by Milner \cite{Milner1989} provides a formalism of the message passing abstraction in terms of the basic building blocks of sending and receiving processes, along with inductively defined continuation processes. The composition of these primitives allow us to describe more complex communication sessions.
+Session types define the typing discipline for the $\pi$-calculus and provide reliability guarantees for communication sessions; the latter addresses a key challenge when reasoning about the correctness of distributed systems. 
+
+% Outline existing implementations of session types in practice
+Many studies are done on the practical applications of session types, from developing languages providing native session type support \cite{ATS2016} to implementing session types in existing programming languages across different paradigms.
+Implementations of the latter approach differ by how they leverage the design philosophy and features provided by the programming language. For example, King et al. \cite{PureScript2019} leveraged the expressive type system of PureScript to perform static session type checking, whilst Neykova and Yoshida \cite{Python2017} opted for dynamic approaches to check the conformance of Python programs with respect to session types.
+
+\subsection{Asynchronous $\pi$-calculus}
 \begin{itemize}
 \item Introduce asynchronous pi calculus
 \item Motivate how this can model interaction between concurrent processes through reduction rule in operational semantics
@@ -21,7 +30,7 @@
 \item Guarantees for well-typed sessions?
 \end{itemize}
 
-\subsection{Multiparty session types}
+\subsection{Multiparty Session Types}
 \begin{itemize}
 \item Motivate the extension from BST to MPST (example of battleship game, existing distributed protocols that involve multiple participants?)
 \item Introduce global type, projection
