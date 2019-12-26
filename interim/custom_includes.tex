@@ -1,5 +1,26 @@
+% Includes
+
+% Infer
+\usepackage{proof}
+
+% Figure and table counter
+\usepackage{chngcntr}
+\counterwithout{figure}{chapter}
+
 % Commands
 \newcommand{\term}[1]{\textit{#1}}
+\newcommand{\mathref}[1]{\textsection #1}
+
+\newcommand{\rulename}[1]{[\textsc{#1}]}
+
+\newcommand{\piin}[2]{#1(#2)}
+\newcommand{\piout}[2]{\bar{#1}\langle #2 \rangle }
+\newcommand{\parti}[1]{{\color{blue}\mathbf{#1}}}
+
+\newcommand{\send}[2]{#1!\langle #2 \rangle}
+\newcommand{\recv}[2]{#1?(#2)}
+\newcommand{\bra}[2]{#1 \rhd \left\{#2\right\}}
+\newcommand{\sel}[2]{#1 \lhd #2}
 
 % Citation style
 \setcitestyle{square}

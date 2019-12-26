@@ -9,26 +9,147 @@ Shared memory provides processes with the impression of a logical single large m
 Message passing interprets the interaction between processes as the exchange of messages, and best describes the communication transports found in web applications, ranging from the stateless request-response client-server interactions via HTTP to full-duplex communication channels via the WebSocket protocol \cite{WebSocketRFC}.
 
 % Outline relevance of process algebra and session types as the relevant typing discipline
-The process algebra $\pi$-calculus introduced by Milner \cite{Milner1989} provides a formalism of the message passing abstraction in terms of the basic building blocks of sending and receiving processes, along with inductively defined continuation processes. The composition of these primitives allow us to describe more complex communication sessions.
+The process algebra $\pi$-calculus introduced by Milner in \cite{Milner1999} provides a formalism of the message passing abstraction in terms of the basic building blocks of sending and receiving processes, along with inductively defined continuation processes. The composition of these primitives allow us to describe more complex communication sessions.
 Session types define the typing discipline for the $\pi$-calculus and provide reliability guarantees for communication sessions; the latter addresses a key challenge when reasoning about the correctness of distributed systems. 
 
 % Outline existing implementations of session types in practice
 Many studies are done on the practical applications of session types, from developing languages providing native session type support \cite{ATS2016} to implementing session types in existing programming languages across different paradigms.
-Implementations of the latter approach differ by how they leverage the design philosophy and features provided by the programming language. For example, King et al. \cite{PureScript2019} leveraged the expressive type system of PureScript to perform static session type checking, whilst Neykova and Yoshida \cite{Python2017} opted for dynamic approaches to check the conformance of Python programs with respect to session types.
+Implementations of the latter approach differ by how they leverage the design philosophy and features provided by the programming language. For example, King et al. leveraged the expressive type system of PureScript to perform static session type checking in \cite{PureScript2019}, whilst Neykova and Yoshida introduced dynamic approaches to check the conformance of Python programs with respect to session types in \cite{Python2017}.
 
-\subsection{Asynchronous $\pi$-calculus}
+\subsection{Asynchronous $\pi$-calculus}\label{section_async}
+
+% Introduce pi-calculus, monadic asynchronous pi-calculus.
+The $\pi$-calculus models concurrent computation, where processes can execute in parallel and communicate via shared names.
+We first consider the asynchronous $\pi$-calculus introduced by Honda and Tokoro in \cite{AsyncHonda}.
+Among the many flavours of the calculus which vary depending on the application domain, we outline the variant as presented in \cite{C406Lecture}. 
+
+Figure \ref{fig:async} defines the syntax of processes in asynchronous $\pi$-calculus; the asynchrony comes from the lack of continuation in the output process.
+
 \begin{itemize}
-\item Introduce asynchronous pi calculus
-\item Motivate how this can model interaction between concurrent processes through reduction rule in operational semantics
+\item $\mathbf{0}$ is the nil process and represents inactivity.
+\item $\piout{u}{v}$ is the output process that will send value $v$ on $u$.
+\item $\piin{u}{x}.P$ is the input process that, upon receiving a message on $u$, will bind the message to $x$ and carry on executing $P$ under this binding.
+\item $P\mid Q$ represents the parallel composition of processes executing simultaneously.
+\item $!P$ represents the parallel composition of infinite instances of $P$; more specifically, $!P \equiv P \mid {!P}$.
+\item $(\nu a)~P$ represents a name restriction where any occurrence of $a$ in $P$ is local and will not interfere with other names outside the scope of $P$.
 \end{itemize}
+
+
+\begin{figure}[!hb]
+\doublespacing
+\[
+\begin{array}{rlr}
+
+P,Q ::= & & \text{Processes} \\
+     & \mathbf{0} & \text{Nil Process} \\
+\mid & \piout{u}{v} & \text{Output} \\
+\mid & \piin{u}{x}.P & \text{Input} \\     
+\mid & P \mid Q & \text{Parallel Composition} \\
+\mid & !P & \text{Replication} \\
+\mid & (\nu a)~P & \text{Restriction} \\
+
+u,v ::= & & \text{Identifiers} \\
+     & a, b, c,~\dots & \text{Names} \\
+\mid & x, y, z,~\dots & \text{Variables} \\
+
+\end{array}
+\]
+\singlespacing
+\caption{Syntax of Asynchronous $\pi$-calculus}
+\label{fig:async}
+\end{figure}
+
+% Motivate how this models interactions between concurrent processes through the reduction rule in operational semantics.
+The operational semantics model the interaction between parallel processes. Whilst \cite{C406Lecture} presents the full operational semantics, we highlight the \rulename{Comm} reduction rule which specifically models message passing:
+if the parallel composition of an input process and output process share the same name, the composition reduces to the continuation of the input process, substituting the variable $x$ with the message received $v$. We omit the definitions of substitution, free variables and free names, $\alpha$-equivalence and structural congruence; the interested reader may refer to \cite{C406Lecture}.
+
+$$
+\infer[\mbox{\rulename{Comm}}]{\piout{a}{v} \mid \piin{a}{x}.P ~\longrightarrow ~ P[v/x] }{}
+$$
+
+We additionally define a process $P$ to be \term{stuck} if $P$ is not the nil process and $P$ cannot be reduced any further. For example, the process $P = \piin{a}{x}.\mathbf{0} \mid \piout{b}{v}$ is stuck as the parallel composition of an input process and an output process that do not share the same name cannot be reduced using \rulename{Comm}. In practice, a stuck process contains communications that will never be executed.
 
 \subsection{Binary Session Types}
+% Introduce synchronous pi calculus with branching and selection
+A \term{binary session} is a parallel composition of two processes, each representing a distinct participant.
+In the context of web applications, a binary session would describe the interactions between client and server.
+Without loss of generality, a \term{session} represents the sequence of send and receive actions of a single participant.
+
+We introduce a \term{synchronous} session calculus built upon \mathref{\ref{section_async}} motivated by \cite{C406Lecture}. Figure \ref{fig:sync} defines the syntax formally; we briefly discuss the main additions below:
+
 \begin{itemize}
-\item Introduce synchronous pi calculus with branching and selection
-\item Motivate with travel agency example
-\item Introduce binary session types, notion of duality and subtyping for well-typed binary proesses
-\item Guarantees for well-typed sessions?
+\item \dots
 \end{itemize}
+
+\begin{figure}[!hb]
+\doublespacing
+\[
+\begin{array}{rlr}
+
+e, e' ::= & & \text{Expressions} \\
+	 & v & \text{Values} \\
+\mid	 & x & \text{Variables} \\
+\mid & e + e'~\mid~e - e' & \text{Arithmetic Operators} \\
+\mid & e = e'~\mid~e < e' ~\mid~e > e' & \text{Relational Operators} \\
+\mid & e \wedge e'~\mid~e \vee e' ~\mid~\neg e & \text{Logical Operators} \\
+
+\parti{p} ::= & \parti{Client},~\parti{Server}& \text{Participant} \\
+
+P,Q ::= & & \text{Processes} \\
+     & \mathbf{0} & \text{Nil Process} \\
+\mid & \send{\parti{p}}{e}.P & \text{Send} \\
+\mid & \recv{\parti{p}}{x}.P & \text{Receive} \\
+\mid & \bra{\parti{p}}{l_i:P_i}_{i\in I} & \text{Branching} \\
+\mid & \sel{\parti{p}}{l_i}.~P & \text{Selection} \\
+\mid & {\tt{if}}~e~{\tt{then}}~P~{\tt{else}}~Q & \text{Conditional} \\
+\mid & \mu X.~P & \text{Recursive Process} \\
+\mid & X & \text{Process Variable} \\
+\mathcal{M} ::= & \parti{p} :: P~\mid~\parti{q} :: Q & \text{Binary Session} \\
+\end{array}
+\]
+
+\singlespacing
+\caption{Syntax of Session Calculus with Branching, Selection and Recursion}
+\label{fig:sync}
+\end{figure}
+
+$$
+\infer[\mbox{\rulename{Comm}}]{
+	\parti{p} :: \piout{\parti{q}}{e}.P \mid 
+	\parti{q} ::\piin{\parti{p}}{x}.Q ~\longrightarrow~ \parti{p} :: P \mid \parti{q} ::Q[v/x] }{
+	\begin{array}{ccc}
+	e \downarrow v 
+	&
+	& \parti{p} \neq \parti{q}
+	\end{array}
+}
+$$
+
+$$
+\infer[\mbox{\rulename{Label}}]{
+	\parti{p} :: \sel{\parti{q}}{l}.~P \mid 
+	\parti{q} :: \bra{\parti{p}}{l_i:Q_i}_{i\in I} ~\longrightarrow~ \parti{p} :: P \mid \parti{q} ::Q_j
+}{
+	\begin{array}{ccc}
+	\exists	j \in I. l_j = l
+	&
+	& \parti{p} \neq \parti{q}
+	\end{array}
+}
+$$
+
+% Introduce binary session types, notion of duality and subtyping for well-typed binary processes
+\term{Session types} represent the type theory for our session calculus. 
+
+% Guarantees for well-typed sessions
+The definition of stuck processes from \mathref{\ref{section_async}} motivate the discussion of communication errors that may occur during interactions among participants. We outline two of the main classes of errors:
+
+\begin{itemize}
+\item \textbf{Deadlock}: 
+\item \textbf{Communication mismatch}: 
+\end{itemize}
+
+The type theory for binary sessions ensure that well-typed binary sessions are guaranteed to be free from the aforementioned communication errors through the concept of \term{duality}.
 
 \subsection{Multiparty Session Types}
 \begin{itemize}

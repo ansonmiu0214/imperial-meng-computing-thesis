@@ -1,14 +1,24 @@
  @article{ATS2016, title={Applied Type System: An Approach to Practical Programming with Theorem-Proving}, abstractNote={The framework Pure Type System (PTS) offers a simple and general approach to designing and formalizing type systems. However, in the presence of dependent types, there often exist certain acute problems that make it difﬁcult for PTS to directly accommodate many common realistic programming features such as general recursion, recursive types, effects (e.g., exceptions, references, input/output), etc. In this paper, Applied Type System (ATS) is presented as a framework for designing and formalizing type systems in support of practical programming with advanced types (including dependent types). In particular, it is demonstrated that ATS can readily accommodate a paradigm referred to as programming with theorem-proving (PwTP) in which programs and proofs are constructed in a syntactically intertwined manner, yielding a practical approach to internalizing constraint-solving needed during type-checking. The key salient feature of ATS lies in a complete separation between statics, where types are formed and reasoned about, and dynamics, where programs are constructed and evaluated. With this separation, it is no longer possible for a program to occur in a type as is otherwise allowed in PTS. The paper contains not only a formal development of ATS but also some examples taken from ATS, a programming language with a type system rooted in ATS, in support of using ATS as a framework to form type systems for practical programming.}, journal={Journal of Functional Programming}, author={Xi, Hongwei}, year={2016}, pages={30} }
 
+ @inproceedings{AsyncHonda, place={Berlin, Heidelberg}, title={An object calculus for asynchronous communication}, ISBN={978-3-540-47537-8}, abstractNote={This paper presents a formal system based on the notion of objects and asynchronous communication. Built on Milner’s work on π-calculus, the communication primitive of the formal system is purely based on asynchronous communication, which makes it unique among various concurrency formalisms. Computationally this results in a consistent reduction of Milner’s calculus, while retaining the same expressive power. Seen semantically asynchronous communication induces a surprisingly different framework where bisimulation is strictly more general than its synchronous counterpart. This paper shows basic construction of the formal system along with several illustrative examples.}, booktitle={ECOOP’91 European Conference on Object-Oriented Programming}, publisher={Springer Berlin Heidelberg}, author={Honda, Kohei and Tokoro, Mario}, editor={America, PierreEditor}, year={1991}, pages={133–147} }
 
-@book{Milner1989,
+@misc{C406Lecture,
+  author        = {Nobuko Yoshida},
+  title         = {{Lecture Notes in CO406 Concurrent Processes}},
+  month         = {October},
+  year          = {2019}
+}
+
+
+@book{Milner1999,
  author = {Milner, R.},
- title = {Communication and Concurrency},
- year = {1989},
- isbn = {0131149849},
- publisher = {Prentice-Hall, Inc.},
- address = {Upper Saddle River, NJ, USA}
+ title = {Communicating and Mobile Systems: The $\pi$-calculus},
+ year = {1999},
+ isbn = {0-521-65869-1},
+ publisher = {Cambridge University Press},
+ address = {New York, NY, USA}
 } 
+
 
  @techreport{WebSocketRFC,
    AUTHOR = {I. Fette and A. Melnikov},
@@ -49,17 +59,8 @@
   year = 2017
 }
 
-@inproceedings{MPST,
-  author = {Mario Coppo and Mariangiola Dezani-Ciancaglini and Luca Padovani and Nobuko Yoshida},
-  title = {{A Gentle Introduction to Multiparty Asynchronous Session Types}},
-  booktitle = {15th International School on Formal Methods for the Design of Computer, Communication and Software Systems: Multicore Programming},
-  series = {LNCS},
-  volume = {9104},
-  pages = {146--178},
-  publisher = {Springer},
-  doi = "10.1007/978-3-319-18941-3_4",
-  year = 2015
-}
+@article{MPST, title={{A Very Gentle Introduction to Multiparty Session Types}}, abstractNote={Multiparty session types (MPST) are a formal specification and verification framework for message-passing protocols without cen- tral control: the desired interactions at the scale of the network itself are specified into a session (called global type). Global types are then projected onto local types (one for each participant), which describe the protocol from a local point of view. These local types are used to validate an application through type-checking, monitoring, and code generation. Theory of session types guarantees that local conformance of all partic- ipants induces global conformance of the network to the initial global type. This paper provides a very gentle introduction of the simplest ver- sion of multiparty session types for readers who are not familiar with session types nor process calculi.}, author={Yoshida, Nobuko and Lorenzo, Gheri} }
+
 
 @inproceedings{Scribble,
   author = {Nobuko Yoshida and Raymond Hu and Rumyana Neykova and Nicholas Ng},
