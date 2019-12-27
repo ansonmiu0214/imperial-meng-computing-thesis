@@ -1,11 +1,13 @@
 % Includes
 
-% Infer
+% Proof trees
 \usepackage{proof}
+\usepackage{bussproofs}
 
 % Figure and table counter
 \usepackage{chngcntr}
 \counterwithout{figure}{chapter}
+\counterwithout{table}{chapter}
 
 % Commands
 \newcommand{\term}[1]{\textit{#1}}
@@ -20,7 +22,16 @@
 \newcommand{\send}[2]{#1!\langle #2 \rangle}
 \newcommand{\recv}[2]{#1?(#2)}
 \newcommand{\bra}[2]{#1 \rhd \left\{#2\right\}}
-\newcommand{\sel}[2]{#1 \lhd #2}
+\newcommand{\sel}[3]{#1 \lhd #2 \langle #3 \rangle}
+
+\newcommand{\tysend}[2]{#1![#2]}
+\newcommand{\tyrecv}[2]{#1?[#2]}
+\newcommand{\tybra}[2]{#1 \& \left\{#2\right\}}
+\newcommand{\tysel}[2]{#1 \oplus \left\{#2\right\}}
+
+
+% Typewriter font
+% \renewcommand{\ttdefault}{pcr} % selects Courier font
 
 % Citation style
 \setcitestyle{square}

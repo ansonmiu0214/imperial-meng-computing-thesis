@@ -75,35 +75,64 @@ A \term{binary session} is a parallel composition of two processes, each represe
 In the context of web applications, a binary session would describe the interactions between client and server.
 Without loss of generality, a \term{session} represents the sequence of send and receive actions of a single participant.
 
-We introduce a \term{synchronous} session calculus built upon \mathref{\ref{section_async}} motivated by \cite{C406Lecture}. Figure \ref{fig:sync} defines the syntax formally; we briefly discuss the main additions below:
+We introduce a \term{synchronous} session calculus inspired by \cite{MPST}. Figure \ref{fig:sync} defines the syntax formally; we briefly discuss the main components and how it differs from the variant introduced in \cite{C406Lecture}:
 
+% polyadic synchronous
+% communication must come with label
+% equi-recursive recursion, assume guarded
 \begin{itemize}
-\item \dots
+\item \textbf{Synchronous communication}: Processes that send a message will have a continuation which will be executed upon a successful send. 
+\item \textbf{Polyadic communication}: A vector of values can be communicated at once.
+\item \textbf{Branching and selection}: A branching process can offer a set of branches, each defined by its own label identifier and continuation process. A selection process can select a branch by sending the corresponding label identifier alongside the payload to the branching process.
+
+\item \textbf{Labelled messages}: a label identifier is attached to all messages; the input process in \mathref{\ref{section_async}} is generalised as a branching process that offers one branch.
 \end{itemize}
+
+The \rulename{Comm} rule in the operational semantics for this calculus exemplifies these new additions: given a binary session between distinct participants $\parti{p}$ and $\parti{q}$ where $\parti{q}$ offers a set of labelled branches, if $\parti{p}$ selects a label offered by $\parti{q}$ and sends a vector of expressions $e_1, \dots, e_n$ that evaluate\footnote{We adopt the operational semantics for expression evaluation $e \downarrow v$ as defined in \cite{C406Lecture}.} to the corresponding vector of values $v_1, \dots, v_n$, the session reduces to a session with the continuation from the selection process composed with the continuation from the selected branch of the branching process, the latter having the variables $x_1, \dots, x_n$ substituted with the vector of values $v_1, \dots, v_n$ received.
+
+$$
+\infer[\mbox{\rulename{Comm}}]{
+	\parti{p} :: \sel{\parti{q}}{l}{e_1 \dots e_n}.~P \mid 
+	\parti{q} :: \bra{\parti{p}}{l_i(x_1 \dots x_n):Q_i}_{i\in I} ~\longrightarrow~ \parti{p} :: P \mid \parti{q} ::Q_j[v_k/x_k]^n_{k=1}
+}{
+	\begin{array}{cccccc}
+	\exists	j \in I. l_j = l
+	&
+	e_1 \downarrow v_1 
+	& \dots 
+	& e_n \downarrow v_n
+	&
+	& \parti{p} \neq \parti{q}
+	\end{array}
+}
+$$
 
 \begin{figure}[!hb]
 \doublespacing
 \[
 \begin{array}{rlr}
 
+v ::= & \underline{n}~\mid~\texttt{true}~\mid~\texttt{false} & \text{Values} \\
 e, e' ::= & & \text{Expressions} \\
 	 & v & \text{Values} \\
 \mid	 & x & \text{Variables} \\
 \mid & e + e'~\mid~e - e' & \text{Arithmetic Operators} \\
 \mid & e = e'~\mid~e < e' ~\mid~e > e' & \text{Relational Operators} \\
 \mid & e \wedge e'~\mid~e \vee e' ~\mid~\neg e & \text{Logical Operators} \\
+\mid & e \oplus e' & \text{Non-Determinism} \\
 
 \parti{p} ::= & \parti{Client},~\parti{Server}& \text{Participant} \\
 
 P,Q ::= & & \text{Processes} \\
      & \mathbf{0} & \text{Nil Process} \\
-\mid & \send{\parti{p}}{e}.P & \text{Send} \\
-\mid & \recv{\parti{p}}{x}.P & \text{Receive} \\
-\mid & \bra{\parti{p}}{l_i:P_i}_{i\in I} & \text{Branching} \\
-\mid & \sel{\parti{p}}{l_i}.~P & \text{Selection} \\
-\mid & {\tt{if}}~e~{\tt{then}}~P~{\tt{else}}~Q & \text{Conditional} \\
+\mid & \bra{\parti{p}}{l_i(x_1 \dots x_n):P_i}_{i\in I} & \text{Branching} \\
+\mid & \sel{\parti{p}}{l}{e_1 \dots e_n}.~P & \text{Selection} \\
+\mid & \texttt{if}~e~\texttt{then}~P~\texttt{else}~Q & \text{Conditional} \\
 \mid & \mu X.~P & \text{Recursive Process} \\
 \mid & X & \text{Process Variable} \\
+
+l, l' ::= & {\tt{``str''}} & \text{Label Identifiers} \\
+
 \mathcal{M} ::= & \parti{p} :: P~\mid~\parti{q} :: Q & \text{Binary Session} \\
 \end{array}
 \]
@@ -113,43 +142,205 @@ P,Q ::= & & \text{Processes} \\
 \label{fig:sync}
 \end{figure}
 
+
+Additionally, the calculus introduces:
+
+\begin{itemize}
+\item \textbf{Conditionals}: If $e \downarrow \texttt{true}$, the process $\texttt{if}~e~\texttt{then}~P~\texttt{else}~Q$ reduces to $P$; if $e \downarrow \texttt{false}$, the process $\texttt{if}~e~\texttt{then}~P~\texttt{else}~Q$ reduces to $Q$.
+\item \textbf{Recursion}: Following the equirecursive approach, the occurrence of the process variable $X$ in the recursive process can be expanded into the process transparently; more specifically, $\mu X. P \equiv P[(\mu X. P)/X]$.
+\end{itemize}
+
+
+% Introduce binary session types
+\term{Session types} represent the type theory for our session calculus. We define the syntax of session types for binary sessions in figure \ref{fig:bst}. 
+
+\begin{figure}[!hb]
+\doublespacing
+\[
+\begin{array}{rlr}
+
+U ::= & \text{\tt{int}}~\mid~\text{\tt{bool}} & \text{Sorts} \\
+
+S ::= & & \text{Session Types} \\
+     & \mathbf{end} & \text{Termination} \\
+\mid & \tybra{\parti{p}}{l_i(U_1 \dots U_n):S_i}_{i\in I} & \text{Branching} \\
+\mid & \tysel{\parti{p}}{l_i(U_1 \dots U_n):S_i}_{i\in I} & \text{Selection} \\
+\mid & \mu \mathbf{t}.~S & \text{Recursive Type} \\
+\mid & \mathbf{t} & \text{Type Variable} \\
+\end{array}
+\]
+
+\singlespacing
+\caption{Syntax of Session Types}
+\label{fig:bst}
+\end{figure}
+
+We derive the type of a process with a \term{typing judgement} of the form $\Gamma \vdash P: S$, which reads, \textit{under the typing context $\Gamma$, process $P$ has session type $S$}. 
+
+The \term{typing context} records typing assumptions used as part of the derivation: in the case of binary session types, the context maps expressions to sorts, and process variables to session types. A typing judgement is constructed in terms of inference rules defined inductively on the structure of processes and expressions.
+
+We present the rules for \rulename{Ty-Sel} and \rulename{Ty-Bra}, the remaining rules follow from \cite{C406Lecture} and can be trivially defined as they leverage the syntactic similarities between session types and our session calculus.
+
 $$
-\infer[\mbox{\rulename{Comm}}]{
-	\parti{p} :: \piout{\parti{q}}{e}.P \mid 
-	\parti{q} ::\piin{\parti{p}}{x}.Q ~\longrightarrow~ \parti{p} :: P \mid \parti{q} ::Q[v/x] }{
+\infer[\mbox{\rulename{Ty-Bra}}]{
+	\Gamma \vdash \bra{\parti{p}}{l_i(x_1 \dots x_n):P_i}_{i\in I} : \tybra{\parti{p}}{l_i(U_1 \dots U_n):S_i}_{i\in I}
+	}{
 	\begin{array}{ccc}
-	e \downarrow v 
+	\forall i \in I.
 	&
-	& \parti{p} \neq \parti{q}
+	&
+    \Gamma, x_1: U_1, \dots, x_n: U_n \vdash P_i : S_i		
 	\end{array}
 }
 $$
 
 $$
-\infer[\mbox{\rulename{Label}}]{
-	\parti{p} :: \sel{\parti{q}}{l}.~P \mid 
-	\parti{q} :: \bra{\parti{p}}{l_i:Q_i}_{i\in I} ~\longrightarrow~ \parti{p} :: P \mid \parti{q} ::Q_j
-}{
-	\begin{array}{ccc}
-	\exists	j \in I. l_j = l
+\infer[\mbox{\rulename{Ty-Sel}}]{
+	\Gamma \vdash \sel{\parti{p}}{l}{e_1 \dots e_n}.P : \tysel{\parti{p}}{l(U_1 \dots U_n): S}
+	}{
+	\begin{array}{cccc}
+	\Gamma \vdash e_1 : U_1
 	&
-	& \parti{p} \neq \parti{q}
+	\dots
+	&
+	\Gamma \vdash e_n : U_n
+	&
+    \Gamma \vdash P : S
 	\end{array}
 }
 $$
 
-% Introduce binary session types, notion of duality and subtyping for well-typed binary processes
-\term{Session types} represent the type theory for our session calculus. 
-
-% Guarantees for well-typed sessions
+% Guarantees for well-typed sessions expressed through duality, also notion of subtyping.
 The definition of stuck processes from \mathref{\ref{section_async}} motivate the discussion of communication errors that may occur during interactions among participants. We outline two of the main classes of errors:
 
 \begin{itemize}
-\item \textbf{Deadlock}: 
-\item \textbf{Communication mismatch}: 
+\item \textbf{Deadlock}: Progress cannot be made when the two participants expect to be receiving a message from each other at the same time.
+\item \textbf{Communication mismatch}: Progress cannot be made when the selection process sends a message with a label identifier not offered by the branching process; likewise, the payload sent must be compatible with the sort expected by the branching process for the selected branch.
 \end{itemize}
 
-The type theory for binary sessions ensure that well-typed binary sessions are guaranteed to be free from the aforementioned communication errors through the concept of \term{duality}.
+Session types ensure that well-typed binary sessions are guaranteed to be free from these communication errors through the concept of \term{duality}. Duality defines a notion of \term{compatibility} between processes: two session types are dual with respect to each other if the communication between them (i.e. pairs of sending and receiving actions) always match (i.e. with respect to the selected label and message payload type). We define $\overline{S}$ as the dual type of $S$ in Table \ref{table:dual}.
+
+% Row height in tables
+\renewcommand{\arraystretch}{1.2}
+\begin{center}
+\begin{tabular}{rcl}
+$\overline{\mathbf{end}}$ & = & $\mathbf{end}$ \\
+$\overline{\tybra{\parti{p}}{l_i(U_1 \dots U_n):S_i}_{i\in I}}$ & = & $\tysel{\parti{q}}{l_i(U_1 \dots U_n):\overline{S_i}}_{i\in I}$ \\
+$\overline{\tysel{\parti{p}}{l_i(U_1 \dots U_n):S_i}_{i\in I}}$ & = & $\tybra{\parti{q}}{l_i(U_1 \dots U_n):\overline{S_i}}_{i\in I}$ \\
+$\overline{\mu \mathbf{t}. S}$ & = & $\mu t. \overline{S}$ \\
+$\overline{\mathbf{t}}$ & = & $\mathbf{t}$ \\ 
+\end{tabular}
+\captionof{table}{Duality of Binary Session Types involving participants $\parti{p}$ and $\parti{q}$}
+\label{table:dual}
+\end{center}
+\renewcommand{\arraystretch}{1}
+
+
+Consequently, a binary session is well-typed if the participating processes are typed to be dual with respect to each other: we illustrate this in \rulename{MTy}.
+
+
+$$
+\infer[\mbox{\rulename{MTy}}]{
+	\vdash \parti{p} :: P \mid 
+	\parti{q} :: Q
+}{
+	\begin{array}{lr}
+	\cdot \vdash P: S
+	&
+	\cdot \vdash Q: \bar{S}
+	\end{array}
+}
+$$
+
+The definition of duality alone restricts the definition of well-typed binary sessions to those where the two processes are derived to be \textit{exactly} dual types of one another. Consider the pair of session types below:
+
+$$
+\begin{array}{rl}
+S_{\text{Client}} &= \tysel{\parti{Server}}{Succ(\texttt{int}): \tybra{\parti{Server}}{Res(\texttt{int}): \mathbf{end}}} \\
+S_{\text{Server}} &= \tybra{\parti{Client}}{Succ(\texttt{int}): \tysel{\parti{Client}}{Res(\texttt{int}): \mathbf{end}},~Quit(): \mathbf{end}}
+\end{array}
+$$
+
+Whilst $\overline{S_{\text{Client}}} \neq S_{\text{Server}}$, this pair of session types is intuitively compatible as the client is selecting a branch offered by the server, where the session types for the continuations of this branch for both participants are indeed dual.
+
+This motivates the concept of \term{subtypes}, which allows a process to be typed by its ``supertype'' when required. $\leqslant$ defines the subtyping relation: $S \leqslant S'$ reads \textit{$S$ is a subtype of $S'$}, and is defined coinductively. 
+
+We present the inference rules for \rulename{Sub-Bra} and \rulename{Sub-Sel} inspired by \cite{MPST} but adapted for polyadic communication; the intuition behind subtyping and subsorting is outlined below:
+
+\begin{itemize}
+\item \textbf{Branching}: A process can offer more branches 
+\item \textbf{Selection}:
+\end{itemize}
+
+\begin{prooftree}
+\AxiomC{$\forall i \in I.$}
+\AxiomC{$U'_1 \leqslant U_1 \dots U'_n \leqslant U_n$}
+\AxiomC{$S_i \leqslant S'_i$}
+\RightLabel{\mbox{\rulename{Sub-Bra}}}
+\doubleLine
+\TrinaryInfC{$
+	\tybra{\parti{p}}{l_i(U_1 \dots U_n):S_i}_{i\in I \cup J}
+	\leqslant
+	\tybra{\parti{p}}{l_i(U'_1 \dots U'_n):S'_i}_{i\in I}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$\forall i \in I.$}
+\AxiomC{$U_1 \leqslant U'_1 \dots U_n \leqslant U'_n$}
+\AxiomC{$S_i \leqslant S'_i$}
+\RightLabel{\mbox{\rulename{Sub-Sel}}}
+\doubleLine
+\TrinaryInfC{$
+	\tysel{\parti{p}}{l_i(U_1 \dots U_n):S_i}_{i\in I}
+	\leqslant
+	\tysel{\parti{p}}{l_i(U'_1 \dots U'_n):S'_i}_{i\in I \cup J}
+$}
+\end{prooftree}
+
+
+We also introduce the \rulename{Ty-Sub} to incorporate the subtyping relation into the typing judgement.
+
+$$
+\infer[\mbox{\rulename{Ty-Sub}}]{
+	\Gamma \vdash P : S'
+}{
+	\begin{array}{lr}
+	\Gamma \vdash P: S
+	&
+	S \leqslant S'
+	\end{array}
+}
+$$
+
+This allows us to construct a derivation to show that the binary session 
+
+\[
+\mathcal{M} = \parti{Client} :: P_\text{Client}~\mid~\parti{Server} :: P_\text{Server}
+\]
+
+is well-typed, assuming the $P_\text{Client}$ and $P_\text{Server}$ are typed $S_\text{Client}$ and $S_\text{Server}$ respectively.
+
+\begin{prooftree}
+\AxiomC{\vdots}
+\UnaryInfC{$\cdot \vdash P_\text{Client}: S_\text{Client}$}
+\AxiomC{\vdots}
+\UnaryInfC{$\cdot \vdash P_\text{Server}: S_\text{Server}$}
+\AxiomC{\vdots}
+\doubleLine
+\UnaryInfC{$S_\text{Server} \leqslant \overline{S_\text{Client}}$}
+
+%\AxiomC{$\cdot \vdash P_\text{Client}: S_\text{Client}$}
+%\AxiomC{$\cdot \vdash P_\text{Server}: S_\text{Server}$}
+%\AxiomC{$S_\text{Server} \leqslant \overline{S_\text{Client}}$}
+\RightLabel{\rulename{Ty-Sub}}
+\BinaryInfC{$\cdot \vdash P_\text{Server}: \overline{S_\text{Client}}$}
+\RightLabel{\rulename{MTy}}
+\BinaryInfC{$
+	\vdash \parti{Client} :: P_\text{Client} \mid 
+	\parti{Server} :: P_\text{Server}
+$}
+\end{prooftree}
 
 \subsection{Multiparty Session Types}
 \begin{itemize}
@@ -159,3 +350,40 @@ The type theory for binary sessions ensure that well-typed binary sessions are g
 \end{itemize}
 
 Gentle introduction to MPST - \cite{MPST}
+
+\begin{figure}[!hb]
+\doublespacing
+\[
+\begin{array}{rlr}
+
+G ::= & & \text{Global Types} \\
+     & \mathbf{end} & \text{Termination} \\
+\mid & \parti{p} \to \parti{q}:[U]; G & \text{Termination} \\
+\mid & \tysend{\parti{p}}{U};~S & \text{Value Send} \\
+\mid & \tyrecv{\parti{p}}{U};~S & \text{Value Receive} \\
+\mid & \tybra{\parti{p}}{l_i:S_i}_{i\in I} & \text{Branching} \\
+\mid & \tysel{\parti{p}}{l_i:S_i}_{i\in I} & \text{Selection} \\
+\mid & \mu \mathbf{t}.~S & \text{Recursive Type} \\
+\mid & \mathbf{t} & \text{Type Variable} \\
+\end{array}
+\]
+
+\singlespacing
+\caption{Syntax of Global Types}
+\label{fig:mpst}
+\end{figure}
+
+$$
+\infer[\mbox{\rulename{MTy}}]{
+	\vdash \prod_{i \in I} \parti{p_i} :: P_i ~: G
+}{
+	\begin{array}{llll}
+	\forall i \in I. 
+	&
+	\cdot \vdash P_i: G \upharpoonright \parti{p_i}
+	&
+	&
+	\text{pt}(G) \subseteq \left\{\parti{p_i} \mid i \in I \right\}
+	\end{array}
+}
+$$
