@@ -1,16 +1,24 @@
 \section{The Scribble Language}
 
 \subsection{Overview}
-\begin{itemize}
-\item Introduce Scribble language as implementation of MPST
-\end{itemize}
+% Introduce Scribble as an implementation of MPST
 
-Original Scribble paper - \cite{Scribble}
 
-\subsection{Protocol Specification}
-\begin{itemize}
-\item Show parallels between Scribble protocol and MPST global type
-\end{itemize}
+% Protocol specification: show parallels between Scribble protocol and MPST global type
+
+\begin{lstlisting}[language=Java,numbers=left,frame=single]
+// TODO: Adder Protocol
+\end{lstlisting}
+
+\[
+\begin{array}{rl}
+G = \mu\mathbf{t}.\parti{Client}\to\parti{Server}:\{
+& \text{Add}(\texttt{int}, \texttt{int}): \parti{Server}\to\parti{Client}: \{\text{Res}(\texttt{int}): \mathbf{t}\}, \\
+& \text{Quit}(): \parti{Server}\to\parti{Client}: \{\text{Terminate}(): \mathbf{end}\}\\
+\} &
+\end{array}
+\]
+
 
 \subsection{Endpoint Finite State Machines}
 \begin{itemize}
