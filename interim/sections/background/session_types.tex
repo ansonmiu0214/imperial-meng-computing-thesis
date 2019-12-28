@@ -247,7 +247,7 @@ $$
 	\begin{array}{lr}
 	\cdot \vdash P: S
 	&
-	\cdot \vdash Q: \bar{S}
+	\cdot \vdash Q: \overline{S}
 	\end{array}
 }
 $$
@@ -263,13 +263,13 @@ $$
 
 Whilst $\overline{S_{\text{Client}}} \neq S_{\text{Server}}$, this pair of session types is intuitively compatible as the client is selecting a branch offered by the server, where the session types for the continuations of this branch for both participants are indeed dual.
 
-This motivates the concept of \term{subtypes}, which allows a process to be typed by its ``supertype'' when required. $\leqslant$ defines the subtyping relation: $S \leqslant S'$ reads \textit{$S$ is a subtype of $S'$}, and is defined coinductively. 
+This motivates the concept of \term{subtypes}, which allows a process to be typed by its ``supertype'' when required. $\leqslant$\footnote{The $\leqslant$ operator is also an overloaded relation on sorts to express subsorting.} defines the subtyping relation: $S \leqslant S'$ reads \textit{$S$ is a subtype of $S'$}, and is defined coinductively on the structure of session types.
 
 We present the inference rules for \rulename{Sub-Bra} and \rulename{Sub-Sel} inspired by \cite{MPST} but adapted for polyadic communication; the intuition behind subtyping and subsorting is outlined below:
 
 \begin{itemize}
-\item \textbf{Branching}: A process can offer more branches 
-\item \textbf{Selection}:
+\item \textbf{Branching}: The supertype of a branching process offers a subset of the branches and expects more specific types of payload; intuitively, if a process expects to receive an \texttt{int}, it can handle a \texttt{nat} payload.
+\item \textbf{Selection}: The supertype of a selection process offers a superset of the internal choices and can send more generic types of payload; intuitively, if a process sends a \texttt{nat}, the payload is compatible with receivers expecting a more generic \texttt{int} payload.
 \end{itemize}
 
 \begin{prooftree}
@@ -299,7 +299,7 @@ $}
 \end{prooftree}
 
 
-We also introduce the \rulename{Ty-Sub} to incorporate the subtyping relation into the typing judgement.
+We also introduce subsumption in \rulename{Ty-Sub} to incorporate the subtyping relation into the typing judgement.
 
 $$
 \infer[\mbox{\rulename{Ty-Sub}}]{
@@ -319,7 +319,7 @@ This allows us to construct a derivation to show that the binary session
 \mathcal{M} = \parti{Client} :: P_\text{Client}~\mid~\parti{Server} :: P_\text{Server}
 \]
 
-is well-typed, assuming the $P_\text{Client}$ and $P_\text{Server}$ are typed $S_\text{Client}$ and $S_\text{Server}$ respectively.
+is well-typed, assuming $P_\text{Client}$ and $P_\text{Server}$ are typed $S_\text{Client}$ and $S_\text{Server}$ respectively.
 
 \begin{prooftree}
 \AxiomC{\vdots}
@@ -349,7 +349,6 @@ $}
 \item How does the notion of compatibility (which used to be duality) adapt to MPST?
 \end{itemize}
 
-Gentle introduction to MPST - \cite{MPST}
 
 \begin{figure}[!hb]
 \doublespacing
