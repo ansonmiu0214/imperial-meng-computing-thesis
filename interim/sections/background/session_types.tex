@@ -63,13 +63,13 @@ u,v ::= & & \text{Identifiers} \\
 The operational semantics model the interaction between parallel processes. Whilst \cite{C406Lecture} presents the full operational semantics, we highlight the \rulename{Comm} reduction rule which specifically models message passing:
 if the parallel composition of an input process and output process share the same name, the composition reduces to the continuation of the input process, substituting the variable $x$ with the message received $v$. We omit the definitions of substitution, free variables and free names, $\alpha$-equivalence and structural congruence; the interested reader may refer to \cite{C406Lecture}.
 
-$$
+\[
 \infer[\mbox{\rulename{Comm}}]{\piout{a}{v} \mid \piin{a}{x}.P ~\longrightarrow ~ P[v/x] }{}
-$$
+\]
 
 We additionally define a process $P$ to be \term{stuck} if $P$ is not the nil process and $P$ cannot be reduced any further. For example, the process $P = \piin{a}{x}.\mathbf{0} \mid \piout{b}{v}$ is stuck as the parallel composition of an input process and an output process that do not share the same name cannot be reduced using \rulename{Comm}. In practice, a stuck process contains communications that will never be executed.
 
-\subsection{Binary Session Types}
+\subsection{Binary Session Types}\label{section_bst}
 % Introduce synchronous pi calculus with branching and selection
 A \term{binary session} is a parallel composition of two processes, each representing a distinct participant.
 In the context of web applications, a binary session would describe the interactions between client and server.
@@ -90,7 +90,7 @@ We introduce a \term{synchronous} session calculus inspired by \cite{MPST}. Figu
 
 The \rulename{Comm} rule in the operational semantics for this calculus exemplifies these new additions: given a binary session between distinct participants $\parti{p}$ and $\parti{q}$ where $\parti{q}$ offers a set of labelled branches, if $\parti{p}$ selects a label offered by $\parti{q}$ and sends a vector of expressions $e_1, \dots, e_n$ that evaluate\footnote{We adopt the operational semantics for expression evaluation $e \downarrow v$ as defined in \cite{C406Lecture}.} to the corresponding vector of values $v_1, \dots, v_n$, the session reduces to a session with the continuation from the selection process composed with the continuation from the selected branch of the branching process, the latter having the variables $x_1, \dots, x_n$ substituted with the vector of values $v_1, \dots, v_n$ received.
 
-$$
+\[
 \infer[\mbox{\rulename{Comm}}]{
 	\parti{p} :: \sel{\parti{q}}{l}{e_1 \dots e_n}.~P \mid 
 	\parti{q} :: \bra{\parti{p}}{l_i(x_1 \dots x_n):Q_i}_{i\in I} ~\longrightarrow~ \parti{p} :: P \mid \parti{q} ::Q_j[v_k/x_k]^n_{k=1}
@@ -105,7 +105,7 @@ $$
 	& \parti{p} \neq \parti{q}
 	\end{array}
 }
-$$
+\]
 
 \begin{figure}[!hb]
 \doublespacing
@@ -181,7 +181,7 @@ The \term{typing context} records typing assumptions used as part of the derivat
 
 We present the rules for \rulename{Ty-Sel} and \rulename{Ty-Bra}, the remaining rules follow from \cite{C406Lecture} and can be trivially defined as they leverage the syntactic similarities between session types and our session calculus.
 
-$$
+\[
 \infer[\mbox{\rulename{Ty-Bra}}]{
 	\Gamma \vdash \bra{\parti{p}}{l_i(x_1 \dots x_n):P_i}_{i\in I} : \tybra{\parti{p}}{l_i(U_1 \dots U_n):S_i}_{i\in I}
 	}{
@@ -192,9 +192,9 @@ $$
     \Gamma, x_1: U_1, \dots, x_n: U_n \vdash P_i : S_i		
 	\end{array}
 }
-$$
+\]
 
-$$
+\[
 \infer[\mbox{\rulename{Ty-Sel}}]{
 	\Gamma \vdash \sel{\parti{p}}{l}{e_1 \dots e_n}.P : \tysel{\parti{p}}{l(U_1 \dots U_n): S}
 	}{
@@ -208,7 +208,7 @@ $$
     \Gamma \vdash P : S
 	\end{array}
 }
-$$
+\]
 
 % Guarantees for well-typed sessions expressed through duality, also notion of subtyping.
 The definition of stuck processes from \mathref{\ref{section_async}} motivate the discussion of communication errors that may occur during interactions among participants. We outline two of the main classes of errors:
@@ -238,8 +238,7 @@ $\overline{\mathbf{t}}$ & = & $\mathbf{t}$ \\
 
 Consequently, a binary session is well-typed if the participating processes are typed to be dual with respect to each other: we illustrate this in \rulename{MTy}.
 
-
-$$
+\[
 \infer[\mbox{\rulename{MTy}}]{
 	\vdash \parti{p} :: P \mid 
 	\parti{q} :: Q
@@ -250,16 +249,16 @@ $$
 	\cdot \vdash Q: \overline{S}
 	\end{array}
 }
-$$
+\]
 
 The definition of duality alone restricts the definition of well-typed binary sessions to those where the two processes are derived to be \textit{exactly} dual types of one another. Consider the pair of session types below:
 
-$$
+\[
 \begin{array}{rl}
-S_{\text{Client}} &= \tysel{\parti{Server}}{Succ(\texttt{int}): \tybra{\parti{Server}}{Res(\texttt{int}): \mathbf{end}}} \\
-S_{\text{Server}} &= \tybra{\parti{Client}}{Succ(\texttt{int}): \tysel{\parti{Client}}{Res(\texttt{int}): \mathbf{end}},~Quit(): \mathbf{end}}
+S_{\text{Client}} &= \tysel{\parti{Server}}{\text{Succ}(\texttt{int}): \tybra{\parti{Server}}{\text{Res}(\texttt{int}): \mathbf{end}}} \\
+S_{\text{Server}} &= \tybra{\parti{Client}}{\text{Succ}(\texttt{int}): \tysel{\parti{Client}}{\text{Res}(\texttt{int}): \mathbf{end}},~\text{Quit}(): \mathbf{end}}
 \end{array}
-$$
+\]
 
 Whilst $\overline{S_{\text{Client}}} \neq S_{\text{Server}}$, this pair of session types is intuitively compatible as the client is selecting a branch offered by the server, where the session types for the continuations of this branch for both participants are indeed dual.
 
@@ -301,7 +300,7 @@ $}
 
 We also introduce subsumption in \rulename{Ty-Sub} to incorporate the subtyping relation into the typing judgement.
 
-$$
+\[
 \infer[\mbox{\rulename{Ty-Sub}}]{
 	\Gamma \vdash P : S'
 }{
@@ -311,7 +310,7 @@ $$
 	S \leqslant S'
 	\end{array}
 }
-$$
+\]
 
 This allows us to construct a derivation to show that the binary session 
 
@@ -343,13 +342,23 @@ $}
 \end{prooftree}
 
 \subsection{Multiparty Session Types}
-\begin{itemize}
-\item Motivate the extension from BST to MPST (example of battleship game, existing distributed protocols that involve multiple participants?)
-\item Introduce global type, projection
-\item How does the notion of compatibility (which used to be duality) adapt to MPST?
-\end{itemize}
 
+% Motivate the extension from BST to MPST (example of battleship game, existing distributed protocols that involve multiple participants?)
+Whilst binary session types provide communication guarantees between exactly 2 participants, distributed systems generally involve more parties in practice. This is equally relevant in interactive web applications, as motivated by the \textit{Battleships} game example in \cite{PureScript2019} where the server coordinates interactions between two players. 
 
+Whilst there is a natural syntactical extension to our session calculus for describing multiparty sessions\footnote{We also adopt the shorthand $\mathcal{M} ::= \prod^n_{i=1} \parti{p_i} :: P_i$ as used in the literature.} as
+
+\[
+\begin{array}{rl}
+\mathcal{M} ::= & \parti{p_1} :: P_1~\mid~\parti{p_2} :: P_2~\mid~\dots~\mid \parti{p_n} :: P_n
+\end{array}
+\]
+
+the same cannot be said for the binary session typing discipline, particularly with respect to duality. The same notion of duality does not extend to the decomposition of multiparty interactions into multiple binary sessions:  \cite{C406Lecture} and \cite{MPST} both present counterexamples of well-typed binary sessions that, when composed to represent a multiparty session, results in communication errors thus violating guarantees of well-typed sessions.
+
+Honda et al. presents \term{multiparty session types} in \cite{MPAST} to extend the binary session typing discipline for sessions involving more than 2 participants, whilst redefining the notion of compatibility in this multiparty context. Multiparty session types are defined in terms a \term{global type}, which provides a bird's eye view of the communication protocol describing the interactions between pairs of participants. Figure \ref{fig:mpst} defines the syntax of global types inspired by \cite{MPST} and adapted to be compatible with our session calculus presented in \mathref{\ref{section_bst}}.
+
+% Introduce global type, projection
 \begin{figure}[!hb]
 \doublespacing
 \[
@@ -357,12 +366,8 @@ $}
 
 G ::= & & \text{Global Types} \\
      & \mathbf{end} & \text{Termination} \\
-\mid & \parti{p} \to \parti{q}:[U]; G & \text{Termination} \\
-\mid & \tysend{\parti{p}}{U};~S & \text{Value Send} \\
-\mid & \tyrecv{\parti{p}}{U};~S & \text{Value Receive} \\
-\mid & \tybra{\parti{p}}{l_i:S_i}_{i\in I} & \text{Branching} \\
-\mid & \tysel{\parti{p}}{l_i:S_i}_{i\in I} & \text{Selection} \\
-\mid & \mu \mathbf{t}.~S & \text{Recursive Type} \\
+\mid & \parti{p} \to \parti{q}:\left\{l_i(U_1 \dots U_n).~G_i\right\}_{i \in I} & \text{Message Exchange} \\
+\mid & \mu \mathbf{t}.~G & \text{Recursive Type} \\
 \mid & \mathbf{t} & \text{Type Variable} \\
 \end{array}
 \]
@@ -372,9 +377,16 @@ G ::= & & \text{Global Types} \\
 \label{fig:mpst}
 \end{figure}
 
-$$
+To check the conformance of a participant's process against the protocol specification described by the global type, we \term{project} the global type onto the participant to obtain a session type that only preserves the interactions described by the global type that pertain to the participant. Projection is defined by the $\upharpoonright$ operator, more commonly seen in literature in its infix form as $G \upharpoonright \parti{p}$ describing the projection of global type $G$ for participant $\parti{p}$. Intuitively, the projected local type of a participant describes the protocol from the viewpoint of the participant.
+
+More formally, projection can be interpreted as a \textit{partial function} ${\upharpoonright} :: G \times \parti{p} \rightharpoonup S$, as the projection for a participant may be undefined for an ill-formed global type; \cite{C406Lecture} presents examples of where this is the case, and \cite{MPST} presents the formal definition of projection.
+
+% How does the notion of compatibility (which used to be duality) adapt to MPST?
+The notion of compatibility in multiparty session types is still captured by \rulename{MTy}, but adapted to consider the local projections for all participants as supposed to dual types in the binary case. 
+
+\[
 \infer[\mbox{\rulename{MTy}}]{
-	\vdash \prod_{i \in I} \parti{p_i} :: P_i ~: G
+	{\displaystyle \vdash \prod^{}_{i \in I} \parti{p_i} :: P_i ~: G} 
 }{
 	\begin{array}{llll}
 	\forall i \in I. 
@@ -385,4 +397,27 @@ $$
 	\text{pt}(G) \subseteq \left\{\parti{p_i} \mid i \in I \right\}
 	\end{array}
 }
-$$
+\]
+
+
+For a multiparty session $\mathcal{M} = \prod_{i \in I}\parti{p_i} :: P_i$ to be well-typed by a global type $G$, we require: 
+
+\begin{enumerate}
+\item All participant processes $\parti{p_i} :: P_i$ to be well-typed with respect to their corresponding well-defined projection $G \upharpoonright \parti{p_i}$, and 
+\item $G$ does not describe interactions with participants not defined in $\mathcal{M}$ 
+\end{enumerate}
+
+Well-typed multiparty session enjoys the following communication guarantees as outlined in \cite{GentleMPST}:
+
+\begin{itemize}
+\item \textbf{Communication safety}: The types of sent and expected messages will always match.
+\item \textbf{Protocol fidelity}: The exchange of messages between processes will abide by the global protocol.
+\item \textbf{Progress}: Messages sent by a process will be eventually received, and a process waiting for a message will eventually receive one; this also means there will not be any sent but unreceived messages.
+\end{itemize}
+
+This motivates an elegant, decentralised solution for checking protocol conformance in practice: once the global type for the protocol is defined, local processes can verify their implementation against their corresponding projection in isolation, independent of each other. Figure \ref{fig:mpst_workflow}\todo{Create figure} illustrates this diagrammatically.
+
+\begin{figure}[!h]
+\caption{Type checking with Multiparty Session Types}
+\label{fig:mpst_workflow}
+\end{figure}
