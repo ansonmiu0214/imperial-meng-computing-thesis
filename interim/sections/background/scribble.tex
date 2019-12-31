@@ -37,7 +37,7 @@ global protocol Adder(role C, role S) {
 \label{fig:adder_scr}
 \end{figure}
 
-The simplicity of the protocol specification language reflects the design goals for Scribble, as outlined in \cite{Scribble}, to be easy to read, write and maintain, even for developers who are not accustomed to the formalities in protocol specification. Moreover, we clearly observe the parallels between the Scribble language and multiparty session type theory (MPST), from the homomorphic mapping between Scribble roles and MPST participants to the syntactic similarities between the specification in Figure \ref{fig:adder_scr} and the global type below written in the calculus.
+The simplicity of the protocol specification language reflects the design goals for Scribble, as outlined in \cite{Scribble}, to be easy to read, write and maintain, even for developers who are not accustomed to the formalities in protocol specification. Moreover, we clearly observe the parallels between the Scribble language and multiparty session type (MPST) theory, from the homomorphic mapping between Scribble roles and MPST participants to the syntactic similarities between the specification in Figure \ref{fig:adder_scr} and the global type below written in the calculus.
 
 \[
 \begin{array}{rl}
@@ -50,10 +50,14 @@ G = \mu\mathbf{t}.\parti{C}\to\parti{S}:\{
 
 
 \subsection{Endpoint Finite State Machines}
-\begin{itemize}
-\item Show parallels between Scribble protocol-to-EFSM and MPST global-to-local projections
-\item Formalise syntax and properties of EFSM derived from well-formed protocols
-\end{itemize}
+% Show parallels between Scribble protocol-to-EFSM and MPST global-to-local projections
+The protocol specification language is a component of the broader Scribble project in \cite{Scribble}; through the project, Honda et al. also aims to facilitate the development of endpoint applications that conform to user-specified protocols.
+
+A Scribble global protocol can be projected to a role to obtain the local specification of said protocol from the role's viewpoint. This is analogous to the standard algorithmic projections in multiparty session type theory: the projected local specification, or local protocol, only preserves the interactions in which the target role is involved. Any user-defined type declarations in the global protocol will also be preserved. This allows local roles, also referred to as \term{endpoints}, to verify their implementation against their local protocol for conformance, independent of other endpoints. The communication safety guarantees from MPST theory also apply here: if the implementation for each endpoint is verified against its local protocol, the multiparty system as a whole will conform to the global protocol.
+
+% Formalise syntax and properties of EFSM derived from well-formed protocols
+To facilitate the verification process, a local protocol is converted into 
+an \term{endpoint finite state machine} (EFSM). An EFSM encodes the control flow of the local protocol, where an initial state is defined and each transition from some state to a successor state corresponds to a valid IO action (i.e. sending to or receiving from another role) permitted at the endpoint at that state.
 
 \begin{figure}[!hb]
 \doublespacing
