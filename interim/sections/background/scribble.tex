@@ -1,20 +1,49 @@
-\section{The Scribble Language}
+\section{The Scribble Protocol Language}
 
 \subsection{Overview}
 % Introduce Scribble as an implementation of MPST
+Whilst session type theory represents the type language for concurrent processes, it also forms the theoretical basis of proposals introduced to implement session types for real-world application development: the Scribble language is one such proposal.
 
+Scribble \cite{Scribble} is a platform-independent description language for the specification of message-passing protocols. The language describes the behaviour of communicating processes at a high level of abstraction: more importantly, the description is independent from implementation details in the same way that the type signature of a function declaration is decoupled from the corresponding function definition.
 
 % Protocol specification: show parallels between Scribble protocol and MPST global type
+A Scribble protocol specification describes an agreement of how participating systems, referred to as \term{roles}, interact. The protocol stipulates the sequence of structured messages exchanged between roles; each message is labelled with a name and the type of payload carried by the message.
 
-\begin{lstlisting}[language=Java,numbers=left,frame=single]
-// TODO: Adder Protocol
+We present an example of a Scribble protocol in Figure \ref{fig:adder_scr} adapted from \cite{Hybrid2016}. The protocol specifies an arithmetic web service offered by a server to a client, represented by roles $S$ and $C$ respectively. The client is permitted to either:
+
+\begin{itemize}
+\item Send two \texttt{int}s attached to an \texttt{Add} message, where the server will respond with an \texttt{int} in a message labelled \texttt{Res}, and the protocol recurses; or,
+\item Send a \texttt{Quit} message, where the server will respond with a \texttt{Terminate} message and the protocol ends.
+\end{itemize}
+
+The platform-independent nature of Scribble can be observed from the \texttt{type} declaration on Line 1: the developer has the freedom to specify message payload formats and data types from the target language of the implementation - in this case, aliasing the built-in Java integer as \texttt{int} throughout the protocol.
+
+\begin{figure}[!h]
+\begin{lstlisting}
+type <java> "java.lang.Integer" from "rt.jar" as int;
+
+global protocol Adder(role C, role S) {
+	choice at C {
+		Add(int, int)	from C to S;
+		Res(int)		from S to C;
+		do Adder(C, S);
+	} or {
+		Quit()		from C to S;
+		Terminate()	from S to C;	
+	}
+}
 \end{lstlisting}
+\caption{Adder Protocol in Scribble}
+\label{fig:adder_scr}
+\end{figure}
+
+The simplicity of the protocol specification language reflects the design goals for Scribble, as outlined in \cite{Scribble}, to be easy to read, write and maintain, even for developers who are not accustomed to the formalities in protocol specification. Moreover, we clearly observe the parallels between the Scribble language and multiparty session type theory (MPST), from the homomorphic mapping between Scribble roles and MPST participants to the syntactic similarities between the specification in Figure \ref{fig:adder_scr} and the global type below written in the calculus.
 
 \[
 \begin{array}{rl}
-G = \mu\mathbf{t}.\parti{Client}\to\parti{Server}:\{
-& \text{Add}(\texttt{int}, \texttt{int}): \parti{Server}\to\parti{Client}: \{\text{Res}(\texttt{int}): \mathbf{t}\}, \\
-& \text{Quit}(): \parti{Server}\to\parti{Client}: \{\text{Terminate}(): \mathbf{end}\}\\
+G = \mu\mathbf{t}.\parti{C}\to\parti{S}:\{
+& \text{Add}(\texttt{int}, \texttt{int}): \parti{S}\to\parti{C}: \{\text{Res}(\texttt{int}): \mathbf{t}\}, \\
+& \text{Quit}(): \parti{S}\to\parti{C}: \{\text{Terminate}(): \mathbf{end}\}\\
 \} &
 \end{array}
 \]
