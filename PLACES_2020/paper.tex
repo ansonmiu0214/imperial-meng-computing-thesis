@@ -22,7 +22,7 @@ Co Author
 California, USA}
 \email{is@gmail.com}
 }
-\def\titlerunning{A Longtitled Paper}
+\def\titlerunning{MPST-safe Web Development in TypeScript}
 \def\authorrunning{R.J. van Glabbeek, C. Author \& Y.S. Else}
 \begin{document}
 \maketitle
@@ -32,9 +32,78 @@ This is a sentence in the abstract.
 This is another sentence in the abstract.
 This is yet another sentence in the abstract.
 This is the final sentence in the abstract.
+
+% Problem: similar to PureScript paper
+
+% In this paper, we present...
+
+% TypeScript
+% - gradual type system, superset of JavaScript
+% - we define how our approach achieves "gradual linearity" (can we define this?)
+Our work targets TypeScript - a superset of \dots
+
+We demonstrate the effectiveness of our approach through a web-based game of \textit{Noughts and Crosses} where communication is performed through WebSocket connections.
+
 \end{abstract}
 
 \section{Introduction}
+
+\section{The Scribble protocol language}
+% Workflow from Scribble -> TSC -> User Program
+
+\section{Endpoint programming with EFSMs}
+% Design choices
+
+\subsection{Server-side API generation}
+% How we interpret EFSM for 
+
+\subsubsection{Static linearity guarantees}
+% Callback approach does not expose any channels
+
+\subsection{Browser-side API generation}
+
+\subsubsection{React and FRP}
+
+\subsubsection{Static affine linearity guarantees}
+
+\section{Case study}
+% TicTacToe example - backend
+
+% TicTacToe example - frontend
+
+\section{Related work}
+% New languages written  (e.g. ATS)
+%	- addresses the challenge of resource linearity with a liner type system
+%	- problem with webdev: not compatible with libraries, technologies, flexibility of JavaScript (ultimately the language of the browser)
+
+% API generation
+% - original Python implementation, generating monitors (Rumi's paper)
+%	- Gradual type system lets us do better than just dynamic runtime checks
+%	- could do the same approach with generating JavaScript monitors, but we have TS and Dart and can leverage more powerful type systems to do more static/compiler checks
+
+% - Java (hybrid approach)
+%	- leverage strongly typed system for static behavioural typing
+%	- minimse dupliction by defining states in terms of IO interfaces (same IO state with different successor can still share code)
+%	- runtime linearity checks
+
+% Typestates (Mungo)
+% - the React components we generate is essentially behaving like typestates of the role, where 
+% each role has its set of permitted actions.
+
+% Session types in web development
+% - purescript looking at the whole workflow
+	% - problem: PureScript isn't as prevalent
+% - simon fowler paper on MVU targeting linearity for frontend GUI 
+
+\section{Conclusion and Future work}
+
+% Future work
+% - generalise to encode protocols as typestates (e.g. Mungo example)
+% - WebRTC for full MPST (since current limitation is w.r.t. MPST protocols with 1-server many-client roles
+
+
+\section{Introduction}
+% Emergence of interactive JavaScript-intensive applications that maintain continuous stateful
 
 The optional arguments of {\tt $\backslash$documentclass$\{$eptcs$\}$} are
 \begin{itemize}
