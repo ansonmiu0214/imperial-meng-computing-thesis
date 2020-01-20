@@ -2,6 +2,7 @@
 \providecommand{\event}{PLACES 2020} % Name of the event you are submitting to
 %\usepackage{breakurl}             % Not needed if you use pdflatex only.
 
+\usepackage{stmaryrd}
 \usepackage[strings]{underscore}
 \usepackage{color}
 \definecolor{purple}{rgb}{0.65, 0.12, 0.82}
@@ -147,31 +148,63 @@ We leverage the Scribble toolchain to check for protocol well-formedness. This d
 \section{Encoding Session Types in TypeScript}
 % Design choices
 
+Developers can validate the communication aspects of their implementation against their EFSM to verify protocol conformance. Our approach integrates the EFSM into the development workflow by encoding session types as TypeScript types. We appreciate the inherent differences in development considerations between front- and back-end web development: business logic tends to initiate communication in the back-end, whilst communication in the front-end is mostly driven by user interactions with the browser. This motivates our design choice of generating different session types encodings for the target application on the server (\sectionref{section:server}) and in the browser (\sectionref{section:browser}).
+
 \subsection{Server-side API generation}
 \label{section:server}
-% How we interpret EFSM for 
+For server-side targets, we encode EFSM states as TypeScript types depending on the type of state. We adopt the EFSM definition presented in \cite{Hybrid2016} to consider receive and send states separately. We assign each TypeScript encoding its state identifier from the EFSM as its type alias, thus providing syntactic sugar when referring to the successor state in the TypeScript encoding of the current state. For any state $S$ in the EFSM, we refer to the TypeScript type alias of its encoding as $\llbracket S \rrbracket$. 
+
+We make a key design decision \textit{not} to expose communication channels in the TypeScript session type encodings to provide linearity guarantees (\sectionref{section:serverlinear}). Our encodings sufficiently exposes seams for the developer to inject their business logic, whilst the generated session API (\sectionref{section:serversessionapi}) handles the sending and receiving of messages; as a result, the encodings do not concern with the role involved in the send/receive action. We outline the encodings below and provide examples for the \textit{Noughts and Crosses} game server (\sectionref{section:exampleserver}).
+
+\paragraph{Branching state} We consider a receive state as a unary branching state for conciseness. A branching state is encoded as an \textit{object literal}, with each branch corresponding to a member field. A branch expecting to receive a message labelled $\texttt{label}_i$ carrying payload of type $\texttt{T}_i$ with successor state $S_i$ is encoded as an \textit{member field} named $\texttt{label}_i$ of function type \texttt{(payload:$\texttt{T}_i$) => $\llbracket S_i \rrbracket$}. The developer implements a branching operation by passing callbacks for each branch, parameterised by the expected message payload type for that branch.
+
+\paragraph{Selection state} We consider a send state as a unary selection state for conciseness. A selection state is encoded as a \textit{union type} of internal choice encodings: each internal choice sending a message labelled $\texttt{label}_i$ carrying payload of type $\texttt{T}_i$ with successor state $S_i$ is encoded as a \textit{tuple type} of \texttt{[Label.label$_i$, T$_i$, $\llbracket S_i \rrbracket$]}. The developer implements a selection operation by passing the selected label and payload to send in the message. We generate a \textit{string enum} (named \texttt{Label}) wrapping the labels in the protocol, hence the enum member access in the first element of the tuple type.
+
+\subsubsection{Session API}
+\label{section:serversessionapi}
 
 \subsubsection{Linear channel usage}
+\label{section:serverlinear}
+Our callback-oriented design for server-side API generation provides eguarantees on state channel linearity by enforcing the following two properties.
+
+\paragraph{Repeat use} By adopting a callback-oriented design for server-side API generation, channels are not directly accessed by the programmer which makes \textit{reuse} impossible. Consider the \textit{Noughts and Crosses} server endpoint: the programmer must pass a callback that handles the receipt of a \texttt{Pos(Point)} message and returns either a \texttt{Lose(Point)}, \texttt{Draw(Point)} or \texttt{Update(Point)} message with the appropriate continuation. Upon receiving the \texttt{Pos(Point)} message from a player, our lightweight runtime invokes the callback to get \texttt{Svr}'s choice from the return value, and perform the appropriate send. This is transparent to the programmer and it is impossible for the programmer to send or receive messages more than once, by design.
+
+\paragraph{Unused} Callbacks for all states of the EFSM must be supplied to the constructor in order to create the session. This will cover the terminal state (if it exists in the EFSM, as \cite{Hybrid2016} notes that an EFSM contains at most one terminal state).
+
+Thus, \dots
+
 % Callback approach does not expose any channels
+
 
 \subsection{Browser-side API generation}
 \label{section:browser}
 
 \subsubsection{The React Framework}
 
+\subsubsection{Model transitions}
+
 \subsubsection{Affine channel usage}
 
 \section{Case Study}
 \label{section:example}
+We apply our framework to implement a web-based implementation of the \textit{Noughts and Crosses} running example in TypeScript; the interested reader can find the full implementation in \cite{NoughtsAndCrosses}. In addition to showing the multiparty session type safety achieved by our generated APIs, we also show that our library design welcomes idiomatic JavaScript practices in the user implementation and is interoperable with common front- and back-end frameworks.
+ 
+\subsection{Game server}
+\label{section:exampleserver}
 % TicTacToe example - backend
 
+% Note: no state space explosion, allows for reusability
+
+\subsection{Game clients}
 % TicTacToe example - frontend
 
 \section{Related Works}
+\paragraph{Languages with native session type support} \dots
 % New languages written  (e.g. ATS)
 %	- addresses the challenge of resource linearity with a liner type system
 %	- problem with webdev: not compatible with libraries, technologies, flexibility of JavaScript (ultimately the language of the browser)
 
+\paragraph{Endpoint API generation} \dots
 % API generation
 % - original Python implementation, generating monitors (Rumi's paper)
 %	- Gradual type system lets us do better than just dynamic runtime checks
@@ -182,14 +215,16 @@ We leverage the Scribble toolchain to check for protocol well-formedness. This d
 %	- minimse dupliction by defining states in terms of IO interfaces (same IO state with different successor can still share code)
 %	- runtime linearity checks
 
-% Typestates (Mungo)
-% - the React components we generate is essentially behaving like typestates of the role, where 
-% each role has its set of permitted actions.
-
+\paragraph{Session types in web development} \dots
 % Session types in web development
 % - purescript looking at the whole workflow
 	% - problem: PureScript isn't as prevalent
 % - simon fowler paper on MVU targeting linearity for frontend GUI 
+
+\paragraph{Typestate programming} \dots
+% Typestates (Mungo)
+% - the React components we generate is essentially behaving like typestates of the role, where 
+% each role has its set of permitted actions.
 
 \section{Conclusion and Future Works}
 
