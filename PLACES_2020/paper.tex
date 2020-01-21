@@ -237,16 +237,23 @@ We will refer to the \texttt{P1} EFSM (figure \ref{fig:efsmp1}) as a running exa
 \subsubsection{The React Framework}
 Rather than using the LINKS web programming language from \cite{MVU2019}, we apply the multiple model types approach to the React framework \cite{React} developed by Facebook. React is widely used in industry to create scalable single-page TypeScript applications, and we intend for our proposed workflow to be beneficial in an industrial context. We introduce the key features of the framework below.
 
-\paragraph{Components} A component is a reusable UI element which contains its own markup and logic. Components implement a \texttt{render()} function which returns a React element, the smallest building blocks of a React application. Components can keep \textit{state} and the \texttt{render()} function is invoked upon a change of state. A simple counter can be implemented as a component, with the count stored as state, a button which increments the count when clicked and a \texttt{div} that renders the current count. Components can also render other components, which gives rise 
+\paragraph{Components} A component is a reusable UI element which contains its own markup and logic. Components implement a \texttt{render()} function which returns a React element, the smallest building blocks of a React application. Components can keep \textit{state} and the \texttt{render()} function is invoked upon a change of state. A simple counter can be implemented as a component, with the count stored as state, a button which increments the count when clicked and a \texttt{div} that renders the current count. Components can also render other components, which gives rise to a parent/child relationship between components. Parents can pass data to children as \textit{props}, so the counter component could render a  child component \texttt{<StyledDiv count=\{this.state.count\} />} and propagate the count in the state to the child to reuse an existing UI element.
 
 \paragraph{Virtual DOM} React components are rendered on a logical abstraction of the DOM, which in turn performs a \texttt{diff} on the current browser DOM and patches the delta accordingly. This allows the programmer to directly specify what should be rendered without having to worry about which elements to append or remove from the browser DOM.
 
-\paragraph{Uni-directional data flow} Parent components pass data to child components as \textit{props}, \dots
-
-% Parent provides props to child (uni-directional workflow)
 
 \subsubsection{Model types in React}
-We leverage React to express the model types approach in \cite{MVU2019} rather than the \textit{Model-View-Controller} (MVC) architecture it was intended for.
+We leverage React to express the model types approach in \cite{MVU2019} rather than the \textit{Model-View-Controller} (MVC) architecture it was intended for. 
+
+\paragraph{State} \dots
+
+\paragraph{Model transitions - message receive} \dots
+
+\paragraph{Model transitions - message send} \dots
+
+\subsubsection{Session instantiation}
+
+\dots
 
 % State = React component
 % Send transitions = model transition factory
@@ -256,7 +263,7 @@ We leverage React to express the model types approach in \cite{MVU2019} rather t
 \subsubsection{Affine channel usage}
 A limitation of our browser-side session type encoding is only being able to guarantee that channel resources are used \textit{at most once} as supposed to \textit{exactly once}.
 
-\paragraph{Repeat use} \dots
+\paragraph{Repeat use} Communication channels are not exposed to the programmer so multiple sends are impossible. This does not restrict the programmer from binding the send action to exactly one UI event: for the \textit{Noughts and Crosses} game, we bind the \texttt{Pos(Point)} send action to each unoccupied cell on the game board, but the generated runtime ensures that, once an event bound to the send action is triggered, the send is only performed once and the successor state is rendered on the DOM to prevent multiple sends initiated by the user.
 
 \paragraph{Unused} Our approach \textit{does not} statically detect whether all transitions in a certain state are bound to some UI event. This means that it is possible for an implementation to \textit{not} handle transitions to a terminal state but still type-check, so we cannot prevent unused states. Consider a hypothetical protocol where, in the current state, sending \texttt{Quit()} to some server role \texttt{S} transitions to the terminal state: \dots
 
