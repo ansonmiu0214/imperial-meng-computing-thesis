@@ -66,28 +66,11 @@ Fangyi Zhou
 \maketitle
 
 \begin{abstract}
-% Situation: webapps, interactive, JavaScript more powerful but remains a poor language for maintaing large applications
+Advancements in mobile device compute power has made interactive web applications possible, allowing the web browser to render content dynamically and support low-latency communication with the server. This comes at a cost to the developer, who now need to reason more about the communication correctness of their application as they support more complex communication patterns. 
 
-% Problem: hard to maintain/test
-% New languages (like Dart and TypeScript)
+Multiparty session types (MPST) provide a framework for verifying implementations to conform to a prescribed communication protocol. Existing proposals for applying the MPST framework in application development either neglect the event-driven nature of web applications, or lack compatibility with industry tools and practices which discourage mainstream adoption by web developers.
 
-% Solution: MPST for web development
-
-This is a sentence in the abstract.
-This is another sentence in the abstract.
-This is yet another sentence in the abstract.
-This is the final sentence in the abstract.
-
-% Problem: similar to PureScript paper
-
-% In this paper, we present...
-
-% TypeScript
-% - gradual type system, superset of JavaScript
-% - we define how our approach achieves "gradual linearity" (can we define this?)
-%Our work targets TypeScript - a superset of \dots
-
-%We demonstrate the effectiveness of our approach through a web-based game of \textit{Noughts and Crosses} where communication is performed through WebSocket connections.
+In this paper, we present an implementation of the MPST framework for developing interactive web applications using familiar industry tools in TypeScript and the \textit{React.js} framework. The global communication protocol is specified in the Scribble protocol language and checked for well-formedness by the Scribble toolchain. We obtain the local protocol for each role, which describes the interactions of the global communication protocols observed by the role. We encode the local protocol into TypeScript types, catering for server-side and client-side targets separately, and show that our encoding guarantees that only implementations which conform to the protocol will type-check. We demonstrate the effectiveness of our approach through a web-based implementation of the classic \textit{Noughts and Crosses} game from a MPST formalism of the game logic.
 
 \end{abstract}
 
@@ -99,7 +82,7 @@ Whilst the HTTP request-response model is sufficient for retrieving static asset
 Developers have since adopted other communication transport abstractions over HTTP connections such as the WebSockets protocol \cite{WebSocketRFC} to enjoy low-latency full-duplex client-server communication in their applications over a single persistent connection. 
 Enabling more complex communication patterns caters for more interactive use cases (such as real-time multiplayer games), but introduces additional concerns to the developer with respect to implementation correctness.
 
-% Example: naughts and crosses
+% Example: noughts and crosses
 Consider a classic turn-based board game of \textit{Noughts and Crosses} between two players. Both players are identified by either noughts or crosses respectively, and take turns to place a mark on an unoccupied cell of a 3-by-3 grid until one player wins (when their markers form one straight line on the board) or a stalemate is reached (when all cells are occupied). A web-based implementation may involve players connected to a game server via WebSocket connections and interacting with the game from their web browser, which serve a \textit{single-page application} (SPA) of the game client written in a popular framework like \textit{React.js} \cite{React}. SPAs feature a single HTML page and dynamically renders content via JavaScript in the browser. Players take turns to make a move on the game board and the server implements the game logic to progress the game forward until a result (either a win/loss or draw) can be declared. 
 
 Whilst WebSockets make this web-based implementation possible, it introduces the developer to a new family of communication errors, even for this simple game. In addition to the usual testing for game logic correctness, the developer needs to test against \textit{deadlocks} (e.g. both players waiting for each other to make a move at the same time) and \textit{communication mismatches} (e.g. player 1 sending a boolean to the game server instead of the board coordinates). The complexity of these errors, which correlate to the complexity of tests required against these errors, scale with the complexity of the communication patterns involved.
@@ -188,12 +171,10 @@ export type S15 = [Labels.Lose, Point, S16]
 \label{lst:svr}
 \end{figure}
 
-\subsubsection{Session Runtime and Protocol API}
+\subsubsection{Session runtime}
 \label{section:serversessionapi}
 
-Our session runtime performs communication in a way that conforms to the protocol specification. The runtime listens to message (receive) events on the communication channel, invokes the corresponding callback to obtain the value to send next, and performs the send.
-
-The \textit{Protocol API} is a class that interfaces between the session runtime and the user implementation of the EFSM state encodings. Upon construction, the Protocol class waits for all client roles to connect via WebSocket, then proceeds to the initial state of the EFSM and performs state transitions depending on the permitted communication patterns from the EFSM.
+Our session runtime performs communication in a way that conforms to the protocol specification, but does not expose these IO actions to the developer by delegating the aforementioned responsibilities to an inner class. The runtime listens to message (receive) events on the communication channel, invokes the corresponding callback to obtain the value to send next, and performs the send. The developer instantiates the session by constructing an instance of the session runtime class.
 
 \subsubsection{Linear channel usage}
 \label{section:serverlinear}
@@ -201,7 +182,7 @@ Our callback-oriented design for server-side API generation provides guarantees 
 
 \paragraph{Repeat use} We do not expose channels to the programmer, which makes \textit{reuse} impossible. For example, to send a message, the generated API only requires the payload that needs to be sent, and the session runtime performs the send internally, guaranteeing this action is done \textit{exactly once} by construction.
 
-\paragraph{Unused} The initial state must be supplied to the Protocol API constructor in order to instantiate the session; this initial state is defined in terms of the successor states, which in turn has references to its successors and so forth. This encoding approach will cover the terminal state (if it exists in the EFSM, as \cite{Hybrid2016} notes that an EFSM contains at most one terminal state), and the session runtime guarantees this terminal state, if it exists, will be reached by construction. 
+\paragraph{Unused} The initial state must be supplied to the session runtime constructor in order to instantiate the session; this initial state is defined in terms of the successor states, which in turn has references to its successors and so forth. This encoding approach will cover the terminal state (if it exists in the EFSM, as \cite{Hybrid2016} notes that an EFSM contains at most one terminal state), and the session runtime guarantees this terminal state, if it exists, will be reached by construction. 
 
 \subsection{Browser-side API generation}
 \label{section:browser}
@@ -300,16 +281,21 @@ new NoughtsAndCrosses.Svr(webSocketServer, handleP1Move, handleP2Move)
 \end{figure}
 
 We apply our framework to implement a web-based implementation of the \textit{Noughts and Crosses} running example in TypeScript; the interested reader can find the full implementation in \cite{NoughtsAndCrosses}. In addition to MPST-safety, we show that our library design welcomes idiomatic JavaScript practices in the user implementation and is interoperable with common front- and back-end frameworks.
-
+ 
 \paragraph{Game server} We set up the WebSocket server inside an Express.js \cite{ExpressJS} application on top of a Node.js \cite{NodeJS} runtime. We define our own game logic in a \texttt{Board} class to keep track of the game state and expose methods to query the result. This custom logic is integrated into our \texttt{Receive\_P1} and \texttt{Receive\_P2} handlers (Listing \ref{lst:svrprotocol}), so the session runtime can handle \texttt{Pos(Point)} messages from players and transition according to the injected game logic. 
 
 Note that, by the structural typing nature of TypeScript, replacing \texttt{handleP2Move} on line 6 with \texttt{handleP1Move} would be type-correct - this allows for better code reuse as supposed to defining additionl abstractions to work around the limitations of nominal typing in \cite{Hybrid2016}. There is also full type erasure when transpiling to JavaScript to run the server code, so state space explosions is never a runtime consideration.
 
-\paragraph{Game clients} We implement the game client for players as a React application - extending from the generated abstract React components, registering our custom implementation as props for the session runtime component. 
+\paragraph{Game clients} We implement the game client for players as a React application - extending from the generated abstract React components, registering our custom implementation as props for the session runtime component.
 
 For the sake of code reuse for demonstration purposes, \cite{NoughtsAndCrosses} uses \textit{higher-order components} (HOC) to build the correct state implementations depending on which player the user chooses to be. We leverage the \textit{Redux} state management library to keep track of game state, thus showing the flexibility of our library design in being interoperable with other libraries and idiomatic JavaScript practices. 
 
 \section{Related Works}
+%\paragraph{Languages with native session type support} \dots
+% New languages written  (e.g. ATS)
+%	- addresses the challenge of resource linearity with a liner type system
+%	- problem with webdev: not compatible with libraries, technologies, flexibility of JavaScript (ultimately the language of the browser)
+
 \paragraph{Endpoint API generation} \cite{Python2017} targeted Python applications and the generation of runtime monitors to dynamically verify communication patterns. Whilst the same approach could be applied to JavaScript, we can provide more static guarantees with TypeScript's gradual typing system and compiler. \cite{Hybrid2016} targeted Java applications and proposed to encode the EFSM states and transitions as classes and instance methods respectively, with behavioural typing achieved statically by the type system and channel linearity guarantees achieved dynamically since channel resources are exposed and aliasing is not monitored.
 
 \paragraph{Session types in web development} \cite{PureScript2019} targeted web development in PureScript using the \textit{Concur UI} framework and proposed a type-level encoding of EFSMs as multi-parameter type classes. However, it presents a trade-off between achieving static linearity guarantees from the type-level EFSM encoding under the expressive type system and providing an intuitive development experience to programmers, especially given the prevalence of JavaScript and TypeScript applications in industry. \cite{MVU2019} focused on applying binary session types in front-end web development and presented approaches that tackle the challenge of guaranteeing linearity in the event-driven environment. 
