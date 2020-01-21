@@ -2,6 +2,9 @@
 \providecommand{\event}{PLACES 2020} % Name of the event you are submitting to
 %\usepackage{breakurl}             % Not needed if you use pdflatex only.
 
+\usepackage{wrapfig}
+\usepackage{graphicx}
+\usepackage{subcaption}
 \usepackage{stmaryrd}
 \usepackage[strings]{underscore}
 \usepackage{color}
@@ -12,6 +15,20 @@
 \lstdefinelanguage{Scribble}{
   keywords={module, type, from, as, global,protocol, role, to, choice, at, or, do},
   keywordstyle=\color{blue}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{darkgray}\ttfamily,
+  stringstyle=\color{purple}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break, class, export, boolean, throw, implements, import, this, const, let},
+  keywordstyle=\color{blue}\bfseries,
+%  ndkeywords={class, export, boolean, throw, implements, import, this},
+%  ndkeywordstyle=\color{darkgray}\bfseries,
   identifierstyle=\color{black},
   sensitive=false,
   comment=[l]{//},
@@ -98,7 +115,7 @@ Whilst the proposal in \cite{Python2017} could be adapted to verify interactive 
 \paragraph{Contributions}
 This paper presents a workflow for developing type-safe interactive SPAs motivated by the MPST framework: \textbf{(1)} An endpoint API code generation workflow targeting TypeScript-based web applications for multiparty sessions; \textbf{(2)} An encoding of session types in server-side TypeScript that enforces static linearity; and \textbf{(3)} An encoding of session types in browser-side TypeScript using the React framework that guarantees affine usage of communication channels.
 
-Figure \ref{fig:workflow} illustrates our proposed development workflow: we extend the Scribble framework (\sectionref{section:scribble}) and generate TypeScript endpoints for server-side (\sectionref{section:server}) and browser-side (\sectionref{section:browser}) targets. We will use the \textit{Noughts and Crosses} game as our running example in the rest of the paper and show how our approach is a practical compromise that combines benefits from static session typing and being compatible with common libraries and JavaScript idiomatic practices (\sectionref{section:example}).
+Figure \ref{fig:workflow} illustrates our proposed development workflow: we extend the Scribble framework (\sectionref{section:scribble}) and generate TypeScript endpoints for server-side (\sectionref{section:server}) and browser-side (\sectionref{section:browser}) targets. We will use the \textit{Noughts and Crosses} game as our running example in the rest of the paper and show how our approach is a practical compromise that combines benefits from static session typing and being compatible with common libraries and idiomatic JavaScript practices (\sectionref{section:example}).
 
 \section{The Scribble Framework}
 \label{section:scribble}
@@ -152,38 +169,98 @@ Developers can validate the communication aspects of their implementation agains
 
 \subsection{Server-side API generation}
 \label{section:server}
-For server-side targets, we encode EFSM states as TypeScript types depending on the type of state. We adopt the EFSM definition presented in \cite{Hybrid2016} to consider receive and send states separately. We assign each TypeScript encoding its state identifier from the EFSM as its type alias, thus providing syntactic sugar when referring to the successor state in the TypeScript encoding of the current state. For any state $S$ in the EFSM, we refer to the TypeScript type alias of its encoding as $\llbracket S \rrbracket$. 
 
-We make a key design decision \textit{not} to expose communication channels in the TypeScript session type encodings to provide linearity guarantees (\sectionref{section:serverlinear}). Our encodings sufficiently exposes seams for the developer to inject their business logic, whilst the generated session API (\sectionref{section:serversessionapi}) handles the sending and receiving of messages; as a result, the encodings do not concern with the role involved in the send/receive action. We outline the encodings below and provide examples for the \textit{Noughts and Crosses} game server (\sectionref{section:exampleserver}).
+\begin{wrapfigure}{r}{0.5\textwidth}
+  \begin{center}
+    \includegraphics[width=0.48\textwidth]{figures/efsm_svr.png}
+  \end{center}
 
-\paragraph{Branching state} We consider a receive state as a unary branching state for conciseness. A branching state is encoded as an \textit{object literal}, with each branch corresponding to a member field. A branch expecting to receive a message labelled $\texttt{label}_i$ carrying payload of type $\texttt{T}_i$ with successor state $S_i$ is encoded as an \textit{member field} named $\texttt{label}_i$ of function type \texttt{(payload:$\texttt{T}_i$) => $\llbracket S_i \rrbracket$}. The developer implements a branching operation by passing callbacks for each branch, parameterised by the expected message payload type for that branch.
+  \captionof{figure}{EFSM for \texttt{Svr} in \textit{Noughts and Crosses}.}
+  \label{fig:efsmsvr}
+\end{wrapfigure}
 
-\paragraph{Selection state} We consider a send state as a unary selection state for conciseness. A selection state is encoded as a \textit{union type} of internal choice encodings: each internal choice sending a message labelled $\texttt{label}_i$ carrying payload of type $\texttt{T}_i$ with successor state $S_i$ is encoded as a \textit{tuple type} of \texttt{[Label.label$_i$, T$_i$, $\llbracket S_i \rrbracket$]}. The developer implements a selection operation by passing the selected label and payload to send in the message. We generate a \textit{string enum} (named \texttt{Label}) wrapping the labels in the protocol, hence the enum member access in the first element of the tuple type.
+We will refer to the \texttt{Svr} EFSM (fig.~\ref{fig:efsmsvr}) as a running example in this section. For server-side targets, we encode EFSM states as TypeScript types depending on the type of state. We adopt the EFSM definition presented in \cite{Hybrid2016} to consider receive and send states separately. We assign each TypeScript encoding its state identifier from the EFSM as its type alias, thus providing syntactic sugar when referring to the successor state in the TypeScript encoding of the current state. For any state $S$ in the EFSM, we refer to the TypeScript type alias of its encoding as $\llbracket S \rrbracket$. 
 
-\subsubsection{Session API}
+We make a key design decision \textit{not} to expose communication channels in the TypeScript session type encodings to provide linearity guarantees (\sectionref{section:serverlinear}). Our encodings sufficiently exposes seams for the developer to inject their business logic, whilst the generated session API (\sectionref{section:serversessionapi}) handles the sending and receiving of messages; as a result, the encodings do not concern with the role involved in the send/receive action. We outline the encodings below using examples from the \textit{Noughts and Crosses} game server (listing \ref{lst:svr}).
+
+\paragraph{Branching state} We consider a receive state as a unary branching state for conciseness. A branching state is encoded as an \textit{object literal} \cite{TypeScriptSpec}, with each branch corresponding to a member field. A branch expecting to receive a message labelled $\texttt{label}_i$ carrying payload of type $\texttt{T}_i$ with successor state $S_i$ is encoded as an \textit{member field} named $\texttt{label}_i$ of function type \texttt{(payload:$\texttt{T}_i$) => $\llbracket S_i \rrbracket$}. The developer implements a branching operation by passing callbacks for each branch, parameterised by the expected message payload type for that branch.
+
+\paragraph{Selection state} We consider a send state as a unary selection state for conciseness. A selection state is encoded as a \textit{union type} \cite{TypeScriptSpec} of internal choice encodings: each internal choice sending a message labelled $\texttt{label}_i$ carrying payload of type $\texttt{T}_i$ with successor state $S_i$ is encoded as a \textit{tuple type} of \texttt{[Labels.label$_i$, T$_i$, $\llbracket S_i \rrbracket$]}. The developer implements a selection operation by passing the selected label and payload to send in the message. We generate a \textit{string enum} (named \texttt{Labels}) wrapping the labels in the protocol, hence the enum member access in the first element of the tuple type.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=JavaScript, title=\texttt{./NoughtsAndCrosses/Game.ts}]
+import { Coordinate as Point } from "./Types";
+import { Labels } from "./Constants";
+
+export type S13 = { Pos: (payload: Point) => S15 }
+export type S15 = [Labels.Lose, Point, S16]
+		| [Labels.Draw, Point, S17]
+		| [Labels.Update, Point, S18]
+\end{lstlisting}  
+\captionof{lstlisting}{Example encodings from \textit{Noughts and Crosses} \texttt{Svr} EFSM.}
+\label{lst:svr}
+\end{figure}
+
+\subsubsection{Session Runtime and Protocol API}
 \label{section:serversessionapi}
+
+Our session runtime performs communication in a way that conforms to the protocol specification. The runtime listens to message (receive) events on the communication channel, invokes the corresponding callback to obtain the value to send next, and performs the send.
+
+The \textit{Protocol API} is a class that interfaces between the session runtime and the user implementation of the EFSM state encodings. Upon construction, the Protocol class waits for all client roles to connect via WebSocket, then proceeds to the initial state of the EFSM and performs state transitions depending on the permitted communication patterns from the EFSM. The Protocol class constructor requires the WebSocket server and the following handlers:
+
+\paragraph{Initial state} When all roles have joined the session, the Protocol class needs to know what to do in the initial state to start communication, be it sending a message to a client or offering branches to a client. For the \textit{Noughts and Crosses} game server, this would be a callback to handle the receipt of the \texttt{Pos(Point)} message from \texttt{P1}.
+
+\paragraph{Receive handlers for each role} The runtime needs to bind a message event listener to the WebSocket between the server and each (client) role, and needs to know how to handle the incoming messages. For each role, the user is required to pass callbacks that encode the receive states for that role. The type alias for such a handler is the \textit{intersection type} \cite{TypeScriptSpec} of all receive states concerning that role. Considering a hypothetical web-service providing addition and square root functionality to a client role \texttt{C}, if \texttt{S1} is a state expecting to receive \texttt{Add(int, int)} from \texttt{C} and \texttt{S4} is a state expecting to receive \texttt{Sqrt(int)} from \texttt{C}, we define \texttt{type Receive_C = S1 \& S4} as the receive handler type alias and the user needs to pass some value of \texttt{Receive_C} when instantiating the session through the Protocol API. 
 
 \subsubsection{Linear channel usage}
 \label{section:serverlinear}
-Our callback-oriented design for server-side API generation provides eguarantees on state channel linearity by enforcing the following two properties.
+Our callback-oriented design for server-side API generation provides guarantees on state channel linearity by preventing the two properties detailed below. Here, channel linearity is guaranteed based on the correctness of our library design and session runtime implementation, which means a faulty implementation could violate this, but is up to the library author to verify once rather than the end user.
 
-\paragraph{Repeat use} By adopting a callback-oriented design for server-side API generation, channels are not directly accessed by the programmer which makes \textit{reuse} impossible. Consider the \textit{Noughts and Crosses} server endpoint: the programmer must pass a callback that handles the receipt of a \texttt{Pos(Point)} message and returns either a \texttt{Lose(Point)}, \texttt{Draw(Point)} or \texttt{Update(Point)} message with the appropriate continuation. Upon receiving the \texttt{Pos(Point)} message from a player, our lightweight runtime invokes the callback to get \texttt{Svr}'s choice from the return value, and perform the appropriate send. This is transparent to the programmer and it is impossible for the programmer to send or receive messages more than once, by design.
+\paragraph{Repeat use} By adopting a callback-oriented design for server-side API generation, channels are not directly accessed by the programmer which makes \textit{reuse} impossible; only the Protocol API is exposed but channel operations are concealed in a private class. Consider the \textit{Noughts and Crosses} server endpoint: the programmer must pass a callback that handles the receipt of a \texttt{Pos(Point)} message and returns either a \texttt{Lose(Point)}, \texttt{Draw(Point)} or \texttt{Update(Point)} message with the appropriate continuation. Upon receiving the \texttt{Pos(Point)} message from a player, our lightweight runtime invokes the callback to get \texttt{Svr}'s choice from the return value, and perform the appropriate send. This is transparent to the programmer and it is impossible for the programmer to send or receive messages more than once, by design.
 
-\paragraph{Unused} Callbacks for all states of the EFSM must be supplied to the constructor in order to create the session. This will cover the terminal state (if it exists in the EFSM, as \cite{Hybrid2016} notes that an EFSM contains at most one terminal state).
-
-Thus, \dots
-
-% Callback approach does not expose any channels
-
+\paragraph{Unused} The initial state must be supplied to the Protocol API constructor in order to instantiate the session; this initial state is defined in terms of the successor states, which in turn has references to its successors and so forth. This encoding approach will cover the terminal state (if it exists in the EFSM, as \cite{Hybrid2016} notes that an EFSM contains at most one terminal state), and the session runtime guarantees this terminal state, if it exists, will be reached by construction. 
 
 \subsection{Browser-side API generation}
 \label{section:browser}
 
-\subsubsection{The React Framework}
+\begin{wrapfigure}{r}{0.5\textwidth}
+  \begin{center}
+    \includegraphics[width=0.48\textwidth]{figures/efsm_p1.png}
+  \end{center}
 
-\subsubsection{Model transitions}
+  \captionof{figure}{EFSM for \texttt{P1} in \textit{Noughts and Crosses}.}
+  \label{fig:efsmp1}
+\end{wrapfigure}
+
+We will refer to the \texttt{P1} EFSM (figure \ref{fig:efsmp1}) as a running example in this section. Preserving behavioural typing and channel linearity are known to be challenging for browser-side applications due to the event-driven nature of user interaction: in the case of \textit{Noughts and Crosses}, once the user makes a move by clicking on a cell on the game board, this click event must be deactivated until the user's next turn, otherwise the user can click again and violate channel linearity. Our design goal is to enforce this statically through the APIs we generate. For browser-side targets, we extend the approach presented in \cite{MVU2019} on \textit{multiple model types} motivated by the \textit{Model-View-Update} (MVU) architecture. Each state in the EFSM is a model type and uniquely defines a \textit{view function}, set of \textit{messages} and \textit{update function}: the view function defines what to render to the DOM, the set of messages define the possible (IO) actions available at that state, and the update function defines which successor state to transition to, given some supported IO action at this state.
+
+\subsubsection{The React Framework}
+Rather than using the LINKS web programming language from \cite{MVU2019}, we apply the multiple model types approach to the React framework \cite{React} developed by Facebook. React is widely used in industry to create scalable single-page TypeScript applications, and we intend for our proposed workflow to be beneficial in an industrial context. We introduce the key features of the framework below.
+
+\paragraph{Components} \dots
+% Component = basic building blocks 
+% Life cycle
+% JSX
+
+\paragraph{Virtual DOM} \dots
+% virtual-dom
+
+\paragraph{Uni-directional data flow} \dots
+% Parent provides props to child (uni-directional workflow)
+
+\subsubsection{Model types in React}
+Although React was originally intended for the \textit{Model-View-Controller} architecture, we use the framework to express the model types approach.
+
+% State = React component
+% Send transitions = model transition factory
+% Receive transitions = handled by 
+% Protocol component = handle joining and rendering of correct EFSM component
 
 \subsubsection{Affine channel usage}
+
+\paragraph{Repeat use}
+
+\paragraph{Unused} Our approach \textit{does not} statically detect whether all transitions in a certain state are bound to some UI event. This means that it is possible for an implementation to \textit{not} handle transitions to a terminal state but still type-check, so we cannot prevent unused states. Consider a hypothetical protocol where, in the current state, sending \texttt{Quit()} to some server role \texttt{S} transitions to the terminal state: \dots
 
 \section{Case Study}
 \label{section:example}
@@ -193,13 +270,64 @@ We apply our framework to implement a web-based implementation of the \textit{No
 \label{section:exampleserver}
 % TicTacToe example - backend
 
+We set up the WebSocket server on top of an Express.js \cite{ExpressJS}application running on Node.js \cite{NodeJS}. We define our own game logic in a \texttt{Board} class to keep track of the game state and expose methods to query the result. This custom logic is integrated into our 
+\texttt{Receive\_P1} and \texttt{Receive\_P2} handlers (listing are defined using 
+encapsulate our custom game logic in a class 
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=JavaScript, tabsize=4, title=\texttt{./app.ts}]
+const handleP1Move: Receive_P1 = (move: Point) => {
+	// User-implemented logic
+	board.P1(move)
+	if (board.won()) { return [Labels.Lose, move, move] }
+	else if (board.draw()) { return [Labels.Draw, move, move] }
+	else { return [Labels.Draw, move, handleP2Move] } 
+}
+
+const handleP2Move: Receive_P2 = ...
+
+// Instantiate session
+const webSocketServer: WebSocket.Server = ...
+new GameServer(webSocketServer, handleP1Move, handleP2Move)
+\end{lstlisting}  
+\captionof{lstlisting}{Example fragment of \textit{Noughts and Crosses} \texttt{Svr} implementation.}
+\label{lst:svrprotocol}
+\end{figure}
+
 % Note: no state space explosion, allows for reusability
 
 \subsection{Game clients}
 % TicTacToe example - frontend
 
+\paragraph{Implement states} \dots
+
+\paragraph{Register states} \dots
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=JavaScript, tabsize=4]
+export class MakeMove extends S31 {
+	render() {
+		...
+		{board.map((row, x) => (
+			board.map((col, y) => {
+				const SelectPoint = this.props.Pos('click', event => {
+					event.preventDefault()
+					return { x, y }
+				}
+				return <SelectPoint><td>.</td></SelectPoint>
+			}
+		)}
+		...
+	}
+}
+\end{lstlisting}  
+\captionof{lstlisting}{Example fragment of \textit{Noughts and Crosses} \texttt{P1} implementation.}
+\label{lst:svrprotocol}
+\end{figure}
+
+
 \section{Related Works}
-\paragraph{Languages with native session type support} \dots
+%\paragraph{Languages with native session type support} \dots
 % New languages written  (e.g. ATS)
 %	- addresses the challenge of resource linearity with a liner type system
 %	- problem with webdev: not compatible with libraries, technologies, flexibility of JavaScript (ultimately the language of the browser)
