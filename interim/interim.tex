@@ -45,7 +45,7 @@
 
 \chapter{Background}
 
-\input{sections/background/session_types.tex}
+\input{sections/background/session_types.tex} 
 
 \input{sections/background/scribble.tex}
 \clearpage
@@ -56,9 +56,79 @@
 \input{sections/background/typescript.tex}
 
 \chapter{Project Plan}
-\section{Theory}
-\section{Implementation}
+We aim to develop a multiparty session type-safe development workflow for building interactive full-stack TypeScript applications that conform to a communication protocol. This involves encoding session types using the TypeScript language and implementing a code generation workflow to generate the encodings.
+
+%As we target full-stack applications, we tackle server-side and browser-side targets separately:
+%
+%\paragraph{Server-side targets} We will analyse the approaches presented in \cite{Hybrid2016, PureScript2019, Python2017} and assess their applicability with respect to the language features and type system offered by TypeScript and general back-end web development patterns. At the point of writing, we have prototyped several approaches for server-side session type TypeScript encodings and will compare their effectiveness through implementing example protocols, such as the \textit{Adder} example in \cite{Hybrid2016} and the \textit{Battleships} example in \cite{PureScript2019}.
+%
+%\paragraph{Browser-side targets} We will analyse how \cite{PureScript2019} handles API generation for front-end implementations, and in particular, study their approach to behavioural typing and guaranteeing channel linearity in an event-driven environment. \cite{MVU2019} also presents an architecture for verifying binary session type conformance of fornt-end implementations through formalisms of the \textit{Model-View-Update} (MVU) architecture and \textit{model types}. We will investigate how to extend their approach for multiparty session types using TypeScript. At the point of writing, we have explored methods to express the methodology in \cite{MVU2019} using React.js for a multiplayer game.
+
+\section{Delivery}
+At the point of writing, we have analysed the existing code generation approaches presented in \cite{Hybrid2016, Scribble, Python2017} and assessed their applicability with respect to verifying the communication aspects of interactive web applications. We have also explored approaches for encoding session types into TypeScript, motivated by existing works along with similar proposals specific to web development in \cite{PureScript2019, MVU2019}.
+
+We plan to deliver our code generation implementation incrementally, aiming to get a working version of the end-to-end workflow first, then iteratively add support for more complex session type primitives. This minimises the risks involved in the project by ensuring we have a functional deliverable at the early stages of the project. We plan to deliver this basic end-to-end workflow by the end of February.
+
+The subsequent months will involve adding support for other primitives (i.e. selection, choice and recursion) for multiparty sessions. We plan to measure our progress by writing example protocols for these milestones and checking that our implementation supports those protocols by the end of each month.
+
+We will also try to connect with web developers in the community to experiment with our implementation to get feedback on ways to make it more applicable and compatible with industry practices, such that we can apply their feedback on the next iterations of our deliverables.
+
+If time permits, we may explore possible extensions of applying supporting \textit{Explicit Connection Actions} presented in \cite{FASE2017} in our workflow to support more protocols.
+
 \section{Timetable}
+We attach a preliminary timetable (Table \ref{table:timetable}) for guidance.
+
+\begin{figure}
+\centering
+\begin{tabular}{l|p{0.4\textwidth}|p{0.4\textwidth}}
+Month & Milestones & Deadlines \\
+\hline\hline
+Jan & \begin{itemize}
+\item Explore approaches for TypeScript encoding
+\item Investigate methods for code generation from EFSM
+\end{itemize} & \begin{itemize}
+\item 24th: Interim Report
+\item 25th: PLACES 2020
+\end{itemize} \\
+\hline
+Feb & \begin{itemize}
+\item Develop API generation end-to-end toolchain
+\item Support binary sessions with simple send/receive
+\end{itemize} & \begin{itemize}
+\item 14th: Project Review
+\end{itemize} \\
+\hline
+Mar & \begin{itemize}
+\item Support multiparty sessions with simple send/receive
+\end{itemize} & \begin{itemize}
+\item 16th-20th: Examinations
+\end{itemize}\\
+\hline
+Apr & \begin{itemize}
+\item Support binary sessions with selection, choice and recursion
+\item Example: calculator service
+\end{itemize} & \begin{itemize}
+\item 6th-17th: Easter break
+\end{itemize}\\
+\hline
+May & \begin{itemize}
+\item Support multiparty sessions with selection, choice and recursion
+\item Example: Tic Tac Toe game
+\end{itemize} & \begin{itemize}
+\item 15th: Health check-up
+\end{itemize}\\
+\hline
+Jun & \begin{itemize}
+\item Complete report write-up
+\end{itemize} & \begin{itemize}
+\item 15th: Final Report
+\item 26th: Final Archive
+\end{itemize}
+\end{tabular}
+\captionof{table}{Project Timetable.}
+\label{table:timetable}
+\end{figure}
+
 
 \chapter{Evaluation Plan}
 \section{Theory}
