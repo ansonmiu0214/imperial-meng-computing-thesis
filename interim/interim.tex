@@ -130,21 +130,21 @@ Jun & \begin{itemize}
 
 \chapter{Evaluation Plan}
 
-\section{Correctness} \dots
+\section{Correctness}
 % Qualitatively argue how the approach achieves behavioural typing and preserves channel linearity
+We will qualitatively argue how our TypeScript encodings of session types achieve behavioural typing and preserves channel linearity.
 
 % May explore formalisms if time permits
+If time permits, we will explore possible formalisms of our implementation as a calculus upon which to prove correctness. This may be related to the formal language presented in \cite{UnderstandingTypeScript}, but we will need to extend this to be specific to our TypeScript encodings of session types.
 
-\section{Productivity} \dots
+\section{Productivity} 
 % Compare with PureScript implementation to talk about developer productivity when using PureScript APIs with ConcurUI compared to TypeScript APIs when using React
+By adopting tools and practices used in industry, we wish to assess the extent to which our implementation boosts developer productivity by providing APIs that guarantee communication protocol conformance in a way that is compatible with existing workflows. Comparing the development workflow of implementing the \textit{Battleships} game using the PureScript workflow in \cite{PureScript2019} and our TypeScript-based proposal would yield interesting findings.
 
 % Survey - qualitative and quantitative feedback
+This can be carried out as a survey to be completed by web developers familiar with both languages. We would include questions that allow us to collect both qualitative and quantitative feedback to make effective comparisons between our approach and existing proposals.
 
-\section{Performance} \dots
-
-% Lines of code?
-% Overhead == size of JS file ran on browser + client
-% Compare with baseline (no MPST)
+\section{Performance} Examples of performance metrics include: lines of code to be written by the developer (as a result of using the generated APIs), the size of the transpiled JavaScript assets to be loaded on the server and client browsers. We aim to extract these metrics from our approach and compare them against metrics extracted from a baseline implementation (i.e. without using the MPST methodology) and evaluate the performance overhead (if any) of our MPST-based approach.
 
 \clearpage
 
