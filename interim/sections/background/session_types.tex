@@ -415,9 +415,11 @@ Well-typed multiparty session enjoys the following communication guarantees as o
 \item \textbf{Progress}: Messages sent by a process will be eventually received, and a process waiting for a message will eventually receive one; this also means there will not be any sent but unreceived messages.
 \end{itemize}
 
-This motivates an elegant, decentralised solution for checking protocol conformance in practice: once the global type for the protocol is defined, local processes can verify their implementation against their corresponding projection in isolation, independent of each other. Figure \ref{fig:mpst_workflow}\todo{Create figure} illustrates this diagrammatically.
+This motivates an elegant, decentralised solution for checking protocol conformance in practice: once the global type for the protocol is defined, local processes can verify their implementation against their corresponding projection in isolation, independent of each other. 
 
-\begin{figure}[!h]
-\caption{Type checking with Multiparty Session Types}
-\label{fig:mpst_workflow}
-\end{figure}
+%Figure \ref{fig:mpst_workflow}\todo{Create figure} illustrates this diagrammatically.
+%
+%\begin{figure}[!h]
+%\caption{Type checking with Multiparty Session Types}
+%\label{fig:mpst_workflow}
+%\end{figure}

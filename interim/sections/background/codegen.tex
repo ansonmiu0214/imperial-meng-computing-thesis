@@ -1,12 +1,22 @@
 \section{Code Generation}
+The EFSM describes the local session type and provides guidance to developers for verifying that their endpoint implementation conforms to the communication protocol. However, a direct encoding of the local session type into the target language of the implementation is usually not feasible as the EFSM assumes IO objects as first-class citizens and communication channels are linear resources, features that are left to be desired in mainstream programming languages (such as Java and Python) used by the developers' implementations. We note that languages with native session type support \cite{ATS2016} do exist, but their usage largely remains for research purposes as supposed to real-world application development.
 
-\subsection{Overview}
+Code generation is a common approach for verifying implementations written in the aforementioned mainstream languages against the EFSM. Approaches in the literature differ by how they leverage features in the target language (such as the type system), but generally define some interpretation of the EFSM in the target language and generate APIs which the developer can use to implement a target application that guarantees the following two properties:
+
 \begin{itemize}
-\item Motivate the practical implementation of session types in programming
-\item What needs to be verified - I/O behaviour (introduce the term behaviour typing) and linear channel usage
+\item \textbf{Behavioural typing}: The execution trace of messages sent and received by the application is accepted by the EFSM.
+\item \textbf{Channel linearity}: Each transition in the EFSM represents a channel resource. When the application transitions from some state $S$ to some successor state $S'$, it must no longer be able to access a reference (e.g. have an alias) to $S$.
 \end{itemize}
 
-\subsection{Static Session Typing}
+We outline the different existing approaches and summarise how they verify the aforementioned properties in \mathref{\ref{section:codegencompare}}.
+
+\subsection{Runtime Monitors}
+% What
+Neykova and Yoshida targeted the MPST methodology for Python programs in \cite{Python2017} and proposed to generate \term{runtime monitors} from the EFSM. These monitors expose APIs for sending and receiving messages, which is used by the developer in their implementation. The runtime monitor is an abstraction between the developer's implementation and the actual communication channel, and ``executes'' the EFSM internally to ensure protocol conformance. When the developer sends a message (with some label and payload) using the API, the runtime monitor checks whether this send action conforms to the current EFSM state, and if so, performs the send and advances to the successor state. Likewise, when the developer invokes a receive, the runtime monitor verifies that this is permitted at the current EFSM state before returning the received payload.
+
+We observe that this approach complements the dynamic typing nature of the Python language, which makes it sensible to perform behavioural typing at runtime. As the send and receive IO primitives are made available to the developer, there are no ``instances'' of channel resources created, so the developer cannot explicitly hold a reference to some state in the EFSM (let alone keep aliases), so channel linearity is trivially guaranteed here.
+
+\subsection{Type-Level Encoding}
 \begin{itemize}
 \item PureScript implementation that addresses the 2 criteria statically
 \begin{itemize}
@@ -21,17 +31,6 @@
 
 PureScript - \cite{PureScript2019}
 
-\subsection{Runtime Monitors}
-\begin{itemize}
-\item Python dynamic runtime monitors that addresses the 2 criteria dynamically
-\begin{itemize}
-\item Channel abstraction
-\item How invitation/conversation messages are handled
-\end{itemize}
-\end{itemize}
-
-Python - \cite{Python2017}
-
 \subsection{Hybrid Session Verification}
 \begin{itemize}
 \item How the aforementioned 2 approaches motivated hybrid session verification
@@ -45,20 +44,22 @@ Python - \cite{Python2017}
 Java - \cite{Hybrid2016}
 
 \subsection{Comparison}
-\begin{itemize}
-\item Comparison table between the 3 approaches for how they deal with behavioural typing 
-\end{itemize}
+\label{section:codegencompare}
+
+We compare how these existing code generation approaches provide communication safety guarantees in Table \ref{table:comparison}.
+
 
 \begin{figure}[!h]
 \centering
-\begin{tabular}{l p{0.4\textwidth} p{0.4\textwidth}}
+\begin{tabular}{l || p{0.35\textwidth} | p{0.35\textwidth}}
+%\begin{tabular}{l||l|l}
 Language & Behavioural typing & Channel linearity \\
 \hline\hline
-Java \cite{Hybrid2016} &  & \\
+Python \cite{Python2017} & Dynamically enforced - runtime monitor represent the EFSM and only execute supported transitions. & Trivially guaranteed - channel resources not exposed, developer uses \texttt{send()} and \texttt{receive()} primitives. \\
 \hline
-Python \cite{Python2017} &  & \\
+PureScript \cite{PureScript2019} & Type-level encoding - EFSM states are encoded as types, IO actions are encoded as multi-parameter type classes (to express the semantics of the state transition function) and EFSM transitions are encoded as instances of said type classes. & Statically guaranteed - channels are not exposed in the provided combinators to prevent reuse, and session constructor requires a \texttt{Session} continuation parameterised by initial and terminal state to prevent incomplete sessions.  \\
 \hline
-TypePureScript \cite{PureScript2019} &  & \\
+Java \cite{Hybrid2016} & Statically guaranteed - states are encoded as classes; transitions are encoded as instance methods on the state class and return a new instance of the successor state class. & Checked at runtime - states keep \texttt{used} boolean flag to detect and prevent reuse, Session API implements \texttt{AutoCloseable} interface to be used in resource try-catch block to prevent unused.
 \end{tabular}
 \captionof{table}{Comparison between existing MPST code generation approaches.}
 \label{table:comparison}
