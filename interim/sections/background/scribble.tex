@@ -1,6 +1,6 @@
 \section{The Scribble Protocol Language}
 
-\subsection{Overview}
+%\subsection{Overview}
 % Introduce Scribble as an implementation of MPST
 Whilst session type theory represents the type language for concurrent processes, it also forms the theoretical basis of proposals introduced to implement session types for real-world application development: the Scribble language is one such proposal.
 
@@ -19,7 +19,7 @@ We present an example of a Scribble protocol in Figure \ref{fig:adder_scr} adapt
 The platform-independent nature of Scribble can be observed from the \texttt{type} declaration on Line 1: the developer has the freedom to specify message payload formats and data types from the target language of the implementation - in this case, aliasing the built-in Java integer as \texttt{int} throughout the protocol.
 
 \begin{figure}[!h]
-\begin{lstlisting}
+\begin{lstlisting}[language=Scribble]
 type <java> "java.lang.Integer" from "rt.jar" as int;
 
 global protocol Adder(role C, role S) {

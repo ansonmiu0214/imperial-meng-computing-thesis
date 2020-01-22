@@ -6,9 +6,34 @@
 
 % Code listing
 \usepackage{listings}
+\lstdefinelanguage{Scribble}{
+  keywords={module, type, from, as, global,protocol, role, to, choice, at, or, do},
+  keywordstyle=\color{blue}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{darkgray}\ttfamily,
+  stringstyle=\color{purple}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break, class, export, boolean, throw, implements, import, this, const, let, extends},
+  keywordstyle=\color{blue}\bfseries,
+%  ndkeywords={class, export, boolean, throw, implements, import, this},
+%  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{darkgray}\ttfamily,
+  stringstyle=\color{purple}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
 \lstset{
-	basicstyle=\ttfamily,
-	language=Java,
+	basicstyle=\footnotesize\ttfamily,
 	numbers=left,
 	frame=single,
 	tabsize=4
