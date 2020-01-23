@@ -4,7 +4,7 @@
 \newcommand{\reportauthor}{Anson Miu}
 \newcommand{\reporttype}{MEng Individual Project}
 \newcommand{\supervisor}{Prof. Nobuko Yoshida}
-\newcommand{\sndmarker}{TBC}
+\newcommand{\sndmarker}{Dr. Iain Phillips}
 \newcommand{\cid}{your college-id number}
 
 % include files that load packages and define macros
@@ -32,38 +32,130 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% Main document
 
 \chapter{Introduction}
-
 % Rise of distributed programs -> main challenges
-
 % How to ensure correctness in general: type system, data types
-
 % Type discipline for concurrent programs - behavioural types (--> session types)
-
 % Mainstream example of distirbuted programs: web services (microservice architecture), interactive web application; 
-
 % Objective: 
+
+Modern interactive web applications aim to provide a highly responsive user experience by minimising the communication latency between clients and servers. 
+Whilst the HTTP request-response model is sufficient for retrieving static assets, applying the same stateless communication approach for interactive use cases (such as a multiplayer game) introduces undesirable performance overhead from having to frequently set up new connections for client-server interactions. 
+Developers have since adopted other communication transport abstractions over HTTP connections such as the WebSockets protocol \cite{WebSocketRFC} to enjoy low-latency full-duplex client-server communication in their applications over a single persistent connection. 
+Enabling more complex communication patterns caters for more interactive use cases (such as real-time multiplayer games), but introduces additional concerns to the developer with respect to implementation correctness.
+
+% Example: noughts and crosses
+Consider a classic turn-based board game of \textit{Noughts and Crosses} between two players. Both players are identified by either noughts or crosses respectively, and take turns to place a mark on an unoccupied cell of a 3-by-3 grid until one player wins (when their markers form one straight line on the board) or a stalemate is reached (when all cells are occupied). A web-based implementation may involve players connected to a game server via WebSocket connections and interacting with the game from their web browser, which serve a \textit{single-page application} (SPA) of the game client written in a popular framework like \textit{React.js} \cite{React}. SPAs feature a single HTML page and dynamically renders content via JavaScript in the browser. Players take turns to make a move on the game board and the server implements the game logic to progress the game forward until a result (either a win/loss or draw) can be declared. 
+
+Whilst WebSockets make this web-based implementation possible, it introduces the developer to a new family of communication errors, even for this simple game. In addition to the usual testing for game logic correctness, the developer needs to test against \textit{deadlocks} (e.g. both players waiting for each other to make a move at the same time) and \textit{communication mismatches} (e.g. player 1 sending a boolean to the game server instead of the board coordinates). The complexity of these errors, which correlate to the complexity of tests required against these errors, scale with the complexity of the communication patterns involved.
+
+\textit{Multiparty Session Types} (MPST) \cite{MPST} provide a framework for formally specifying a structured communication pattern between concurrent processes and verifying implementations for correctness with respect to the communications aspect. By specifying the client-server interactions of our game as a protocol and verifying the implementations against the protocol for well-formedness, MPST theory guarantees well-formed implementations to be free from communication errors.
+
+We see the application of the MPST methodology to verifying interactive web applications written in TypeScript to be an interesting design space - to what extent can the MPST methodology be applied such that we leverage TypeScript language features to maximise static safety guarantees whilst preserving a flexible, natural and idiomatic workflow for TypeScript developers? Such a workflow would ultimately decrease the overhead for incorporating MPST into mainstream web development, which reduces development time by programmatically verifying implementations for communication correctness.
+
+We present a workflow for developing type-safe interactive SPAs motivated by the MPST framework: \textbf{(1)} An endpoint API code generation workflow targeting TypeScript-based web applications for multiparty sessions; \textbf{(2)} An encoding of session types in server-side TypeScript that enforces static linearity; and \textbf{(3)} An encoding of session types in browser-side TypeScript using the React framework that guarantees affine usage of communication channels.
 
 \chapter{Background}
 
-\input{sections/background/session_types.tex}
+\input{sections/background/session_types.tex} 
 
 \input{sections/background/scribble.tex}
-\clearpage
 
 \input{sections/background/codegen.tex}
-\clearpage
 
-\input{sections/background/typescript.tex}
+%\input{sections/background/typescript.tex}
 
 \chapter{Project Plan}
-\section{Theory}
-\section{Implementation}
+We aim to develop a multiparty session type-safe development workflow for building interactive full-stack TypeScript applications that conform to a communication protocol. This involves encoding session types using the TypeScript language and implementing a code generation workflow to generate the encodings.
+
+%As we target full-stack applications, we tackle server-side and browser-side targets separately:
+%
+%\paragraph{Server-side targets} We will analyse the approaches presented in \cite{Hybrid2016, PureScript2019, Python2017} and assess their applicability with respect to the language features and type system offered by TypeScript and general back-end web development patterns. At the point of writing, we have prototyped several approaches for server-side session type TypeScript encodings and will compare their effectiveness through implementing example protocols, such as the \textit{Adder} example in \cite{Hybrid2016} and the \textit{Battleships} example in \cite{PureScript2019}.
+%
+%\paragraph{Browser-side targets} We will analyse how \cite{PureScript2019} handles API generation for front-end implementations, and in particular, study their approach to behavioural typing and guaranteeing channel linearity in an event-driven environment. \cite{MVU2019} also presents an architecture for verifying binary session type conformance of fornt-end implementations through formalisms of the \textit{Model-View-Update} (MVU) architecture and \textit{model types}. We will investigate how to extend their approach for multiparty session types using TypeScript. At the point of writing, we have explored methods to express the methodology in \cite{MVU2019} using React.js for a multiplayer game.
+
+\section{Delivery}
+At the point of writing, we have analysed the existing code generation approaches presented in \cite{Hybrid2016, Scribble, Python2017} and assessed their applicability with respect to verifying the communication aspects of interactive web applications. We have also explored approaches for encoding session types into TypeScript, motivated by existing works along with similar proposals specific to web development in \cite{PureScript2019, MVU2019}.
+
+We plan to deliver our code generation implementation incrementally, aiming to get a working version of the end-to-end workflow first, then iteratively add support for more complex session type primitives. This minimises the risks involved in the project by ensuring we have a functional deliverable at the early stages of the project. We plan to deliver this basic end-to-end workflow by the end of February.
+
+The subsequent months will involve adding support for other primitives (i.e. selection, choice and recursion) for multiparty sessions. We plan to measure our progress by writing example protocols for these milestones and checking that our implementation supports those protocols by the end of each month.
+
+We will also try to connect with web developers in the community to experiment with our implementation to get feedback on ways to make it more applicable and compatible with industry practices, such that we can apply their feedback on the next iterations of our deliverables.
+
+If time permits, we may explore possible extensions of applying supporting \textit{Explicit Connection Actions} presented in \cite{FASE2017} in our workflow to support more protocols.
+
 \section{Timetable}
+We attach a preliminary timetable (Table \ref{table:timetable}) for guidance.
+
+\begin{figure}
+\centering
+\begin{tabular}{l|p{0.4\textwidth}|p{0.4\textwidth}}
+Month & Milestones & Deadlines \\
+\hline\hline
+Jan & \begin{itemize}
+\item Explore approaches for TypeScript encoding
+\item Investigate methods for code generation from EFSM
+\end{itemize} & \begin{itemize}
+\item 24th: Interim Report
+\item 25th: PLACES 2020
+\end{itemize} \\
+\hline
+Feb & \begin{itemize}
+\item Develop API generation end-to-end toolchain
+\item Support binary sessions with simple send/receive
+\end{itemize} & \begin{itemize}
+\item 14th: Project Review
+\end{itemize} \\
+\hline
+Mar & \begin{itemize}
+\item Support multiparty sessions with simple send/receive
+\end{itemize} & \begin{itemize}
+\item 16th-20th: Examinations
+\end{itemize}\\
+\hline
+Apr & \begin{itemize}
+\item Support binary sessions with selection, choice and recursion
+\item Example: calculator service
+\end{itemize} & \begin{itemize}
+\item 6th-17th: Easter break
+\end{itemize}\\
+\hline
+May & \begin{itemize}
+\item Support multiparty sessions with selection, choice and recursion
+\item Example: Tic Tac Toe game
+\end{itemize} & \begin{itemize}
+\item 15th: Health check-up
+\end{itemize}\\
+\hline
+Jun & \begin{itemize}
+\item Complete report write-up
+\end{itemize} & \begin{itemize}
+\item 15th: Final Report
+\item 26th: Final Archive
+\end{itemize}
+\end{tabular}
+\captionof{table}{Project Timetable.}
+\label{table:timetable}
+\end{figure}
+
 
 \chapter{Evaluation Plan}
-\section{Theory}
-\section{Implementation}
 
+\section{Correctness}
+% Qualitatively argue how the approach achieves behavioural typing and preserves channel linearity
+We will qualitatively argue how our TypeScript encodings of session types achieve behavioural typing and preserves channel linearity.
+
+% May explore formalisms if time permits
+If time permits, we may explore possible formalisms of our implementation as a calculus upon which to prove correctness. This may be related to the formal language presented in \cite{UnderstandingTypeScript}, but we will need to extend this to be specific to our TypeScript encodings of session types.
+
+\section{Productivity} 
+% Compare with PureScript implementation to talk about developer productivity when using PureScript APIs with ConcurUI compared to TypeScript APIs when using React
+By adopting tools and practices used in industry, we wish to assess the extent to which our implementation boosts developer productivity by providing APIs that guarantee communication protocol conformance in a way that is compatible with existing workflows. Comparing the development workflow of implementing the \textit{Battleships} game using the PureScript workflow in \cite{PureScript2019} and our TypeScript-based proposal would yield interesting findings.
+
+% Survey - qualitative and quantitative feedback
+This can be carried out as a survey to be completed by web developers familiar with both languages. We would include questions that allow us to collect both qualitative and quantitative feedback to make effective comparisons between our approach and existing proposals.
+
+\section{Performance} Examples of performance metrics include: lines of code to be written by the developer (as a result of using the generated APIs), the size of the transpiled JavaScript assets to be loaded on the server and client browsers. We aim to extract these metrics from our approach and compare them against metrics extracted from a baseline implementation (i.e. without using the MPST methodology) and evaluate the performance overhead (if any) of our MPST-based approach.
 
 \clearpage
 

@@ -1,6 +1,6 @@
 \section{The Scribble Protocol Language}
 
-\subsection{Overview}
+%\subsection{Overview}
 % Introduce Scribble as an implementation of MPST
 Whilst session type theory represents the type language for concurrent processes, it also forms the theoretical basis of proposals introduced to implement session types for real-world application development: the Scribble language is one such proposal.
 
@@ -19,7 +19,7 @@ We present an example of a Scribble protocol in Figure \ref{fig:adder_scr} adapt
 The platform-independent nature of Scribble can be observed from the \texttt{type} declaration on Line 1: the developer has the freedom to specify message payload formats and data types from the target language of the implementation - in this case, aliasing the built-in Java integer as \texttt{int} throughout the protocol.
 
 \begin{figure}[!h]
-\begin{lstlisting}
+\begin{lstlisting}[language=Scribble]
 type <java> "java.lang.Integer" from "rt.jar" as int;
 
 global protocol Adder(role C, role S) {
@@ -48,7 +48,6 @@ G = \mu\mathbf{t}.\parti{C}\to\parti{S}:\{
 \end{array}
 \]
 
-
 \subsection{Endpoint Finite State Machines}
 % Show parallels between Scribble protocol-to-EFSM and MPST global-to-local projections
 The protocol specification language is a component of the broader Scribble project in \cite{Scribble}; through the project, Honda et al. also aims to facilitate the development of endpoint applications that conform to user-specified protocols.
@@ -57,7 +56,7 @@ A Scribble global protocol can be projected to a role to obtain the local specif
 
 % Formalise syntax and properties of EFSM derived from well-formed protocols
 To facilitate the verification process, a local protocol is converted into 
-an \term{endpoint finite state machine} (EFSM). An EFSM encodes the control flow of the local protocol, where an initial state is defined and each transition from some state to a successor state corresponds to a valid IO action (i.e. sending to or receiving from another role) permitted at the endpoint at that state.
+an \term{endpoint finite state machine} (EFSM). An EFSM encodes the control flow of the local protocol, where an initial state is defined and each transition from some state to a successor state corresponds to a valid IO action (i.e. sending to or receiving from another role) permitted at the endpoint at that state. Figure \ref{fig:efsmsyntax} presents the EFSM formalism adopted from \cite{Hybrid2016}.
 
 \begin{figure}[!hb]
 \doublespacing
@@ -83,20 +82,27 @@ an \term{endpoint finite state machine} (EFSM). An EFSM encodes the control flow
 \end{array}
 \]
 \singlespacing
-\caption{Syntax for Endpoint FSM}
+\captionof{figure}{Syntax for Endpoint FSM}
+\label{fig:efsmsyntax}
 \end{figure}
 
-\begin{figure}[!hb]
+We highlight the semantics of the \term{state transition function}. Its domain defines the set of permitted actions for each state, and the range defines the successor state. Crucially, this is a \term{partial function} because the EFSM restricts what can be done (in terms of send and receive actions, and what label/payload types can be sent and received). 
+
+\begin{figure}[!h]
 \doublespacing
 \[
 \begin{array}{rl}
 
-\texttt{initial}_{\mathbb{R}, \mathbb{L}, \mathbb{T}, \Sigma, \mathbb{S}, \delta}(S) \iff & \nexists S' \in \mathbb{S},\alpha \in \Sigma.~\delta(S',\alpha) = S \\
-\texttt{terminal}_{\mathbb{R}, \mathbb{L}, \mathbb{T}, \Sigma, \mathbb{S}, \delta}(S) \iff & \delta(S) = \emptyset \\
-\texttt{output}_{\mathbb{R}, \mathbb{L}, \mathbb{T}, \Sigma, \mathbb{S}, \delta}(S) \iff & \delta(S) = \{\,\alpha \in \Sigma \mid \exists r \in \mathbb{R}, l \in \mathbb{L}, \tilde{T} \subseteq{\mathbb{T}}.~\alpha = r!l(\tilde{T})\,\} \\
-\texttt{input}_{\mathbb{R}, \mathbb{L}, \mathbb{T}, \Sigma, \mathbb{S}, \delta}(S) \iff & \delta(S) = \{\,\alpha \in \Sigma \mid \exists r \in \mathbb{R}, l \in \mathbb{L}, \tilde{T} \subseteq{\mathbb{T}}.~\alpha = r?l(\tilde{T})\,\} \\
+\texttt{initial}_{EFSM}(S) \iff & \nexists S' \in \mathbb{S},\alpha \in \Sigma.~\delta(S',\alpha) = S \\
+\texttt{terminal}_{EFSM}(S) \iff & \delta(S) = \emptyset \\
+\texttt{output}_{EFSM}(S) \iff & \delta(S) = \{\,\alpha \in \Sigma \mid \exists l \in \mathbb{L}, \tilde{T} \subseteq{\mathbb{T}}.~\alpha = r!l(\tilde{T})\,\}~\text{for some}~r \in \mathbb{R} \\
+\texttt{input}_{EFSM}(S) \iff & \delta(S) = \{\,\alpha \in \Sigma \mid \exists l \in \mathbb{L}, \tilde{T} \subseteq{\mathbb{T}}.~\alpha = r?l(\tilde{T})\,\}~\text{for some}~r \in \mathbb{R}
 \end{array}
 \]
 \singlespacing
-\caption{Types of EFSM States}
+\captionof{figure}{Types of EFSM States}
+\label{fig:efsmstates}
 \end{figure}
+
+\cite{Hybrid2016} also identifies properties of EFSMs for well-formed protocol specifications: \textbf{(1)} there is exactly one initial state, \textbf{(2)} there is at most one terminal state, and \textbf{(3)} every non-terminal state is either an input state or output state. There are further restrictions on input and output states, namely these states must only send to or receive from the same role. We formalise these properties in Figure \ref{fig:efsmstates}.
+
