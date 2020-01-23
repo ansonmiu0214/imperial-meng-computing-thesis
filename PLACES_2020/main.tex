@@ -52,6 +52,7 @@
 
 \toggletrue{draft}
 \newcommand{\fz}[1]{\iftoggle{draft}{{\color{red}FZ: #1}}{}}
+\newcommand{\am}[1]{\iftoggle{draft}{{\color{blue}AM: #1}}{}}
 
 \title{Verifying Interactive WebSocket Applications in TypeScript}
 \author{Anson Miu
@@ -157,10 +158,8 @@ defined in \cite{MPST} to derive valid local type \textit{projections} for all p
 \section{Encoding Session Types in TypeScript}
 % Design choices
 
-\fz{Mention correctness by construction instead of verifying conformance?}
-Developers can validate the communication aspects of their
-implementation against their EFSM to verify protocol conformance. Our
-approach integrates the EFSM into the development workflow by encoding
+Developers can implement their application using APIs generated from the EFSM to guarantee correctness by construction.
+Our approach integrates the EFSM into the development workflow by encoding
 session types as TypeScript types.
 There are inherent differences between front- and back-end web development: business logic tends to initiate communication in the back-end, whilst communication in the front-end is mostly driven by user interactions with the browser. This motivates our design choice of generating different session types encodings for server (\sectionref{section:server}) and browser targets (\sectionref{section:browser}).
 
@@ -168,6 +167,8 @@ There are inherent differences between front- and back-end web development: busi
   basically the side which accepts the connection and ``Client'' side is the
 side which makes the connection. But this is orthogonal to whether it runs on
 Node or on browser? (Correct me if I'm wrong)}
+
+\am{Not for the case of WebSockets, because only WebSocket clients on browser can initiate connections and only WebSocket Server on Node can accept; will make this distinction clear.}
 
 \subsection{Server-side API generation}
 \fz{Could you remove the state names in figures?}
@@ -184,10 +185,8 @@ Node or on browser? (Correct me if I'm wrong)}
 
 
 We refer to the \texttt{Svr} EFSM (fig.~\ref{fig:efsmsvr}) as a
-running example in this section. \fz{What do you try to say in the next
-  sentence?} For server-side targets, we encode
-EFSM states as TypeScript types depending on the type of state. We
-adopt the EFSM definition presented in \cite{Hybrid2016} to consider
+running example in this section. For server-side targets, we encode
+EFSM states as types, considering
 receive and send states separately. Each TypeScript encoding is
 assigned to its state identifier from the EFSM as its type alias, thus providing syntactic sugar when referring to the successor state in the TypeScript encoding of the current state. For any state $S$ in the EFSM, we refer to the TypeScript type alias of its encoding as $\llbracket S \rrbracket$.
 
