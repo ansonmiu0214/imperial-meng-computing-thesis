@@ -17,6 +17,7 @@ build/
 *.cb
 *.cb2
 .*.lb
+*.pag
 
 ## Intermediate documents:
 *.dvi
