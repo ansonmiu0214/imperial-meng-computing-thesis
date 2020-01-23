@@ -191,7 +191,7 @@ export type S15 = [Labels.Lose, Point, S16] | [Labels.Draw, Point, S17]
 \subsubsection{Session runtime}
 \label{section:serversessionapi}
 
-Our session runtime performs communication in a protocol-conformant manner, but does not expose these IO actions to the developer by delegating the aforementioned responsibilities to an inner class. The runtime listens to message (receive) events on the communication channel, invokes the corresponding callback to obtain the value to send next, and performs the send. The developer instantiates the session by constructing an instance of the session runtime class, providing the WebSocket endpoint URL and initial state.
+Our session runtime performs communication in a protocol-conformant manner, but does not expose these IO actions to the developer by delegating the aforementioned responsibilities to an inner class. The runtime listens to message (receive) events on the communication channel, invokes the corresponding callback to obtain the value to send next, and performs the send. The developer instantiates the session by constructing an instance of the session runtime class, providing the WebSocket endpoint URL (to open the connection) and initial state (to execute the EFSM).
 
 \subsubsection{Linear channel usage}
 \label{section:serverlinear}
