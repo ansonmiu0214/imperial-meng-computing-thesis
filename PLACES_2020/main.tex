@@ -8,6 +8,8 @@
 \usepackage{stmaryrd}
 \usepackage[strings]{underscore}
 \usepackage{color}
+\usepackage{etoolbox}
+\newtoggle{draft}
 \definecolor{purple}{rgb}{0.65, 0.12, 0.82}
 \definecolor{darkgray}{rgb}{.4,.4,.4}
 
@@ -48,6 +50,9 @@
 
 \newcommand{\sectionref}[1]{\textsection~\ref{#1}}
 
+\toggletrue{draft}
+\newcommand{\fz}[1]{\iftoggle{draft}{{\color{red}FZ: #1}}{}}
+
 \title{Verifying Interactive WebSocket Applications in TypeScript}
 \author{Anson Miu
 \institute{Imperial College London}
@@ -67,9 +72,14 @@ Fangyi Zhou
 \maketitle
 
 \begin{abstract}
-Advancements in mobile device compute power has made interactive web applications possible, allowing the web browser to render content dynamically and support low-latency communication with the server. This comes at a cost to the developer, who now needs to reason more about the communication correctness of their application as they support more complex communication patterns. 
+Advancements in mobile device compute power have made interactive web
+applications possible, allowing the web browser to render contents dynamically and support low-latency communication with the server. This comes at a cost to the developer, who now needs to reason more about the communication correctness of their application as they support more complex communication patterns.
 
-Multiparty session types (MPST) provide a framework for verifying implementations to conform to a prescribed communication protocol. Existing proposals for applying the MPST framework in application development either neglect the event-driven nature of web applications, or lack compatibility with industry tools and practices which discourage mainstream adoption by web developers.
+Multiparty session types (MPST) provide a framework for verifying conformance
+of implementations to their prescribed communication protocol. Existing
+proposals for applying the MPST framework in application development either
+neglect the event-driven nature of web applications, or lack compatibility with
+industry tools and practices which discourages mainstream adoption by web developers.
 
 In this paper, we present an implementation of the MPST framework for developing interactive web applications using familiar industry tools in TypeScript and the \textit{React.js} framework. The global communication protocol is specified in the Scribble protocol language and checked for well-formedness by the Scribble toolchain. We obtain the local protocol for each role, which describes the interactions of the global communication protocols observed by the role. We encode the local protocol into TypeScript types, catering for server-side and client-side targets separately, and show that our encoding guarantees that only implementations which conform to the protocol will type-check. We demonstrate the effectiveness of our approach through a web-based implementation of the classic \textit{Noughts and Crosses} game from a MPST formalism of the game logic.
 
@@ -78,13 +88,13 @@ In this paper, we present an implementation of the MPST framework for developing
 \section{Introduction}
 % Situation: stateful communication over WebSocket and interactive web applications
 
-Modern interactive web applications aim to provide a highly responsive user experience by minimising the communication latency between clients and servers. 
-Whilst the HTTP request-response model is sufficient for retrieving static assets, applying the same stateless communication approach for interactive use cases (such as a multiplayer game) introduces undesirable performance overhead from having to frequently set up new connections for client-server interactions. 
-Developers have since adopted other communication transport abstractions over HTTP connections such as the WebSockets protocol \cite{WebSocketRFC} to enjoy low-latency full-duplex client-server communication in their applications over a single persistent connection. 
+Modern interactive web applications aim to provide a highly responsive user experience by minimising the communication latency between clients and servers.
+Whilst the HTTP request-response model is sufficient for retrieving static assets, applying the same stateless communication approach for interactive use cases (such as a multiplayer game) introduces undesirable performance overhead from having to frequently set up new connections for client-server interactions.
+Developers have since adopted other communication transport abstractions over HTTP connections such as the WebSockets protocol \cite{WebSocketRFC} to enjoy low-latency full-duplex client-server communication in their applications over a single persistent connection.
 Enabling more complex communication patterns caters for more interactive use cases (such as real-time multiplayer games), but introduces additional correctness concerns to the developer.
 
 % Example: noughts and crosses
-Consider a classic turn-based board game of \textit{Noughts and Crosses} between two players. Both players are identified by either noughts or crosses respectively, and take turns to place a mark on an unoccupied cell of a 3-by-3 grid until one player wins (when their markers form one straight line on the board) or a stalemate is reached (when all cells are occupied). A web-based implementation may involve players connected to a game server via WebSocket connections and interacting with the game from their web browser, which serve a \textit{single-page application} (SPA) of the game client written in a popular framework like \textit{React.js} \cite{React}. SPAs feature a single HTML page and dynamically renders content via JavaScript in the browser. Players take turns to make a move on the game board and the server implements the game logic to progress the game forward until a result (either a win/loss or draw) can be declared. 
+Consider a classic turn-based board game of \textit{Noughts and Crosses} between two players. Both players are identified by either noughts or crosses respectively, and take turns to place a mark on an unoccupied cell of a 3-by-3 grid until one player wins (when their markers form one straight line on the board) or a stalemate is reached (when all cells are occupied). A web-based implementation may involve players connected to a game server via WebSocket connections and interacting with the game from their web browser, which serve a \textit{single-page application} (SPA) of the game client written in a popular framework like \textit{React.js} \cite{React}. SPAs feature a single HTML page and dynamically renders content via JavaScript in the browser. Players take turns to make a move on the game board and the server implements the game logic to progress the game forward until a result (either a win/loss or draw) can be declared.
 
 Whilst WebSockets make this web-based implementation possible, it introduces the developer to a new family of communication errors, even for this simple game. In addition to the usual testing for game logic correctness, the developer needs to test against \textit{deadlocks} (e.g. both players waiting for each other to make a move at the same time) and \textit{communication mismatches} (e.g. player 1 sending a boolean to the game server instead of the board coordinates). The complexity of these errors correlate to the complexity of related tests required, scale with the complexity of communication patterns involved.
 
@@ -99,7 +109,7 @@ idiomatic workflow for TypeScript developers? Such a workflow would
 ultimately decrease the overhead for incorporating MPST into
 mainstream web system, which reduces development time by
 programmatically
-verifying communication correctness of the implementation. 
+verifying communication correctness of the implementation.
 
 \paragraph{Contributions}
 This paper presents a workflow for developing type-safe interactive SPAs motivated by the MPST framework: \textbf{(1)} An endpoint API code generation workflow targeting TypeScript-based web applications for multiparty sessions; \textbf{(2)} An encoding of session types in server-side TypeScript that enforces static linearity; and \textbf{(3)} An encoding of session types in browser-side TypeScript using the React framework that guarantees affine usage of communication channels.
@@ -137,7 +147,8 @@ global protocol Game(role Svr, role P1, role P2) {
 We leverage the Scribble toolchain to check for protocol
 well-formedness.
 This directly corresponds to multiparty session
-type theory \cite{MPST}: 
+type theory \cite{MPST}:
+\fz{Cite the featherweight scribble paper for the correspondence?}
 a Scribble protocol maps to some \textit{global type}, and protocol verification implements the algorithmic projection
 defined in \cite{MPST} to derive valid local type \textit{projections} for all participants.  We obtain a set of \textit{endpoint protocols}
 -- one for each role from a well-formed global protocol. An endpoint protocol only preserves the interactions defined by the global protocol in which the target role is involved, and corresponds to an equivalent \textit{Endpoint Finite State Machine} (EFSM) in the Scribble toolchain. We use the EFSMs as a basis for API generation and adopt the formalisms in \cite{Hybrid2016}.
@@ -146,13 +157,20 @@ defined in \cite{MPST} to derive valid local type \textit{projections} for all p
 \section{Encoding Session Types in TypeScript}
 % Design choices
 
+\fz{Mention correctness by construction instead of verifying conformance?}
 Developers can validate the communication aspects of their
 implementation against their EFSM to verify protocol conformance. Our
 approach integrates the EFSM into the development workflow by encoding
 session types as TypeScript types.
 There are inherent differences between front- and back-end web development: business logic tends to initiate communication in the back-end, whilst communication in the front-end is mostly driven by user interactions with the browser. This motivates our design choice of generating different session types encodings for server (\sectionref{section:server}) and browser targets (\sectionref{section:browser}).
 
+\fz{I think there is an important thing to note here, ``Server'' side is
+  basically the side which accepts the connection and ``Client'' side is the
+side which makes the connection. But this is orthogonal to whether it runs on
+Node or on browser? (Correct me if I'm wrong)}
+
 \subsection{Server-side API generation}
+\fz{Could you remove the state names in figures?}
 \label{section:server}
 
 \begin{wrapfigure}{r}{0.5\textwidth}
@@ -165,12 +183,13 @@ There are inherent differences between front- and back-end web development: busi
 \end{wrapfigure}
 
 
-We will refer to the \texttt{Svr} EFSM (fig.~\ref{fig:efsmsvr}) as a
-running example in this section. For server-side targets, we encode
+We refer to the \texttt{Svr} EFSM (fig.~\ref{fig:efsmsvr}) as a
+running example in this section. \fz{What do you try to say in the next
+  sentence?} For server-side targets, we encode
 EFSM states as TypeScript types depending on the type of state. We
 adopt the EFSM definition presented in \cite{Hybrid2016} to consider
 receive and send states separately. Each TypeScript encoding is
-assigned to its state identifier from the EFSM as its type alias, thus providing syntactic sugar when referring to the successor state in the TypeScript encoding of the current state. For any state $S$ in the EFSM, we refer to the TypeScript type alias of its encoding as $\llbracket S \rrbracket$. 
+assigned to its state identifier from the EFSM as its type alias, thus providing syntactic sugar when referring to the successor state in the TypeScript encoding of the current state. For any state $S$ in the EFSM, we refer to the TypeScript type alias of its encoding as $\llbracket S \rrbracket$.
 
 We make a key design decision \textit{not} to expose communication channels in the TypeScript session type encoding to provide \textit{static} linearity guarantees (\sectionref{section:serverlinear}). Our encoding sufficiently exposes seams for the developer to inject their business logic, whilst the generated session API (\sectionref{section:serversessionapi}) handles the sending and receiving of messages; as a result, the encoding does not concern with the role involved in the send/receive action. We outline the encoding below using examples from the \textit{Noughts and Crosses} game (Listing \ref{lst:svr}).
 
@@ -181,9 +200,10 @@ We make a key design decision \textit{not} to expose communication channels in t
 \begin{figure}[!h]
 \begin{lstlisting}[language=JavaScript]
 export type S13 = { Pos: (payload: Point) => S15 };
-export type S15 = [Labels.Lose, Point, S16] | [Labels.Draw, Point, S17]
-											| [Labels.Update, Point, S18];
-\end{lstlisting}  
+export type S15 = [Labels.Lose, Point, S16]
+                | [Labels.Draw, Point, S17]
+                | [Labels.Update, Point, S18];
+\end{lstlisting}
 \captionof{lstlisting}{Example encodings from \textit{Noughts and Crosses} \texttt{Svr} EFSM.}
 \label{lst:svr}
 \end{figure}
@@ -199,20 +219,23 @@ Channel linearity is guaranteed based on the correctness of our library design a
 
 \paragraph{Repeat use} We do not expose channels to the programmer, which makes \textit{reuse} impossible. For example, to send a message, the generated API only requires the payload that needs to be sent, and the session runtime performs the send internally, guaranteeing this action is done \textit{exactly once} by construction.
 
-\paragraph{Unused} The initial state must be supplied to the session runtime constructor in order to instantiate the session; this initial state is defined in terms of the successor states, which in turn has references to its successors and so forth. This encoding approach will cover the terminal state (if it exists), and the session runtime guarantees this terminal state, if it exists, will be reached by construction. 
+\paragraph{Unused} The initial state must be supplied to the session runtime
+constructor in order to instantiate the session; this initial state is defined
+in terms of the successor states, which in turn has references to its
+successors and so forth. This encoding approach covers the terminal state (if it exists), and the session runtime guarantees this terminal state, if it exists, will be reached by construction.
 
 \subsection{Browser-side API generation}
 \label{section:browser}
 
-We will refer to the \texttt{P1} EFSM (figure \ref{fig:efsmp1}) as a
+We refer to the \texttt{P1} EFSM (figure \ref{fig:efsmp1}) as a
 running example in this section. Preserving behavioural typing and
 channel linearity are known to be challenging for browser-side
-applications due to EFSM transitions being triggered by user events: 
+applications due to EFSM transitions being triggered by user events:
 in the case of \textit{Noughts and Crosses}, once the user makes a move
 by clicking on a cell on the game board, this click event must be
 deactivated until the user's next turn, otherwise the user can click
 again and violate channel linearity. Our design goal is to enforce
-this statically through the generated APIs. 
+this statically through the generated APIs.
 
 For browser-side targets, we extend the approach presented in \cite{MVU2019} on \textit{multiple model types} motivated by the \textit{Model-View-Update} (MVU) architecture. Each state in the EFSM is a model type and uniquely defines a \textit{view function}, set of \textit{messages} and \textit{update function}: the view function defines what to render to the DOM, the set of messages define the possible (IO) actions available at that state, and the update function defines which successor state to transition to, given some supported IO action at this state.
 
@@ -226,7 +249,10 @@ For browser-side targets, we extend the approach presented in \cite{MVU2019} on 
 \end{wrapfigure}
 
 \subsubsection{The React Framework}
-Rather than using the Links web programming language from \cite{MVU2019}, we apply the multiple model types approach to the React framework \cite{React} developed by Facebook, albeit originally intended for the \textit{Model-View-Controller} (MVC) architecture. React is widely used in industry to create scalable single-page TypeScript applications, and we intend for our proposed workflow to be beneficial in an industrial context. We introduce the key features of the framework.
+
+\fz{This subsubsection is a bit misplaced, probably move it up}
+
+We apply the multiple model types approach in \cite{MVU2019} to the React framework \cite{React} developed by Facebook, albeit originally intended for the \textit{Model-View-Controller} (MVC) architecture. React is widely used in industry to create scalable single-page TypeScript applications, and we intend for our proposed workflow to be beneficial in an industrial context. We introduce the key features of the framework.
 
 \paragraph{Components} A component is a reusable UI element which
 contains its own markup and logic. Components implement a
@@ -234,7 +260,8 @@ contains its own markup and logic. Components implement a
 building blocks of a React application. Components can keep
 \textit{state} and the \texttt{render()} function is invoked upon a
 change of state. A simple counter can be implemented as a component,
-with \texttt{count} stored as state, a button which increments \texttt{count}when clicked and a \texttt{div} that renders the current
+with \texttt{count} stored as state, a button which increments \texttt{count}
+when clicked and a \texttt{div} that renders the current
 \texttt{count}. Components can also render other components, which gives rise
 to a parent/child relationship between components. Parents can pass
 data to children as \textit{props}: going back to the aforementioned
@@ -244,15 +271,16 @@ example, the the counter component could render a child component
 state to the child. This enables reusability, and for our use case,
 gives a control to the parent on what data to pass to its children (e.g. pass the payload of a received message to a child to render).
 
+\fz{Is VDOM needed to be covered here?}
 \paragraph{Virtual DOM (VDOM)} React components are rendered on a logical abstraction of the DOM, which in turn performs a \texttt{diff} on the current browser DOM and patches the delta accordingly. This allows the programmer to directly specify what should be rendered without having to worry about which elements to append or remove from the browser DOM.
 
 \subsubsection{Model types in React}
 
 \paragraph{State} An EFSM state is encoded as an \textit{abstract} React component. This is an abstract class to require the programmer to provide their own view function, which translates conveniently to the \texttt{render()} function of React components. Our session runtime (\sectionref{section:clientruntime}) ``executes'' the EFSM and renders the current state, so upon transitioning to a successor state, the successor's view function will be invoked, as per the semantics expressed in \cite{MVU2019}.
 
-\paragraph{Model transitions} Transitions are encoded as React component props onto the encoded states by the session runtime (\sectionref{section:clientruntime}). We motivate the design choice of not exposing channel resources to provide guarantees on channel usage. React components in TypeScript are \textit{generics} \cite{TypeScriptSpec} which are parameterised by the permitted types of prop and state, which allows us to leverage the TypeScript compiler to verify that the props for model transitions stay local to the state they are defined for. The model transitions for EFSMs are message send and receive.
+\paragraph{Model transitions} Transitions are encoded as React component props onto the encoded states by the session runtime (\sectionref{section:clientruntime}). We motivate the design choice of not exposing channel resources to provide guarantees on channel usage. React components in TypeScript are \textit{generic} \cite{TypeScriptSpec} which are parameterised by the permitted types of prop and state, which allows us to leverage the TypeScript compiler to verify that the props for model transitions stay local to the state they are defined for. The model transitions for EFSMs are message send and receive.
 
-\subparagraph{Send} We make the assumption that message sending is triggered by some user-driven UI event (e.g. clicking a button, pressing a key on the keyboard) which interacts with some DOM element. We could pass a \texttt{send()} function as a prop to the sending state, but the programmer would be free to call the function multiple times which makes channel reuse possible. Instead, we pass a \textit{factory function} as a prop, which will, given an HTML event and a event handler function, return a fresh React component that binds the sending action on construction, so once the bound event is triggered, our session runtime executes the event handler function to obtain the payload to send, perform the send \textit{exactly once} and transition to (which, in practice, means render) the successor state. 
+\subparagraph{Send} We make the assumption that message sending is triggered by some user-driven UI event (e.g. clicking a button, pressing a key on the keyboard) which interacts with some DOM element. We could pass a \texttt{send()} function as a prop to the sending state, but the programmer would be free to call the function multiple times which makes channel reuse possible. Instead, we pass a \textit{factory function} as a prop, which will, given an HTML event and a event handler function, return a fresh React component that binds the sending action on construction, so once the bound event is triggered, our session runtime executes the event handler function to obtain the payload to send, perform the send \textit{exactly once} and transition to (which, in practice, means render) the successor state.
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=JavaScript, tabsize=4]
@@ -264,8 +292,8 @@ gives a control to the parent on what data to pass to its children (e.g. pass th
 			return { x: x, y: y };}
 		return <SelectPoint><td>.</td></SelectPoint>;
 });}
-\end{lstlisting}  
-\captionof{lstlisting}{Model transition for message sending in 
+\end{lstlisting}
+\captionof{lstlisting}{Model transition for message sending in
 \textit{Noughts and Crosses} \texttt{P1} implementation.}
 \label{lst:clientapp}
 \end{figure}
@@ -287,6 +315,7 @@ A limitation of our browser-side session type encoding is only being able to gua
 Communication channels are not exposed to the programmer so multiple sends are impossible. This does not restrict the programmer from binding the send action to exactly one UI event: for \textit{Noughts and Crosses}, we bind the \texttt{Pos(Point)} send action to each unoccupied cell on the game board, but the generated runtime ensures that, once the cell is clicked, the send is only performed once and the successor state is rendered on the DOM, so the channel resource used to send becomes unavailable.
 
 However, our approach \textit{does not} statically detect whether all transitions in a certain state are bound to some UI event. This means that it is possible for an implementation to \textit{not} handle transitions to a terminal state but still type-check, so we cannot prevent unused states.
+\fz{A client may also close the browser, hence dropping the connection?}
 
 \section{Case Study}
 \label{section:example}
@@ -301,27 +330,29 @@ const handleP1Move: Receive_P1 = (move: Point) => {
 
 // Instantiate session - `handleP2Move` defined similarly
 new NoughtsAndCrosses.Svr(webSocketServer, handleP1Move, handleP2Move);
-\end{lstlisting}  
+\end{lstlisting}
 \captionof{lstlisting}{Session runtime instantiation for \textit{Noughts and Crosses} \texttt{Svr}.}
 \label{lst:svrprotocol}
 \end{figure}
 
 We apply our framework to implement a web-based implementation of the \textit{Noughts and Crosses} running example in TypeScript; the interested reader can find the full implementation in \cite{NoughtsAndCrosses}. In addition to MPST-safety, we show that our library design welcomes idiomatic JavaScript practices in the user implementation and is interoperable with common front- and back-end frameworks.
- 
-\paragraph{Game server} We set up the WebSocket server inside an Express.js \cite{ExpressJS} application on top of a Node.js \cite{NodeJS} runtime. We define our own game logic in a \texttt{Board} class to keep track of the game state and expose methods to query the result. This custom logic is integrated into our \texttt{Receive\_P1} and \texttt{Receive\_P2} handlers (Listing \ref{lst:svrprotocol}), so the session runtime can handle \texttt{Pos(Point)} messages from players and transition according to the injected game logic. 
+
+\paragraph{Game server} We set up the WebSocket server inside an Express.js \cite{ExpressJS} application on top of a Node.js \cite{NodeJS} runtime. We define our own game logic in a \texttt{Board} class to keep track of the game state and expose methods to query the result. This custom logic is integrated into our \texttt{Receive\_P1} and \texttt{Receive\_P2} handlers (Listing \ref{lst:svrprotocol}), so the session runtime can handle \texttt{Pos(Point)} messages from players and transition according to the injected game logic.
 
 Note that, by the structural typing nature of TypeScript, replacing \texttt{handleP2Move} on line 6 with \texttt{handleP1Move} would be type-correct - this allows for better code reuse as supposed to defining additionl abstractions to work around the limitations of nominal typing in \cite{Hybrid2016}. There is also full type erasure when transpiling to JavaScript to run the server code, so state space explosions is never a runtime consideration.
 
 \paragraph{Game clients} We implement the game client for \texttt{P1} and \texttt{P2} by extending from the generated abstract React (EFSM state) components and registering those to the session runtime component.
 
-For the sake of code reuse for demonstration purposes, \cite{NoughtsAndCrosses} uses \textit{higher-order components} (HOC) to build the correct state implementations depending on which player the user chooses to be. We leverage the \textit{Redux} state management library to keep track of game state, thus showing the flexibility of our library design in being interoperable with other libraries and idiomatic JavaScript practices. 
+For the sake of code reuse for demonstration purposes, \cite{NoughtsAndCrosses} uses \textit{higher-order components} (HOC) to build the correct state implementations depending on which player the user chooses to be. We leverage the \textit{Redux} state management library to keep track of game state, thus showing the flexibility of our library design in being interoperable with other libraries and idiomatic JavaScript practices.
 
 \section{Related Works}
+\fz{Try to avoid using {[X]} at the beginning of a sentence.}
+
 Native language support for first-class linear channel resources \cite{ATS} and code generation are two main approaches for incorporating MPST into application development. The latter closely relates to our proposal; we highlight two areas of existing works under this approach that motivate our design choice.
 
 \paragraph{Endpoint API generation} \cite{Python2017} targeted Python applications and the generation of runtime monitors to dynamically verify communication patterns. Whilst the same approach could be applied to JavaScript, we can provide more static guarantees with TypeScript's gradual typing system and compiler. \cite{Hybrid2016} targeted Java applications and proposed to encode the EFSM states and transitions as classes and instance methods respectively, with behavioural typing achieved statically by the type system and channel linearity guarantees achieved dynamically since channel resources are exposed and aliasing is not monitored.
 
-\paragraph{Session types in web development} \cite{PureScript2019} targeted web development in PureScript using the \textit{Concur UI} framework and proposed a type-level encoding of EFSMs as multi-parameter type classes. However, it presents a trade-off between achieving static linearity guarantees from the type-level EFSM encoding under the expressive type system and providing an intuitive development experience to programmers, especially given the prevalence of JavaScript and TypeScript applications in industry. \cite{MVU2019} focused on applying binary session types in front-end web development and presented approaches that tackle the challenge of guaranteeing linearity in the event-driven environment. 
+\paragraph{Session types in web development} \cite{PureScript2019} targeted web development in PureScript using the \textit{Concur UI} framework and proposed a type-level encoding of EFSMs as multi-parameter type classes. However, it presents a trade-off between achieving static linearity guarantees from the type-level EFSM encoding under the expressive type system and providing an intuitive development experience to programmers, especially given the prevalence of JavaScript and TypeScript applications in industry. \cite{MVU2019} focused on applying binary session types in front-end web development and presented approaches that tackle the challenge of guaranteeing linearity in the event-driven environment.
 
 Our work applies the aforementioned approaches in a \textit{multiparty} context using industrial tools and practices to ultimately encourage MPST-safe web application development workflows in industry.
 
@@ -330,7 +361,7 @@ Our work applies the aforementioned approaches in a \textit{multiparty} context 
 \section{Conclusion and Future Works}
 We have presented a MPST-based framework for developing full-stack interactive TypeScript applications with WebSocket communications that conform to a protocol, statically providing linear channel usage guarantees and affine channel usage guarantees for back-end and front-end targets respectively.
 
-Future works include incorporating \textit{explicit connection actions} introduced in \cite{ExplicitConnections} in our API generation to better model real-world communication protocols that may feature in interactive web applications. 
+Future works include incorporating \textit{explicit connection actions} introduced in \cite{ExplicitConnections} in our API generation to better model real-world communication protocols that may feature in interactive web applications.
 Whilst our approach supports multiparty sessions, the nature of WebSockets require some server-based role in the communication protocol and clients to interact via the server. Extending support to WebRTC would cater for peer-to-peer communication between browsers, which further opens up possibilities for communication protocols supported by our approach.
 
 % Future work
