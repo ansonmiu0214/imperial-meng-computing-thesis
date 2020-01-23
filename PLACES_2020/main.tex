@@ -120,14 +120,11 @@ type <typescript> "Coordinate" from "./Types" as Point;	// Position on board
 global protocol Game(role Svr, role P1, role P2) {
   Pos(Point) from P1 to Svr;
   choice at Svr {
-    Lose(Point) from Svr to P2;
-    Win(Point) from Svr to P1;
+    Lose(Point) from Svr to P2; Win(Point) from Svr to P1;
   } or {
-    Draw(Point) from Svr to P2;
-    Draw(Point) from Svr to P1;
+    Draw(Point) from Svr to P2; Draw(Point) from Svr to P1;
   } or {
-    Update(Point) from Svr to P2;
-    Update(Point) from Svr to P1;
+    Update(Point) from Svr to P2; Update(Point) from Svr to P1;
     do Game(Svr, P2, P1);
   }
 }
@@ -183,9 +180,6 @@ We make a key design decision \textit{not} to expose communication channels in t
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=JavaScript]
-import { Coordinate as Point } from "./Types";
-import { Labels } from "./Constants";
-
 export type S13 = { Pos: (payload: Point) => S15 }
 export type S15 = [Labels.Lose, Point, S16]
 		| [Labels.Draw, Point, S17]
@@ -266,19 +260,14 @@ We leverage React to express the model types approach in \cite{MVU2019} rather t
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=JavaScript, tabsize=4]
-render() {
-	...
-	{board.map((row, x) => (
-		board.map((col, y) => {
-			const SelectPoint = this.props.Pos('click', (event: UIEvent) => {
-				event.preventDefault()
-				return { x, y }
-			}
-			return <SelectPoint><td>.</td></SelectPoint>
-		}
-	)}
-	...	
-}
+// Inside some render() function..
+{board.map((row, x) => (
+	row.map((col, y) => {
+		const SelectPoint = this.props.Pos('click', (event: UIEvent) => {
+			event.preventDefault()
+			return { x: x, y: y }}
+		return <SelectPoint><td>.</td></SelectPoint>
+})}
 \end{lstlisting}  
 \captionof{lstlisting}{Model transition for message sending in 
 \textit{Noughts and Crosses} \texttt{P1} implementation.}
