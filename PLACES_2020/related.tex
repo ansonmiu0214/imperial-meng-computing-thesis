@@ -1,0 +1,39 @@
+\section{Related Works}
+\fz{Try to avoid using {[X]} at the beginning of a sentence.}
+
+Native language support for first-class linear channel resources \cite{ATS} and
+code generation are two main approaches for incorporating MPST into application
+development.
+The latter closely relates to our proposal;
+we highlight two areas of existing works under this approach that motivate our
+design choice.
+
+\paragraph{Endpoint API generation}
+\cite{Python2017} targeted Python applications and the generation of runtime
+monitors to dynamically verify communication patterns.
+Whilst the same approach could be applied to JavaScript, we can provide more
+static guarantees with TypeScript's gradual typing system and compiler.
+\cite{Hybrid2016} targeted Java applications and proposed to encode the EFSM
+states and transitions as classes and instance methods respectively, with
+behavioural typing achieved statically by the type system and channel linearity
+guarantees achieved dynamically since channel resources are exposed and
+aliasing is not monitored.
+
+\paragraph{Session types in web development}
+\cite{PureScript2019} targeted web development in PureScript using the
+\textit{Concur UI} framework and proposed a type-level encoding of EFSMs as
+multi-parameter type classes.
+However, it presents a trade-off between achieving static linearity guarantees
+from the type-level EFSM encoding under the expressive type system and
+providing an intuitive development experience to developers, especially given
+the prevalence of JavaScript and TypeScript applications in industry.
+\cite{MVU2019} focused on applying binary session types in front-end web
+development and presented approaches that tackle the challenge of guaranteeing
+linearity in the event-driven environment.
+
+Our work applies the aforementioned approaches in a \textit{multiparty} context
+using industrial tools and practices to ultimately encourage MPST-safe web
+application development workflows in industry.
+
+%\paragraph{Typestate programming} \dots
+
