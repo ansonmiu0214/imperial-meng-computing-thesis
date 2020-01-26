@@ -128,7 +128,48 @@ This encoding approach covers the terminal state (if it exists), and the
 session runtime guarantees this terminal state, if it exists, will be reached
 by construction.
 
+\subsection{The React Framework}
+Our browser-side session type encodings for browser-side targets build upon the React framework, developed by Facebook \cite{React} for the \textit{Model-View-Controller} (MVC) architecture. React is widely used in industry to create scalable single-page TypeScript
+applications, and we intend for our proposed workflow to be beneficial in an
+industrial context.
+We introduce the key features of the framework.
+
+\paragraph{Components}
+A component is a reusable UI element which
+contains its own markup and logic.
+Components implement a \texttt{render()} function which returns a React
+element, the smallest building blocks of a React application, analogous to the
+view function in the MVU architecture.
+Components can keep \textit{state} and the \texttt{render()} function is
+invoked upon a change of state.
+A simple counter can be implemented as a component,
+with \texttt{count} stored as state, a button which increments \texttt{count}
+when clicked and a \texttt{div} that renders the current
+\texttt{count}.
+Components can also render other components, which gives rise
+to a parent/child relationship between components.
+Parents can pass data to children as \textit{props} (short for properties).
+Going back to the aforementioned example, the the counter component could
+render a child component \texttt{<StyledDiv count=\{this.state.count\} />} in
+its \texttt{render()} function, propagating the \texttt{count} from its state
+to the child.
+This enables reusability, and for our use case, gives a control to the parent
+on what data to pass to its children (e.g. pass the payload of a received
+message to a child to render).
+
+\fz{Is VDOM needed to be covered here?}
+
+\am{Intended to motivate how the session runtime implementation renders the required state and the VDOM deals with the diffs - at the same time, unsure whether this is important for the reader to understand (or just leave the DOM rendering as a black box)?}
+\paragraph{Virtual DOM (VDOM)}
+React components are rendered on a logical
+abstraction of the DOM, which in turn performs a \texttt{diff} on the current
+browser DOM and patches the delta accordingly.
+This allows the developer to
+directly specify what should be rendered without having to worry about which
+elements to append or remove from the browser DOM.
+
 \subsection{Browser-side API generation}
+
 \label{section:browser}
 
 \begin{wrapfigure}{r}{0.4\textwidth}
@@ -160,50 +201,6 @@ the view function defines what to render to the DOM, the set of messages define
 the possible (IO) actions available at that state, and the update function
 defines which successor state to transition to, given some supported IO action
 at this state.
-
-\subsubsection{The React Framework}
-
-\fz{This subsubsection is a bit misplaced, probably move it up}
-
-We apply the multiple model types approach in \cite{MVU2019} to the React
-framework \cite{React} developed by Facebook, albeit originally intended for
-the \textit{Model-View-Controller} (MVC) architecture.
-React is widely used in industry to create scalable single-page TypeScript
-applications, and we intend for our proposed workflow to be beneficial in an
-industrial context.
-We introduce the key features of the framework.
-
-\paragraph{Components}
-A component is a reusable UI element which
-contains its own markup and logic.
-Components implement a \texttt{render()} function which returns a React
-element, the smallest building blocks of a React application, analogous to the
-view function in the MVU architecture.
-Components can keep \textit{state} and the \texttt{render()} function is
-invoked upon a change of state.
-A simple counter can be implemented as a component,
-with \texttt{count} stored as state, a button which increments \texttt{count}
-when clicked and a \texttt{div} that renders the current
-\texttt{count}.
-Components can also render other components, which gives rise
-to a parent/child relationship between components.
-Parents can pass data to children as \textit{props} (short for properties).
-Going back to the aforementioned example, the the counter component could
-render a child component \texttt{<StyledDiv count=\{this.state.count\} />} in
-its \texttt{render()} function, propagating the \texttt{count} from its state
-to the child.
-This enables reusability, and for our use case, gives a control to the parent
-on what data to pass to its children (e.g. pass the payload of a received
-message to a child to render).
-
-\fz{Is VDOM needed to be covered here?}
-\paragraph{Virtual DOM (VDOM)}
-React components are rendered on a logical
-abstraction of the DOM, which in turn performs a \texttt{diff} on the current
-browser DOM and patches the delta accordingly.
-This allows the developer to
-directly specify what should be rendered without having to worry about which
-elements to append or remove from the browser DOM.
 
 \subsubsection{Model types in React}
 
@@ -325,5 +322,5 @@ transitions in a certain state are bound to some UI event.
 This means that it is possible for an implementation to \textit{not} handle
 transitions to a terminal state but still type-check, so we cannot prevent
 unused states.
-\fz{A client may also close the browser, hence dropping the connection?}
 
+\fz{A client may also close the browser, hence dropping the connection?}
