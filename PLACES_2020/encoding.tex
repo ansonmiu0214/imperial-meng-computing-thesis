@@ -183,7 +183,7 @@ elements to append or remove from the browser DOM.
 
 We refer to the \texttt{P1} EFSM (\cref{fig:efsmp1}) as a running example in
 this section.
-Preserving behavioural typing and channel linearity are known to be challenging
+Preserving behavioural typing and channel linearity is challenging
 for browser-side applications due to EFSM transitions being triggered by user
 events:
 in the case of \textit{Noughts and Crosses}, once the user makes a move by
@@ -321,6 +321,4 @@ However, our approach \textit{does not} statically detect whether all
 transitions in a certain state are bound to some UI event.
 This means that it is possible for an implementation to \textit{not} handle
 transitions to a terminal state but still type-check, so we cannot prevent
-unused states.
-
-\fz{A client may also close the browser, hence dropping the connection?}
+unused states. Equally, our approach cannot prevent a client closing the browser, which would drop the connection.
