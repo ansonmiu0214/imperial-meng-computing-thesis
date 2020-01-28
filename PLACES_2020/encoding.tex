@@ -5,10 +5,10 @@ Developers can implement their application using APIs generated from the EFSM
 to guarantee correctness by construction.
 Our approach integrates the EFSM into the development workflow by encoding
 session types as TypeScript types.
-There are inherent differences between front- and back-end web development:
-business logic tends to initiate communication in the back-end, whilst
-communication in the front-end is mostly driven by user interactions with the
-browser. This motivates our design choice of generating different session types
+Communication over the WebSocket protocol introduces additional constriants: 
+communication is always initiated in the front-end and driven by user interactions, 
+whilst back-end roles can only accept connections.
+This motivates our design choice of generating different session types
 encodings for server (\cref{section:server}) and browser targets
 (\cref{section:browser}).
 
@@ -37,7 +37,7 @@ Node or on browser? (Correct me if I'm wrong)}
 We refer to the \texttt{Svr} EFSM (\cref{fig:efsmsvr}) as a running example in
 this section.
 For server-side targets, we encode EFSM states into TypeScript types and
-considering receive and send states separately.
+consider receive and send states separately.
 Each TypeScript encoding is assigned to its state identifier from the EFSM as
 its type alias, thus providing syntactic sugar when referring to the successor
 state in the TypeScript encoding of the current state.
@@ -149,11 +149,11 @@ when clicked and a \texttt{div} that renders the current
 Components can also render other components, which gives rise
 to a parent/child relationship between components.
 Parents can pass data to children as \textit{props} (short for properties).
-Going back to the aforementioned example, the the counter component could
+Going back to the aforementioned example, the counter component could
 render a child component \texttt{<StyledDiv count=\{this.state.count\} />} in
 its \texttt{render()} function, propagating the \texttt{count} from its state
 to the child.
-This enables reusability, and for our use case, gives a control to the parent
+This enables reusability, and for our use case, gives control to the parent
 on what data to pass to its children (e.g. pass the payload of a received
 message to a child to render).
 
