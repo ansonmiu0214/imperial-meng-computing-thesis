@@ -8,9 +8,7 @@ session types as TypeScript types.
 Communication over the WebSocket protocol introduces additional constriants: 
 communication is always initiated in the front-end and driven by user interactions, 
 whilst back-end roles can only accept connections.
-This motivates our design choice of generating different session types
-encodings for server (\cref{section:server}) and browser targets
-(\cref{section:browser}).
+This motivates our design of encoding the session types differently for server (\cref{section:server}) and client (\cref{section:browser}) targets.
 
 \fz{I think there is an important thing to note here, ``Server'' side is
   basically the side which accepts the connection and ``Client'' side is the
@@ -21,6 +19,8 @@ Node or on browser? (Correct me if I'm wrong)}
 
 \subsection{Server-side API generation}
 \label{section:server}
+
+% Francisco: mention that it corresponds to the messages for the Noughts and Crosses example too
 
 \begin{wrapfigure}{r}{0.5\textwidth}
   \vspace{-5mm}
@@ -109,7 +109,7 @@ connection) and initial state (to execute the EFSM).
 Channel linearity is guaranteed based on the correctness of our library design
 and session runtime implementation, which means a faulty implementation could
 violate this, but is up to the library author to verify once rather than the
-end user. Our library design prevent the two properties below:
+end user. Our library design prevents the two properties below:
 
 \paragraph{Repeated use}
 We do not expose channels to the developer, which makes \textit{reuse}
@@ -282,7 +282,7 @@ accordingly.
 \subsubsection{Session runtime}
 \label{section:clientruntime}
 
-Our session runtime can be interpreted as an abstraction on top of the React
+The session runtime can be interpreted as an abstraction on top of the React
 VDOM that implements the EFSM by construction.
 The session runtime itself is a React component too, named after the endpoint
 role identifier:
@@ -300,7 +300,7 @@ props, the \textit{endpoint URL} (so it can open the connection) and a list of
 The developer writes their own implementation of each state (mainly to
 customise how the state is rendered and inject business logic into state
 transitions) by extending the abstract React class components.
-The session runtime requires references to these concrete components order to
+The session runtime requires references to these concrete components in order to
 render the user implementation accordingly.
 
 \subsubsection{Affine channel usage}
@@ -321,4 +321,4 @@ However, our approach \textit{does not} statically detect whether all
 transitions in a certain state are bound to some UI event.
 This means that it is possible for an implementation to \textit{not} handle
 transitions to a terminal state but still type-check, so we cannot prevent
-unused states. Equally, our approach cannot prevent a client closing the browser, which would drop the connection.
+unused states. Equally, our approach does not prevent a client closing the browser, which would drop the connection.
