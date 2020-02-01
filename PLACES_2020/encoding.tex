@@ -42,7 +42,8 @@ Each TypeScript encoding is assigned to its state identifier from the EFSM as
 its type alias, thus providing syntactic sugar when referring to the successor
 state in the TypeScript encoding of the current state.
 For any state $S$ in the EFSM, we refer to the TypeScript type alias of its
-encoding as $\llbracket S \rrbracket$.
+encoding as $\llbracket S \rrbracket$. We outline the encoding below using examples from the
+\textit{Noughts and Crosses} game (\cref{lst:svr}).
 
 \paragraph{Branching state}
 We consider a receive state as a unary branching state for conciseness.
@@ -88,8 +89,7 @@ business logic, whilst the generated session API
 (\cref{section:serversessionapi}) handles the sending and receiving of
 messages;
 as a result, the encoding does not concern with the role involved in the
-send/receive action. We outline the encoding below using examples from the
-\textit{Noughts and Crosses} game (\cref{lst:svr}).
+send/receive action.
 
 \subsubsection{Session runtime}
 \label{section:serversessionapi}
