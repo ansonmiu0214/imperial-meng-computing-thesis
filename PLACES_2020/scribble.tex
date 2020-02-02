@@ -1,0 +1,50 @@
+\section{The Scribble Framework}
+\label{section:scribble}
+
+Development begins by specifying the expected communications between
+participants as a \textit{global protocol} in Scribble \cite{Scribble}, a
+MPST-based protocol specification language and code generation toolchain.
+We specify the \textit{Noughts and Crosses} game as a Scribble protocol in
+\cref{lst:game}.
+
+\begin{figure}[!h]
+\begin{lstlisting}[
+	language=Scribble
+]
+module NoughtsAndCrosses;
+type <typescript> "Coordinate" from "./Types" as Point;	// Position on board
+
+global protocol Game(role Svr, role P1, role P2) {
+  Pos(Point) from P1 to Svr;
+  choice at Svr {
+    Lose(Point) from Svr to P2; Win(Point) from Svr to P1;
+  } or {
+    Draw(Point) from Svr to P2; Draw(Point) from Svr to P1;
+  } or {
+    Update(Point) from Svr to P2; Update(Point) from Svr to P1;
+    do Game(Svr, P2, P1); // Continue the game with player roles swapped
+  }
+}
+\end{lstlisting}
+\captionof{lstlisting}{Main body of the \textit{Noughts and Crosses} protocol.}
+\label{lst:game}
+\end{figure}
+
+We leverage the Scribble toolchain to check for protocol
+well-formedness.
+This directly corresponds to multiparty session
+type theory \cite{FeatherweightScribble}:
+a Scribble protocol maps to some \textit{global type}, and protocol
+verification implements the algorithmic projection defined in \cite{MPST} to
+derive valid local type \textit{projections} for all participants.
+% Note: Scribble Projection is not MPST projection, because you can have
+% protocols with choices that send to different roles.
+We obtain a set of \textit{endpoint protocols} -- one for each role from a
+well-formed global protocol.
+An endpoint protocol only preserves the interactions defined by the global
+protocol in which the target role is involved, and corresponds to an equivalent
+\textit{Endpoint Finite State Machine} (EFSM) \cite{ICALP13CFSM}.
+We use the EFSMs as a basis for API generation and adopt the formalisms in
+\cite{Hybrid2016}.
+
+

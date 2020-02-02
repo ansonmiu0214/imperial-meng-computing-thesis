@@ -1,0 +1,21 @@
+\section{Conclusion and Future Work}
+We have presented a MPST-based framework for developing full-stack interactive
+TypeScript applications with WebSocket communications that conform to a
+protocol, statically providing linear channel usage guarantees and affine
+channel usage guarantees for back-end and front-end targets respectively.
+
+Future works include incorporating \textit{explicit connection actions}
+introduced in \cite{ExplicitConnections} in our API generation to better model
+real-world communication protocols that may feature in interactive web
+applications.
+Whilst our approach supports multiparty sessions, the nature of
+WebSockets require some server-based role in the communication protocol and
+clients to interact via the server.
+Extending support to WebRTC \cite{WebRTC} would
+cater for peer-to-peer communication between browsers, which further opens up
+possibilities for communication protocols supported by our approach.
+
+% Future work
+% - generalise to encode protocols as typestates (e.g. Mungo example)
+% - WebRTC for full MPST (since current limitation is w.r.t. MPST protocols with 1-server many-client roles
+

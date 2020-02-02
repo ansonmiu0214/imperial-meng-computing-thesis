@@ -1,0 +1,15 @@
+
+digraph G {
+compound = true;
+"31" [ label="31" ];
+"31" -> "33" [ label="Svr!Pos(Point)" ];
+"32" [ label="32" ];
+"33" [ label="33" ];
+"33" -> "32" [ label="Svr?Win(Point)" ];
+"33" -> "32" [ label="Svr?Draw(Point)" ];
+"33" -> "34" [ label="Svr?Update(Point)" ];
+"34" [ label="34" ];
+"34" -> "32" [ label="Svr?Lose(Point)" ];
+"34" -> "32" [ label="Svr?Draw(Point)" ];
+"34" -> "31" [ label="Svr?Update(Point)" ];
+}

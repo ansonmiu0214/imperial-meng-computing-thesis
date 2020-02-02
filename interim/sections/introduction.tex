@@ -1,0 +1,29 @@
+
+\chapter{Introduction}
+% Rise of distributed programs -> main challenges
+% How to ensure correctness in general: type system, data types
+% Type discipline for concurrent programs - behavioural types (--> session types)
+% Mainstream example of distirbuted programs: web services (microservice architecture), interactive web application; 
+% Objective: 
+
+Modern interactive web applications aim to provide a highly responsive user experience by minimising the communication latency between clients and servers. 
+Whilst the HTTP request-response model is sufficient for retrieving static assets, applying the same stateless communication approach for interactive use cases (such as multiplayer games) introduces undesirable performance overhead from having to frequently set up new connections for client-server interactions. 
+Developers have since adopted other communication transport abstractions over HTTP connections such as the WebSockets protocol \cite{WebSocketRFC} to enjoy low-latency full-duplex client-server communication in their applications over a single persistent connection. 
+Enabling more complex communication patterns caters for more interactive use cases, but introduces additional concerns to the developer with respect to implementation correctness.
+
+% Example: noughts and crosses
+Consider a classic turn-based board game of \textit{Noughts and Crosses} between two players. Both players are identified by either noughts or crosses respectively, and take turns to place a mark on an unoccupied cell of a 3-by-3 grid until one player wins (when their markers form one straight line on the board) or a stalemate is reached (when all cells are occupied). A web-based implementation may involve players connected to a game server via WebSocket connections and interacting with the game from their web browser, which serve a \textit{single-page application} (SPA) of the game client written in a popular framework like \textit{React.js} \cite{React}. SPAs feature a single HTML page and dynamically renders content via JavaScript in the browser. Players take turns to make a move on the game board and the server implements the game logic to progress the game forward until a result (either a win/loss or draw) can be declared. 
+
+Whilst WebSockets make this web-based implementation possible, it introduces the developer to a new family of communication errors, even for this simple game. In addition to the usual testing for game logic correctness, the developer needs to test against \textit{deadlocks} (e.g. both players waiting for each other to make a move at the same time) and \textit{communication mismatches} (e.g. player 1 sending a boolean to the game server instead of the board coordinates). The complexity of these errors, which correlate to the complexity of tests required against these errors, scale with the complexity of the communication patterns involved.
+
+\textit{Multiparty Session Types} (MPST) \cite{MPST} provide a framework for formally specifying a structured communication pattern between concurrent processes and verifying implementations for correctness with respect to the communications aspect. By specifying the client-server interactions of our game as a protocol and verifying the implementations against the protocol for well-formedness, MPST theory guarantees well-formed implementations to be free from communication errors.
+
+We see the application of the MPST methodology to verifying interactive web applications written in TypeScript to be an interesting design space - to what extent can the MPST methodology be applied such that we leverage TypeScript language features to maximise static safety guarantees whilst preserving a flexible, natural and idiomatic workflow for TypeScript developers? Such a workflow would ultimately decrease the overhead for incorporating MPST into mainstream web development, which reduces development time by programmatically verifying implementations for communication correctness.
+
+\paragraph{Contributions} We present a workflow for developing type-safe interactive SPAs motivated by the MPST framework:
+
+\begin{enumerate}
+\item An endpoint API code generation workflow targeting TypeScript-based web applications for multiparty sessions;
+\item An encoding of session types in server-side TypeScript that enforces static linearity;
+\item An encoding of session types in browser-side TypeScript using the React framework that guarantees affine usage of communication channels.
+\end{enumerate}

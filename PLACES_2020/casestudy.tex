@@ -1,0 +1,56 @@
+\section{Case Study}
+\label{section:example}
+
+\begin{figure}
+\begin{lstlisting}[language=JavaScript, tabsize=4]
+const handleP1Move: Receive_P1 = (move: Point) => {
+	board.P1(move);			// User logic
+	if (board.won()) { return [Labels.Lose, move, move]; }
+	else if (board.draw()) { return [Labels.Draw, move, move]; }
+	else { return [Labels.Update, move, handleP2Move]; }}
+
+// Instantiate session - `handleP2Move` defined similarly
+new NoughtsAndCrosses.Svr(webSocketServer, handleP1Move, handleP2Move);
+\end{lstlisting}
+\captionof{lstlisting}{Session runtime instantiation for \textit{Noughts and Crosses} \texttt{Svr}.}
+\label{lst:svrprotocol}
+\end{figure}
+
+We apply our framework to implement a web-based implementation of the
+\textit{Noughts and Crosses} running example in TypeScript;
+the interested reader can find the full implementation in
+\cite{NoughtsAndCrosses}.
+In addition to MPST-safety, we show that our library design welcomes idiomatic
+JavaScript practices in the user implementation and is interoperable with
+common front- and back-end frameworks.
+
+\paragraph{Game server}
+We set up the WebSocket server as an Express.js \cite{ExpressJS}
+application on top of a Node.js \cite{NodeJS} runtime.
+We define our own game logic in a \texttt{Board} class to keep track of the
+game state and expose methods to query the result.
+This custom logic is integrated into our \texttt{Receive\_P1} and
+\texttt{Receive\_P2} handlers (\cref{lst:svrprotocol}), so the session runtime
+can handle \texttt{Pos(Point)} messages from players and transition according
+to the injected game logic.
+
+Note that, by TypeScript's structural typing \cite{TypeScriptSpec}, replacing
+\texttt{handleP2Move} on line 5 with \texttt{handleP1Move} would be
+type-correct -- this allows for better code reuse as supposed to defining
+additional abstractions to work around the limitations of nominal typing in
+\cite{Hybrid2016}.
+There is also full type erasure when transpiling to JavaScript to run the
+server code, so state space explosion is not a runtime consideration.
+
+\paragraph{Game clients}
+We implement the game client for \texttt{P1} and
+\texttt{P2} by extending from the generated abstract React (EFSM state)
+components and registering those to the session runtime component.
+
+For the sake of code reuse for demonstration purposes, \cite{NoughtsAndCrosses}
+uses \textit{higher-order components} (HOC) to build the correct state
+implementations depending on which player the user chooses to be.
+We leverage the \textit{Redux} \cite{Redux} state management library to keep track of game
+state, thus showing the flexibility of our library design in being
+interoperable with other libraries and idiomatic JavaScript practices.
+
