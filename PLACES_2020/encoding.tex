@@ -109,7 +109,7 @@ connection) and initial state (to execute the EFSM).
 Channel linearity is guaranteed based on the correctness of our library design
 and session runtime implementation, which means a faulty implementation could
 violate this, but is up to the library author to verify once rather than the
-end user. Our library design prevents the two properties below:
+end user. Our library design prevents the two conditions detailed below:
 
 \paragraph{Repeated use}
 We do not expose channels to the developer, which makes \textit{reuse}
@@ -237,7 +237,7 @@ We could pass a
 would be free to call the function multiple times which makes channel reuse
 possible.
 Instead, we pass a \textit{factory function} as a prop, which will,
-given an HTML event and a event handler function, return a fresh React
+given a HTML event and an event handler function, return a fresh React
 component that binds the sending action on construction.
 So once the bound event is triggered, our session runtime executes the event
 handler function to obtain the payload to send, perform the send
@@ -305,7 +305,7 @@ render the user implementation accordingly.
 
 \subsubsection{Affine channel usage}
 A limitation of our browser-side session type encoding is only being able to
-guarantee that channel resources are used \textit{at most once} as supposed to
+guarantee that channel resources are used \textit{at most once} as opposed to
 \textit{exactly once}.
 
 Communication channels are not exposed to the developer so multiple sends are
