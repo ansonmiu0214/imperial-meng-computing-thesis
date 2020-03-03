@@ -81,6 +81,8 @@ architecture and the concept of model type are needed.
 
 * There seems to be a tight coupling in client-side code between user interface events and channel actions. It seems that one would want to allow for some layers of indirection and abstraction between these two. The paper does not seem to address that.
 
+> Separation of concerns (communication logic and program logic)
+
 > ...
 
 * The server-side approach does not seem to allow the server to perform asynchronous operations (e.g. interactions with a database). Since all I/O in Node.js is supposed to happen using asynchronous operations, this effectively means the server cannot do anything but perform protocol actions. This is not discussed by the paper.
@@ -95,6 +97,8 @@ send values of type T | Promise\<T\>? This way, the session runtime needs to dis
 > Put "Promise integration" under future work? Unlikely to get something working by next Friday
 
 * Minor question: p.9: could the approach of the present paper be applied in Java as well? Discuss?
+
+> TODO: find citation
 
 > Server-side encoding could be applied to Java. Scribble-Java has some support for the callback-oriented pattern (for branching), except that the session objects are still exposed to the developer.
 
