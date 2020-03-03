@@ -5,8 +5,8 @@ Developers can implement their application using APIs generated from the EFSM
 to guarantee correctness by construction.
 Our approach integrates the EFSM into the development workflow by encoding
 session types as TypeScript types.
-Communication over the WebSocket protocol introduces additional constriants: 
-communication is always initiated in the front-end and driven by user interactions, 
+Communication over the WebSocket protocol introduces additional constriants:
+communication is always initiated in the front-end and driven by user interactions,
 whilst back-end roles can only accept connections.
 This motivates our design of encoding the session types differently for server (\cref{section:server}) and client (\cref{section:browser}) targets.
 
@@ -81,15 +81,19 @@ export type S15 = [ Labels.Lose, Point, S16 ]
 \label{lst:svr}
 \end{figure}
 
+% REVIEW:
+% Also, when describing Listing 2, it would be helpful to say a bit more explicitly that the client is supposed to implement S13, and the code in S13 returns an object of type S15. Then you can point to Listing 4 if they are coordinated.
+In the case of \cref{lst:svr}, the developer is expected to implement
+\texttt{S13} which handles the \texttt{Pos} message sent by P1,
+and the code in \texttt{S13} returns a value of type \texttt{S15}, which corresponds to a selection of messages to send to P2. \cref{lst:svrprotocol} illustrates how the developer may implement these types.
+
 We make a key design decision \textit{not} to expose communication channels in
 the TypeScript session type encoding to provide \textit{static} linearity
 guarantees (\cref{section:serverlinear}).
 Our encoding sufficiently exposes seams for the developer to inject their
 business logic, whilst the generated session API
 (\cref{section:serversessionapi}) handles the sending and receiving of
-messages;
-as a result, the encoding does not concern with the role involved in the
-send/receive action.
+messages.
 
 \subsubsection{Session runtime}
 \label{section:serversessionapi}
@@ -109,7 +113,7 @@ connection) and initial state (to execute the EFSM).
 Channel linearity is guaranteed based on the correctness of our library design
 and session runtime implementation, which means a faulty implementation could
 violate this, but is up to the library author to verify once rather than the
-end user. Our library design prevents the two properties below:
+end user. Our library design prevents the two conditions detailed below:
 
 \paragraph{Repeated use}
 We do not expose channels to the developer, which makes \textit{reuse}
@@ -237,7 +241,7 @@ We could pass a
 would be free to call the function multiple times which makes channel reuse
 possible.
 Instead, we pass a \textit{factory function} as a prop, which will,
-given an HTML event and a event handler function, return a fresh React
+given an HTML event and an event handler function, return a fresh React
 component that binds the sending action on construction.
 So once the bound event is triggered, our session runtime executes the event
 handler function to obtain the payload to send, perform the send
@@ -268,7 +272,7 @@ For each x-y coordinate on the game board, we
 create a \texttt{SelectPoint} React component from the factory function (which
 reads ``build a React component that sends the \texttt{Pos} message with x-y
 coordinates as payload when the user clicks on it'') and we wrap a table cell
-(the game board is rendered as a HTML table) inside the \texttt{SelectPoint}
+(the game board is rendered as an HTML table) inside the \texttt{SelectPoint}
 component to bind the click event on the table cell.
 
 \subparagraph{Receive}
@@ -305,7 +309,7 @@ render the user implementation accordingly.
 
 \subsubsection{Affine channel usage}
 A limitation of our browser-side session type encoding is only being able to
-guarantee that channel resources are used \textit{at most once} as supposed to
+guarantee that channel resources are used \textit{at most once} as opposed to
 \textit{exactly once}.
 
 Communication channels are not exposed to the developer so multiple sends are
