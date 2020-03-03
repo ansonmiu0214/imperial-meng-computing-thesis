@@ -81,15 +81,19 @@ export type S15 = [ Labels.Lose, Point, S16 ]
 \label{lst:svr}
 \end{figure}
 
+% REVIEW:
+% Also, when describing Listing 2, it would be helpful to say a bit more explicitly that the client is supposed to implement S13, and the code in S13 returns an object of type S15. Then you can point to Listing 4 if they are coordinated.
+In the case of \cref{lst:svr}, the developer is expected to implement 
+\texttt{S13} which handles the \texttt{Pos} message sent by P1,
+and the code in \texttt{S13} returns a value of type \texttt{S15}, which corresponds to a selection of messages to send to P2. \cref{lst:svrprotocol} illustrates how the developer may implement these types.
+
 We make a key design decision \textit{not} to expose communication channels in
 the TypeScript session type encoding to provide \textit{static} linearity
 guarantees (\cref{section:serverlinear}).
 Our encoding sufficiently exposes seams for the developer to inject their
 business logic, whilst the generated session API
 (\cref{section:serversessionapi}) handles the sending and receiving of
-messages;
-as a result, the encoding does not concern with the role involved in the
-send/receive action.
+messages.
 
 \subsubsection{Session runtime}
 \label{section:serversessionapi}

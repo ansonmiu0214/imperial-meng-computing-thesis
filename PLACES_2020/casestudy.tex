@@ -3,14 +3,14 @@
 
 \begin{figure}
 \begin{lstlisting}[language=JavaScript, tabsize=4]
-const handleP1Move: Receive_P1 = (move: Point) => {
+const handleP1Move: S13 = (move: Point) => {
 	board.P1(move);			// User logic
 	if (board.won()) { return [Labels.Lose, move, move]; }
 	else if (board.draw()) { return [Labels.Draw, move, move]; }
 	else { return [Labels.Update, move, handleP2Move]; }}
 
-// Instantiate session - `handleP2Move` defined similarly
-new NoughtsAndCrosses.Svr(webSocketServer, handleP1Move, handleP2Move);
+// Instantiate session - `handleP2Move` defined similarly as S18
+new NoughtsAndCrosses.Svr(webSocketServer, handleP1Move);
 \end{lstlisting}
 \captionof{lstlisting}{Session runtime instantiation for \textit{Noughts and Crosses} \texttt{Svr}.}
 \label{lst:svrprotocol}
@@ -29,8 +29,8 @@ We set up the WebSocket server as an Express.js \cite{ExpressJS}
 application on top of a Node.js \cite{NodeJS} runtime.
 We define our own game logic in a \texttt{Board} class to keep track of the
 game state and expose methods to query the result.
-This custom logic is integrated into our \texttt{Receive\_P1} and
-\texttt{Receive\_P2} handlers (\cref{lst:svrprotocol}), so the session runtime
+This custom logic is integrated into our \texttt{handleP1Move} and
+\texttt{handleP2Move} handlers (\cref{lst:svrprotocol}), so the session runtime
 can handle \texttt{Pos(Point)} messages from players and transition according
 to the injected game logic.
 
