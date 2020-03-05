@@ -17,7 +17,7 @@ Node or on browser? (Correct me if I'm wrong)}
 
 \am{Not for the case of WebSockets, because only WebSocket clients on browser can initiate connections and only WebSocket Server on Node can accept; will make this distinction clear.}
 
-\subsection{Server-side API generation}
+\subsection{Server-Side API Generation}
 \label{section:server}
 
 % Francisco: mention that it corresponds to the messages for the Noughts and Crosses example too
@@ -45,7 +45,7 @@ For any state $S$ in the EFSM, we refer to the TypeScript type alias of its
 encoding as $\llbracket S \rrbracket$. We outline the encoding below using examples from the
 \textit{Noughts and Crosses} game (\cref{lst:svr}).
 
-\paragraph{Branching state}
+\paragraph{Branching State}
 We consider a receive state as a unary branching state for conciseness.
 A branching state is encoded as an \textit{object literal}
 \cite{TypeScriptSpec}, with each branch $i \in I$, $I$ denoting set of all
@@ -57,7 +57,7 @@ $(payload:\texttt{T}_i) \to \llbracket S_i \rrbracket$.
 The developer implements a branching operation by passing callbacks for each
 branch, parameterised by the expected message payload type for that branch.
 
-\paragraph{Selection state}
+\paragraph{Selection State}
 We consider a send state as a unary selection state for conciseness.
 A selection state is encoded as a \textit{union type}
 \cite{TypeScriptSpec} of internal choice encodings: each internal choice $i \in
@@ -95,7 +95,7 @@ business logic, whilst the generated session API
 (\cref{section:serversessionapi}) handles the sending and receiving of
 messages.
 
-\subsubsection{Session runtime}
+\subsubsection{Session Runtime}
 \label{section:serversessionapi}
 
 Our session runtime performs communication in a protocol-conformant manner, but
@@ -108,21 +108,21 @@ The developer instantiates the session by constructing an instance of the
 session runtime class, providing the WebSocket endpoint URL (to open the
 connection) and initial state (to execute the EFSM).
 
-\subsubsection{Linear channel usage}
+\subsubsection{Linear Channel Usage}
 \label{section:serverlinear}
 Channel linearity is guaranteed based on the correctness of our library design
 and session runtime implementation, which means a faulty implementation could
 violate this, but is up to the library author to verify once rather than the
 end user. Our library design prevents the two conditions detailed below:
 
-\paragraph{Repeated use}
+\paragraph{Repeated Usage}
 We do not expose channels to the developer, which makes \textit{reuse}
 impossible.
 For example, to send a message, the generated API only requires the payload
 that needs to be sent, and the session runtime performs the send internally,
 guaranteeing this action is done \textit{exactly once} by construction.
 
-\paragraph{Unused}
+\paragraph{Unused Channels}
 The initial state must be supplied to the session runtime
 constructor in order to instantiate the session;
 this initial state is defined
@@ -172,7 +172,7 @@ This allows the developer to
 directly specify what should be rendered without having to worry about which
 elements to append or remove from the browser DOM.
 
-\subsection{Browser-side API generation}
+\subsection{Browser-Side API Generation}
 
 \label{section:browser}
 
@@ -206,7 +206,7 @@ the possible (IO) actions available at that state, and the update function
 defines which successor state to transition to, given some supported IO action
 at this state.
 
-\subsubsection{Model types in React}
+\subsubsection{Model Types in React}
 
 \paragraph{State}
 An EFSM state is encoded as an \textit{abstract} React
@@ -232,7 +232,7 @@ verify that the props for model transitions stay local to the state they are
 defined for.
 The model transitions for EFSMs are message send and receive.
 
-\subparagraph{Send}
+\subparagraph{Sending}
 We make the assumption that message sending is triggered by
 some user-driven UI event (e.g. clicking a button, pressing a key on the
 keyboard) which interacts with some DOM element.
@@ -275,7 +275,7 @@ coordinates as payload when the user clicks on it'') and we wrap a table cell
 (the game board is rendered as an HTML table) inside the \texttt{SelectPoint}
 component to bind the click event on the table cell.
 
-\subparagraph{Receive}
+\subparagraph{Receiving}
 The payload of a message receive transition is passed as
 a prop to the successor state and can be handled in the successor's view
 function.
@@ -283,7 +283,7 @@ Upon a message receive event, the session runtime renders the
 successor of the receive state and propagates the payload to the successor
 accordingly.
 
-\subsubsection{Session runtime}
+\subsubsection{Session Runtime}
 \label{section:clientruntime}
 
 The session runtime can be interpreted as an abstraction on top of the React
@@ -307,7 +307,7 @@ transitions) by extending the abstract React class components.
 The session runtime requires references to these concrete components in order to
 render the user implementation accordingly.
 
-\subsubsection{Affine channel usage}
+\subsubsection{Affine Channel Usage}
 A limitation of our browser-side session type encoding is only being able to
 guarantee that channel resources are used \textit{at most once} as opposed to
 \textit{exactly once}.

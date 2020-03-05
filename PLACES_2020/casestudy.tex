@@ -24,7 +24,7 @@ In addition to MPST-safety, we show that our library design welcomes idiomatic
 JavaScript practices in the user implementation and is interoperable with
 common front- and back-end frameworks.
 
-\paragraph{Game server}
+\paragraph{Game Server}
 We set up the WebSocket server as an Express.js \cite{ExpressJS}
 application on top of a Node.js \cite{NodeJS} runtime.
 We define our own game logic in a \texttt{Board} class to keep track of the
@@ -42,7 +42,7 @@ additional abstractions to work around the limitations of nominal typing in
 There is also full type erasure when transpiling to JavaScript to run the
 server code, so state space explosion is not a runtime consideration.
 
-\paragraph{Game clients}
+\paragraph{Game Clients}
 We implement the game client for \texttt{P1} and
 \texttt{P2} by extending from the generated abstract React (EFSM state)
 components and registering those to the session runtime component.

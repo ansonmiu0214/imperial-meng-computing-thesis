@@ -50,10 +50,12 @@ formally specifying a structured communication pattern between concurrent
 processes and verifying implementations for correctness with respect to the
 communications aspect.
 By specifying the client-server interactions of our game as an MPST protocol
-and verifying the implementations against the protocol for well-formedness,
+and verifying the implementations against the protocol for conformance,
 MPST theory guarantees well-formed implementations to be free from
 communication errors.
 
+\fz{This paragraph needs to be modified, to emphasis that our generated APIs
+are correct by construction, and not ``verifying'' existing ones}
 We see the application of the MPST methodology to verifying interactive web
 applications written in TypeScript to be an interesting design space -- to what
 extent can the MPST methodology be applied such that we leverage TypeScript
