@@ -98,9 +98,13 @@ messages.
 \subsubsection{Session Runtime}
 \label{section:serversessionapi}
 
-Our session runtime performs communication in a protocol-conformant manner, but
+The generated code for our session runtime performs communication in a protocol-conformant manner, but
 does not expose these IO actions to the developer by delegating the
 aforementioned responsibilities to an inner class.
+% REVIEW: it is not clear what is
+% generated on the server-side and what actually is the session runtime
+The runtime executes the EFSM by keeping track of 
+the current state (similar to the generated code in \cite{javatypestate}) and only permitting the allowed IO actions at the current state.
 The runtime listens to message (receive) events on the communication channel,
 invokes the corresponding callback to obtain the value to send next, and
 performs the send.
@@ -199,12 +203,21 @@ Our design goal is to enforce this statically through the generated APIs.
 For browser-side targets, we extend the approach presented in \cite{MVU2019} on
 \textit{multiple model types} motivated by the \textit{Model-View-Update} (MVU)
 architecture.
-Each state in the EFSM is a \emph{model type} and uniquely defines a
-\textit{view function}, set of \textit{messages} and \textit{update function}:
-the view function defines what to render to the DOM, the set of messages define
-the possible (IO) actions available at that state, and the update function
-defines which successor state to transition to, given some supported IO action
-at this state.
+% FEEDBACK: introduce MVU and model type
+An MVU application features a \textit{model} encapsulating application 
+state, a \textit{view function} rendering the state on the DOM, and an 
+\textit{update function} handling \textit{messages} produced by the 
+rendered model to produce a new model.
+The concept of model types express type dependencies between these 
+components: a \emph{model type} uniquely defines a \textit{view function}, 
+set of \textit{messages} and \textit{update function} -- rather than 
+producing a new model, the update function defines valid transitions to 
+other model types.
+We leverage the correspondence between model types and states in the EFSM:
+each state in the EFSM is a model type, the set of messages represent
+the possible (IO) actions available at that state,
+and the update function defines which successor state to transition to, 
+given the supported IO actions at this state.
 
 \subsubsection{Model Types in React}
 

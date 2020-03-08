@@ -7,7 +7,8 @@ const handleP1Move: S13 = (move: Point) => {
 	board.P1(move);			// User logic
 	if (board.won()) { return [Labels.Lose, move, move]; }
 	else if (board.draw()) { return [Labels.Draw, move, move]; }
-	else { return [Labels.Update, move, handleP2Move]; }}
+	else { return [Labels.Update, move, move, handleP2Move]; }
+}
 
 // Instantiate session - `handleP2Move` defined similarly as S18
 new NoughtsAndCrosses.Svr(webSocketServer, handleP1Move);
@@ -31,11 +32,20 @@ We define our own game logic in a \texttt{Board} class to keep track of the
 game state and expose methods to query the result.
 This custom logic is integrated into our \texttt{handleP1Move} and
 \texttt{handleP2Move} handlers (\cref{lst:svrprotocol}), so the session runtime
-can handle \texttt{Pos(Point)} messages from players and transition according
-to the injected game logic.
+can handle \texttt{Pos(Point)} messages from players and transition to the 
+permitted successor states (\cref{lst:game}) according
+to the injected game logic: if \texttt{P1} played a winning move (line 3), 
+\texttt{Svr} sends a \texttt{Lose} message to \texttt{P2} with the winning 
+move, and also sends a \texttt{Win} message to \texttt{P1} 
+(note that we do not need to specify the label for a single choice); 
+if \texttt{P1}'s move resulted 
+in a draw (line 4), \texttt{Svr} sends \texttt{Draw} messages to 
+both \texttt{P2} and \texttt{P1}; otherwise, the game continues (line 5), 
+so \texttt{Svr} updates both \texttt{P2} and \texttt{P1} with the latest 
+move and proceeds to handle \texttt{P2}'s turn.
 
 Note that, by TypeScript's structural typing \cite{TypeScriptSpec}, replacing
-\texttt{handleP2Move} on line 5 with \texttt{handleP1Move} would be
+\texttt{handleP2Move} on line 5 with a recursion of \texttt{handleP1Move} would be
 type-correct -- this allows for better code reuse as opposed to defining
 additional abstractions to work around the limitations of nominal typing in
 \cite{Hybrid2016}.
@@ -53,4 +63,8 @@ implementations depending on which player the user chooses to be.
 We leverage the \textit{Redux} \cite{Redux} state management library to keep track of game
 state, thus showing the flexibility of our library design in being
 interoperable with other libraries and idiomatic JavaScript practices.
-
+% REVIEW: tight-coupling?
+Our approach encourages the separation of concerns between the 
+communication logic and program logic -- the generated session runtime
+keeps track of the state of the EFSM to ensure protocol conformance by 
+construction, whilst \textit{Redux} solely manages our game state.
