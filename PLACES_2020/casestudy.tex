@@ -5,9 +5,13 @@
 \begin{lstlisting}[language=JavaScript, tabsize=4]
 const handleP1Move: S13 = (move: Point) => {
 	board.P1(move);			// User logic
-	if (board.won()) { return [Labels.Lose, move, move]; }
-	else if (board.draw()) { return [Labels.Draw, move, move]; }
-	else { return [Labels.Update, move, move, handleP2Move]; }
+	if (board.won()) {
+		return [Labels.Lose, move, [Labels.Win, move]]; (*@\label{linelose}@*)
+	} else if (board.draw()) {
+		return [Labels.Draw, move, [Labels.Draw, move]]; (*@\label{linedraw}@*)
+	} else {
+		return [Labels.Update, move, [Labels.Update, move, handleP2Move]]; 	(*@\label{lineupdate}@*)
+	}
 }
 
 // Instantiate session - `handleP2Move` defined similarly as S18
@@ -34,18 +38,17 @@ This custom logic is integrated into our \texttt{handleP1Move} and
 \texttt{handleP2Move} handlers (\cref{lst:svrprotocol}), so the session runtime
 can handle \texttt{Pos(Point)} messages from players and transition to the 
 permitted successor states (\cref{lst:game}) according
-to the injected game logic: if \texttt{P1} played a winning move (line 3), 
+to the injected game logic: if \texttt{P1} played a winning move (\cref{linelose}), 
 \texttt{Svr} sends a \texttt{Lose} message to \texttt{P2} with the winning 
-move, and also sends a \texttt{Win} message to \texttt{P1} 
-(note that we do not need to specify the label for a single choice); 
+move, and also sends a \texttt{Win} message to \texttt{P1}; 
 if \texttt{P1}'s move resulted 
-in a draw (line 4), \texttt{Svr} sends \texttt{Draw} messages to 
-both \texttt{P2} and \texttt{P1}; otherwise, the game continues (line 5), 
+in a draw (\cref{linedraw}), \texttt{Svr} sends \texttt{Draw} messages to 
+both \texttt{P2} and \texttt{P1}; otherwise, the game continues (\cref{lineupdate}), 
 so \texttt{Svr} updates both \texttt{P2} and \texttt{P1} with the latest 
 move and proceeds to handle \texttt{P2}'s turn.
 
 Note that, by TypeScript's structural typing \cite{TypeScriptSpec}, replacing
-\texttt{handleP2Move} on line 5 with a recursion of \texttt{handleP1Move} would be
+\texttt{handleP2Move} on \cref{lineupdate} with a recursion of \texttt{handleP1Move} would be
 type-correct -- this allows for better code reuse as opposed to defining
 additional abstractions to work around the limitations of nominal typing in
 \cite{Hybrid2016}.
