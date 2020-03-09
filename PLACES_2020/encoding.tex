@@ -113,10 +113,10 @@ connection) and the initial state (to execute the EFSM).
 \subsubsection{Linear Channel Usage}
 \label{section:serverlinear}
 \fz{This sentence is confusing and I don't know how to fix.}
-Channel linearity is guaranteed based on the correctness of our library design
-and session runtime implementation, which means a faulty implementation could
-violate this, but is up to the library author to verify once rather than the
-end user. Our library design prevents the two conditions detailed below:
+
+Developers writing their implementation using the generated APIs 
+enjoy channel linearity by construction.
+Our library design prevents the two conditions detailed below:
 
 \paragraph{Repeated Usage}
 We do not expose channels to the developer, which makes \textit{reusing
@@ -132,8 +132,10 @@ this initial state is defined
 in terms of the successor states, which in turn has references to its
 successors and so forth.
 \fz{It's not the approach, rather than the developer implementation?}
-This encoding approach covers the terminal state (if it exists), and the
-session runtime guarantees this terminal state, if it exists, will be reached
+
+The developer's implementation will cover the terminal state
+(if it exists), and the
+session runtime guarantees this terminal state will be reached
 by construction.
 
 \subsection{The React Framework}
