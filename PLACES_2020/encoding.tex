@@ -5,17 +5,11 @@ Developers can implement their application using APIs generated from the EFSM
 to guarantee correctness by construction.
 Our approach integrates the EFSM into the development workflow by encoding
 session types as TypeScript types.
-Communication over the WebSocket protocol introduces additional constriants:
+Communication over the WebSocket protocol introduces additional constraints:
 communication is always initiated in the front-end and driven by user interactions,
 whilst back-end roles can only accept connections.
-This motivates our design of encoding the session types differently for server (\cref{section:server}) and client (\cref{section:browser}) targets.
-
-\fz{I think there is an important thing to note here, ``Server'' side is
-  basically the side which accepts the connection and ``Client'' side is the
-side which makes the connection. But this is orthogonal to whether it runs on
-Node or on browser? (Correct me if I'm wrong)}
-
-\am{Not for the case of WebSockets, because only WebSocket clients on browser can initiate connections and only WebSocket Server on Node can accept; will make this distinction clear.}
+This motivates our design of encoding the session types differently for server
+(\cref{section:server}) and client (\cref{section:browser}) targets.
 
 \subsection{Server-Side API Generation}
 \label{section:server}
@@ -37,19 +31,20 @@ Node or on browser? (Correct me if I'm wrong)}
 We refer to the \texttt{Svr} EFSM (\cref{fig:efsmsvr}) as a running example in
 this section.
 For server-side targets, we encode EFSM states into TypeScript types and
-consider receive and send states separately.
-Each TypeScript encoding is assigned to its state identifier from the EFSM as
-its type alias, thus providing syntactic sugar when referring to the successor
-state in the TypeScript encoding of the current state.
+consider branching (receiving) and selection (sending) states separately.
+We assign TypeScript encodings of states to their state identifiers in the
+EFSM, providing syntactic sugar when referring to the successor state when
+encoding the current state.
 For any state $S$ in the EFSM, we refer to the TypeScript type alias of its
-encoding as $\llbracket S \rrbracket$. We outline the encoding below using examples from the
+encoding as $\llbracket S \rrbracket$.
+We outline the encoding below using examples from the
 \textit{Noughts and Crosses} game (\cref{lst:svr}).
 
 \paragraph{Branching State}
-We consider a receive state as a unary branching state for conciseness.
+We consider a receiving state as a unary branching state for conciseness.
 A branching state is encoded as an \textit{object literal}
-\cite{TypeScriptSpec}, with each branch $i \in I$, $I$ denoting set of all
-branches, corresponding to a member field.
+\cite{TypeScriptSpec} (a record type), with each branch $i \in I$ ($I$ denoting set of all
+branches), corresponding to a member field.
 A branch expecting to receive a message labelled $\texttt{label}_i$ carrying
 payload of type $\texttt{T}_i$ with successor state $S_i$ is encoded as an
 \textit{member field} named $\texttt{label}_i$ of function type
@@ -58,7 +53,7 @@ The developer implements a branching operation by passing callbacks for each
 branch, parameterised by the expected message payload type for that branch.
 
 \paragraph{Selection State}
-We consider a send state as a unary selection state for conciseness.
+We consider a sending state as a unary selection state for conciseness.
 A selection state is encoded as a \textit{union type}
 \cite{TypeScriptSpec} of internal choice encodings: each internal choice $i \in
 I$, $I$ denoting set of all choices, sending a message labelled
@@ -84,14 +79,16 @@ export type S15 = [ Labels.Lose, Point, S16 ]
 % REVIEW:
 % Also, when describing Listing 2, it would be helpful to say a bit more explicitly that the client is supposed to implement S13, and the code in S13 returns an object of type S15. Then you can point to Listing 4 if they are coordinated.
 In the case of \cref{lst:svr}, the developer is expected to implement
-\texttt{S13} which handles the \texttt{Pos} message sent by P1,
-and the code in \texttt{S13} returns a value of type \texttt{S15}, which corresponds to a selection of messages to send to P2. \cref{lst:svrprotocol} illustrates how the developer may implement these types.
+\texttt{S13} which handles the \texttt{Pos} message sent by \texttt{P1},
+and the code in \texttt{S13} returns a value of type \texttt{S15}, which
+corresponds to a selection of messages to send to \texttt{P2}. \Cref{lst:svrprotocol}
+illustrates how the developer may implement these types.
 
 We make a key design decision \textit{not} to expose communication channels in
-the TypeScript session type encoding to provide \textit{static} linearity
+the TypeScript session type encodings to provide \textit{static} linearity
 guarantees (\cref{section:serverlinear}).
 Our encoding sufficiently exposes seams for the developer to inject their
-business logic, whilst the generated session API
+program logic, whilst the generated session API
 (\cref{section:serversessionapi}) handles the sending and receiving of
 messages.
 
@@ -103,41 +100,47 @@ does not expose these IO actions to the developer by delegating the
 aforementioned responsibilities to an inner class.
 % REVIEW: it is not clear what is
 % generated on the server-side and what actually is the session runtime
-The runtime executes the EFSM by keeping track of 
-the current state (similar to the generated code in \cite{javatypestate}) and only permitting the allowed IO actions at the current state.
-The runtime listens to message (receive) events on the communication channel,
+The runtime executes the EFSM by keeping track of
+the current state (similar to the generated code in \cite{javatypestate})
+and only permitting the specified IO actions at the current state.
+The runtime listens to message (receiving) events on the communication channel,
 invokes the corresponding callback to obtain the value to send next, and
-performs the send.
-The developer instantiates the session by constructing an instance of the
+performs the sending.
+The developer instantiates a session by constructing an instance of the
 session runtime class, providing the WebSocket endpoint URL (to open the
-connection) and initial state (to execute the EFSM).
+connection) and the initial state (to execute the EFSM).
 
 \subsubsection{Linear Channel Usage}
 \label{section:serverlinear}
+\fz{This sentence is confusing and I don't know how to fix.}
 Channel linearity is guaranteed based on the correctness of our library design
 and session runtime implementation, which means a faulty implementation could
 violate this, but is up to the library author to verify once rather than the
 end user. Our library design prevents the two conditions detailed below:
 
 \paragraph{Repeated Usage}
-We do not expose channels to the developer, which makes \textit{reuse}
-impossible.
+We do not expose channels to the developer, which makes \textit{reusing
+  channels} impossible.
 For example, to send a message, the generated API only requires the payload
 that needs to be sent, and the session runtime performs the send internally,
 guaranteeing this action is done \textit{exactly once} by construction.
 
 \paragraph{Unused Channels}
 The initial state must be supplied to the session runtime
-constructor in order to instantiate the session;
+constructor in order to instantiate a session;
 this initial state is defined
 in terms of the successor states, which in turn has references to its
 successors and so forth.
+\fz{It's not the approach, rather than the developer implementation?}
 This encoding approach covers the terminal state (if it exists), and the
 session runtime guarantees this terminal state, if it exists, will be reached
 by construction.
 
 \subsection{The React Framework}
-Our browser-side session type encodings for browser-side targets build upon the React framework, developed by Facebook \cite{React} for the \textit{Model-View-Controller} (MVC) architecture. React is widely used in industry to create scalable single-page TypeScript
+Our browser-side session type encodings for browser-side targets build upon the
+\emph{React.js} framework, developed by Facebook \cite{React} for the
+\textit{Model-View-Controller} (MVC) architecture.
+React is widely used in industry to create scalable single-page TypeScript
 applications, and we intend for our proposed workflow to be beneficial in an
 industrial context.
 We introduce the key features of the framework.
@@ -148,12 +151,18 @@ contains its own markup and logic.
 Components implement a \texttt{render()} function which returns a React
 element, the smallest building blocks of a React application, analogous to the
 view function in the MVU architecture.
-Components can keep \textit{state} and the \texttt{render()} function is
+Components can keep \textit{state}s and the \texttt{render()} function is
 invoked upon a change of state.
-A simple counter can be implemented as a component,
-with \texttt{count} stored as state, a button which increments \texttt{count}
+
+For example, a simple counter can be implemented as a component,
+with its \texttt{count} stored as state.
+When rendered, it displays a button which increments \texttt{count}
 when clicked and a \texttt{div} that renders the current
 \texttt{count}.
+If the button is clicked, the \texttt{count} is incremented, which triggers a
+re-rendering (since the state has changed), and the updated \texttt{count} is
+displayed.
+
 Components can also render other components, which gives rise
 to a parent/child relationship between components.
 Parents can pass data to children as \textit{props} (short for properties).
@@ -204,19 +213,19 @@ For browser-side targets, we extend the approach presented in \cite{MVU2019} on
 \textit{multiple model types} motivated by the \textit{Model-View-Update} (MVU)
 architecture.
 % FEEDBACK: introduce MVU and model type
-An MVU application features a \textit{model} encapsulating application 
-state, a \textit{view function} rendering the state on the DOM, and an 
-\textit{update function} handling \textit{messages} produced by the 
+An MVU application features a \textit{model} encapsulating application
+state, a \textit{view function} rendering the state on the DOM, and an
+\textit{update function} handling \textit{messages} produced by the
 rendered model to produce a new model.
-The concept of model types express type dependencies between these 
-components: a \emph{model type} uniquely defines a \textit{view function}, 
-set of \textit{messages} and \textit{update function} -- rather than 
-producing a new model, the update function defines valid transitions to 
+The concept of model types express type dependencies between these
+components: a \emph{model type} uniquely defines a \textit{view function},
+set of \textit{messages} and \textit{update function} -- rather than
+producing a new model, the update function defines valid transitions to
 other model types.
 We leverage the correspondence between model types and states in the EFSM:
 each state in the EFSM is a model type, the set of messages represent
 the possible (IO) actions available at that state,
-and the update function defines which successor state to transition to, 
+and the update function defines which successor state to transition to,
 given the supported IO actions at this state.
 
 \subsubsection{Model Types in React}
