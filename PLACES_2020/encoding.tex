@@ -275,8 +275,7 @@ successor state.
 
 We demonstrate the semantics using the \textit{Noughts and Crosses} example in
 \cref{lst:clientapp}.
-\texttt{this.props.Pos} is the factory function prop
-passed from the session runtime.
+The session runtime passes the factory function \texttt{this.props.Pos} as a prop.
 For each x-y coordinate on the game board, we
 create a \texttt{SelectPoint} React component from the factory function (which
 reads ``build a React component that sends the \texttt{Pos} message with x-y
