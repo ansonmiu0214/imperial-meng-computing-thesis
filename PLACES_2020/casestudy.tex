@@ -47,13 +47,18 @@ both \texttt{P2} and \texttt{P1}; otherwise, the game continues (\cref{lineupdat
 so \texttt{Svr} updates both \texttt{P2} and \texttt{P1} with the latest 
 move and proceeds to handle \texttt{P2}'s turn.
 
-Note that, by TypeScript's structural typing \cite{TypeScriptSpec}, replacing
-\texttt{handleP2Move} on \cref{lineupdate} with a recursion of \texttt{handleP1Move} would be
-type-correct -- this allows for better code reuse as opposed to defining
-additional abstractions to work around the limitations of nominal typing in
+Note that, by TypeScript's structural typing 
+\cite{TypeScriptSpec}, replacing
+\texttt{handleP2Move} on \cref{lineupdate} with a recursive 
+occurrence of \texttt{handleP1Move} would be
+type-correct -- this allows for better code reuse as opposed to 
+defining
+additional abstractions to work around the limitations of nominal 
+typing in
 \cite{Hybrid2016}.
-There is also full type erasure when transpiling to JavaScript to run the
-server code, so state space explosion is not a runtime consideration.
+There is also full type erasure when transpiling to JavaScript to 
+run the server code, so state space explosion is not a 
+runtime consideration.
 
 \paragraph{Game Clients}
 We implement the game client for \texttt{P1} and
