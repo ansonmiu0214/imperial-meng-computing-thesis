@@ -1,11 +1,13 @@
 \section{The Scribble Framework}
 \label{section:scribble}
 
-Development begins by specifying the expected communications between
+Development begins with specifying the expected communications between
 participants as a \textit{global protocol} in Scribble \cite{Scribble}, a
 MPST-based protocol specification language and code generation toolchain.
 We specify the \textit{Noughts and Crosses} game as a Scribble protocol in
 \cref{lst:game}.
+In the protocol, the role \texttt{Svr} stands for the Server, and the roles
+\texttt{P1} and \texttt{P2} stand for the two Players respectively.
 
 \begin{figure}[!h]
 \begin{lstlisting}[
@@ -26,7 +28,7 @@ global protocol Game(role Svr, role P1, role P2) {
   }
 }
 \end{lstlisting}
-\captionof{lstlisting}{Main body of the \textit{Noughts and Crosses} protocol.}
+\captionof{lstlisting}{\textit{Noughts and Crosses} in a Scribble protocol.}
 \label{lst:game}
 \end{figure}
 
@@ -34,17 +36,18 @@ We leverage the Scribble toolchain to check for protocol
 well-formedness.
 This directly corresponds to multiparty session
 type theory \cite{FeatherweightScribble}:
-a Scribble protocol maps to some \textit{global type}, and protocol
-verification implements the algorithmic projection defined in \cite{MPST} to
+a Scribble protocol maps to some \textit{global type}, and the Scribble
+toolchain implements the algorithmic projection defined in \cite{MPST} to
 derive valid local type \textit{projections} for all participants.
 % Note: Scribble Projection is not MPST projection, because you can have
 % protocols with choices that send to different roles.
-We obtain a set of \textit{endpoint protocols} -- one for each role from a
+We obtain a set of \textit{endpoint protocols} (corresponds to \emph{local
+  types}) --- one for each role from a
 well-formed global protocol.
 An endpoint protocol only preserves the interactions defined by the global
 protocol in which the target role is involved, and corresponds to an equivalent
 \textit{Endpoint Finite State Machine} (EFSM) \cite{ICALP13CFSM}.
-% Review: The meaning and hte usage of EFSM should be explained 
+% Review: The meaning and hte usage of EFSM should be explained
 The EFSM holds information about the permitted IO actions for the role.
 We use the EFSMs as a basis for API generation and adopt the formalisms in
 \cite{Hybrid2016}.

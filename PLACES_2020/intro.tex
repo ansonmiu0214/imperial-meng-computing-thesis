@@ -17,10 +17,10 @@ cases, but introduces additional correctness concerns to the developer.
 % Example: noughts and crosses
 Consider a classic turn-based board game of \textit{Noughts and Crosses}
 between two players.
-Both players, identified by either noughts or crosses respectively, take
+Both players, identified by either \emph{noughts (O's)} or \emph{crosses (X's)} respectively, take
 turns to place a mark on an unoccupied cell of a 3-by-3 grid until one player
 wins (when their markers form one straight line on the board) or a stalemate is
-reached (when all cells are occupied).
+reached (when all cells are occupied and no one wins).
 A web-based implementation may involve players connected to a game server via
 WebSocket connections.
 The players interact with the game from their web browser, which shows a
@@ -29,20 +29,21 @@ framework like \textit{React.js} \cite{React}.
 SPAs feature a single HTML page and dynamically render content via JavaScript
 in the browser.
 Players take turns to make a move on the game board, which sends a message to
-the server, and the server implements the game logic to progress the game
+the server.
+The server implements the game logic to progress the game
 forward until a result (either a win/loss or draw) can be declared, where
 either the move of the other player or the game result is sent to players.
 
-Whilst WebSockets make this web-based implementation possible, it introduces
+Whilst WebSockets make this web-based implementation possible, they introduce
 the developer to a new family of communication errors, even for this simple
 game.
 In addition to the usual testing for game logic correctness, the
-developer needs to test against \textit{deadlocks} (e.g. both players waiting
+developer needs to test against \textit{deadlocks} (e.g.\ both players waiting
 for each other to make a move at the same time) and \textit{communication
- mismatches} (e.g. player 1 sending a boolean to the game server instead of
+ mismatches} (e.g.\ player 1 sending a boolean to the game server instead of
 the board coordinates).
-The complexity of these errors correlate to the
-complexity of the required tests and scale with the complexity of
+The complexity of these errors correlates to the
+complexity of the required tests and scales with the complexity of
 communication patterns involved.
 
 \textit{Multiparty Session Types} (MPST) \cite{MPST} provide a framework for
@@ -54,9 +55,9 @@ and verifying the implementations against the protocol for conformance,
 MPST theory guarantees well-formed implementations to be free from
 communication errors.
 
-We see the application of the MPST methodology to generating interactive 
-TypeScript web applications to be an interesting design space 
--- to what extent can the MPST methodology be applied to
+We see the application of the MPST methodology to generating interactive
+TypeScript web applications to be an interesting design space
+--- to what extent can the MPST methodology be applied to
 deliver a workflow where developers use the generated TypeScript APIs in
 their application to guarantee protocol conformance by construction?
 Such a workflow would ultimately decrease the overhead for incorporating MPST
