@@ -174,17 +174,6 @@ This enables reusability, and for our use case, gives control to the parent
 on what data to pass to its children (e.g. pass the payload of a received
 message to a child to render).
 
-\fz{Is VDOM needed to be covered here?}
-
-\am{Intended to motivate how the session runtime implementation renders the required state and the VDOM deals with the diffs - at the same time, unsure whether this is important for the reader to understand (or just leave the DOM rendering as a black box)?}
-\paragraph{Virtual DOM (VDOM)}
-React components are rendered on a logical
-abstraction of the DOM, which in turn performs a \texttt{diff} on the current
-browser DOM and patches the delta accordingly.
-This allows the developer to
-directly specify what should be rendered without having to worry about which
-elements to append or remove from the browser DOM.
-
 \subsection{Browser-Side API Generation}
 
 \label{section:browser}
@@ -214,7 +203,7 @@ For browser-side targets, we extend the approach presented in \cite{MVU2019} on
 architecture.
 % FEEDBACK: introduce MVU and model type
 An MVU application features a \textit{model} encapsulating application
-state, a \textit{view function} rendering the state on the DOM, and an
+state, a \textit{view function} rendering the state on the Document Object Model (DOM), and an
 \textit{update function} handling \textit{messages} produced by the
 rendered model to produce a new model.
 The concept of model types express type dependencies between these
