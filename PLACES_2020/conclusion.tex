@@ -4,13 +4,13 @@ TypeScript applications with WebSocket communications that conform to a
 protocol, statically providing linear channel usage guarantees and affine
 channel usage guarantees for back-end and front-end targets respectively.
 
-Future works include incorporating \textit{explicit connection actions}
+Future work includes incorporating \textit{explicit connection actions}
 introduced in \cite{ExplicitConnections} in our API generation to better model
 real-world communication protocols that may feature in interactive web
 applications.
 % REVIEW: asynchronous
-Server-side implementations may perform asynchronous operations on the 
-received messages, so supporting asynchronous values (such as JavaScript 
+Server-side implementations may perform asynchronous operations on the
+received messages, so supporting asynchronous values (such as JavaScript
 \textit{Promises} \cite{promise}) in IO actions would be a welcome addition.
 Whilst our approach supports multiparty sessions, the nature of
 WebSockets require some server-based role in the communication protocol and
