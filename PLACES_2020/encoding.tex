@@ -29,7 +29,7 @@ This motivates our design of encoding the session types differently for server
 \end{wrapfigure}
 
 We refer to the \texttt{Svr} EFSM (\cref{fig:efsmsvr}) as a running example in
-this section.
+this subsection.
 For server-side targets, we encode EFSM states into TypeScript types and
 consider branching (receiving) and selection (sending) states separately.
 We assign TypeScript encodings of states to their state identifiers in the
@@ -112,7 +112,7 @@ connection) and the initial state (to execute the EFSM).
 
 \subsubsection{Linear Channel Usage}
 \label{section:serverlinear}
-Developers writing their implementation using the generated APIs 
+Developers writing their implementation using the generated APIs
 enjoy channel linearity by construction.
 Our library design prevents the two conditions detailed below:
 
@@ -169,7 +169,7 @@ render a child component \texttt{<StyledDiv count=\{this.state.count\} />} in
 its \texttt{render()} function, propagating the \texttt{count} from its state
 to the child.
 This enables reusability, and for our use case, gives control to the parent
-on what data to pass to its children (e.g. pass the payload of a received
+on what data to pass to its children (e.g.\ pass the payload of a received
 message to a child to render).
 
 \subsection{Browser-Side API Generation}
@@ -186,7 +186,7 @@ message to a child to render).
 \end{wrapfigure}
 
 We refer to the \texttt{P1} EFSM (\cref{fig:efsmp1}) as a running example in
-this section.
+this subsection.
 Preserving behavioural typing and channel linearity is challenging
 for browser-side applications due to EFSM transitions being triggered by user
 events:
@@ -194,7 +194,7 @@ in the case of \textit{Noughts and Crosses}, once the user makes a move by
 clicking on a cell on the game board, this click event must be deactivated
 until the user's next turn, otherwise the user can click again and violate
 channel linearity.
-Our design goal is to enforce this statically through the generated APIs.
+Our design goal is to enforce linearity statically through the generated APIs.
 
 For browser-side targets, we extend the approach presented in \cite{MVU2019} on
 \textit{multiple model types} motivated by the \textit{Model-View-Update} (MVU)
@@ -206,7 +206,7 @@ state, a \textit{view function} rendering the state on the Document Object Model
 rendered model to produce a new model.
 The concept of model types express type dependencies between these
 components: a \emph{model type} uniquely defines a \textit{view function},
-set of \textit{messages} and \textit{update function} -- rather than
+set of \textit{messages} and \textit{update function} --- rather than
 producing a new model, the update function defines valid transitions to
 other model types.
 We leverage the correspondence between model types and states in the EFSM:
@@ -228,7 +228,7 @@ renders the current state.
 Upon transitioning to a successor state, the successor's view function will be
 invoked, as per the semantics expressed in \cite{MVU2019}.
 
-\paragraph{Model transitions}
+\paragraph{Model Transitions}
 Transitions are encoded as React component props onto the encoded states by the
 session runtime (\cref{section:clientruntime}).
 We motivate the design choice of not exposing channel resources to provide
@@ -243,8 +243,8 @@ The model transitions for EFSMs are message send and receive.
 
 \subparagraph{Sending}
 We make the assumption that message sending is triggered by
-some user-driven UI event (e.g. clicking a button, pressing a key on the
-keyboard) which interacts with some DOM element.
+some user-driven UI event (e.g.\ clicking a button, pressing a key on the
+keyboard) which interacts with some DOM elements.
 We could pass a
 \texttt{send()} function as a prop to the sending state, but the developer
 would be free to call the function multiple times which makes channel reuse
@@ -299,7 +299,7 @@ The session runtime can be interpreted as an abstraction on top of the React
 VDOM that implements the EFSM by construction.
 The session runtime itself is a React component too, named after the endpoint
 role identifier:
-it opens the WebSocket connection to the server, keeps track of the current
+it opens a WebSocket connection to the server, keeps track of the current
 EFSM state as part of its React component state, and most importantly, renders
 the React component encoding of the active EFSM state.
 Channel communications are managed by the runtime, which allows it to render
@@ -311,14 +311,14 @@ props, the \textit{endpoint URL} (so it can open the connection) and a list of
 \textit{concrete state components}.
 
 The developer writes their own implementation of each state (mainly to
-customise how the state is rendered and inject business logic into state
+customise how the state is rendered and inject program logic into state
 transitions) by extending the abstract React class components.
 The session runtime requires references to these concrete components in order to
 render the user implementation accordingly.
 
 \subsubsection{Affine Channel Usage}
-A limitation of our browser-side session type encoding is only being able to
-guarantee that channel resources are used \textit{at most once} as opposed to
+A limitation of our browser-side session type encoding is
+that channel resources are guaranteed to be used \textit{at most once} as opposed to
 \textit{exactly once}.
 
 Communication channels are not exposed to the developer so multiple sends are
@@ -334,4 +334,6 @@ However, our approach \textit{does not} statically detect whether all
 transitions in a certain state are bound to some UI event.
 This means that it is possible for an implementation to \textit{not} handle
 transitions to a terminal state but still type-check, so we cannot prevent
-unused states. Equally, our approach does not prevent a client closing the browser, which would drop the connection.
+unused states.
+Equally, our approach does not prevent a client closing the browser, which
+would drop the connection.
