@@ -56,7 +56,7 @@ branch, parameterised by the expected message payload type for that branch.
 We consider a sending state as a unary selection state for conciseness.
 A selection state is encoded as a \textit{union type}
 \cite{TypeScriptSpec} of internal choice encodings: each internal choice $i \in
-I$, $I$ denoting set of all choices, sending a message labelled
+I$ ($I$ denoting set of all choices), sending a message labelled
 $\texttt{label}_i$ carrying payload of type $\texttt{T}_i$ with successor state
 $S_i$ is encoded as a \textit{tuple type} of \texttt{[Labels.label$_i$, T$_i$,
   $\llbracket S_i \rrbracket$]}.
