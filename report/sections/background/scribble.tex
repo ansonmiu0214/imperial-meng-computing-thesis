@@ -1,0 +1,108 @@
+\section{The Scribble Protocol Language}
+
+%\subsection{Overview}
+% Introduce Scribble as an implementation of MPST
+Whilst session type theory represents the type language for concurrent processes, it also forms the theoretical basis of proposals introduced to implement session types for real-world application development: the Scribble language is one such proposal.
+
+Scribble \cite{Scribble} is a platform-independent description language for the specification of message-passing protocols. The language describes the behaviour of communicating processes at a high level of abstraction: more importantly, the description is independent from implementation details in the same way that the type signature of a function declaration is decoupled from the corresponding function definition.
+
+% Protocol specification: show parallels between Scribble protocol and MPST global type
+A Scribble protocol specification describes an agreement of how participating systems, referred to as \term{roles}, interact. The protocol stipulates the sequence of structured messages exchanged between roles; each message is labelled with a name and the type of payload carried by the message.
+
+We present an example of a Scribble protocol in Figure \ref{fig:adder_scr} adapted from \cite{Hybrid2016}. The protocol specifies an arithmetic web service offered by a server to a client, represented by roles $S$ and $C$ respectively. The client is permitted to either:
+
+\begin{itemize}
+\item Send two \texttt{int}s attached to an \texttt{Add} message, where the server will respond with an \texttt{int} in a message labelled \texttt{Res}, and the protocol recurses; or,
+\item Send a \texttt{Quit} message, where the server will respond with a \texttt{Terminate} message and the protocol ends.
+\end{itemize}
+
+The platform-independent nature of Scribble can be observed from the \texttt{type} declaration on Line 1: the developer has the freedom to specify message payload formats and data types from the target language of the implementation - in this case, aliasing the built-in Java integer as \texttt{int} throughout the protocol.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=Scribble]
+type <java> "java.lang.Integer" from "rt.jar" as int;
+
+global protocol Adder(role C, role S) {
+	choice at C {
+		Add(int, int)	from C to S;
+		Res(int)		from S to C;
+		do Adder(C, S);
+	} or {
+		Quit()		from C to S;
+		Terminate()	from S to C;	
+	}
+}
+\end{lstlisting}
+\caption{Adder Protocol in Scribble}
+\label{fig:adder_scr}
+\end{figure}
+
+The simplicity of the protocol specification language reflects the design goals for Scribble, as outlined in \cite{Scribble}, to be easy to read, write and maintain, even for developers who are not accustomed to the formalities in protocol specification. Moreover, we clearly observe the parallels between the Scribble language and multiparty session type (MPST) theory, from the homomorphic mapping between Scribble roles and MPST participants to the syntactic similarities between the specification in Figure \ref{fig:adder_scr} and the global type below written in the calculus.
+
+\[
+\begin{array}{rl}
+G = \mu\mathbf{t}.\parti{C}\to\parti{S}:\{
+& \text{Add}(\texttt{int}, \texttt{int}): \parti{S}\to\parti{C}: \{\text{Res}(\texttt{int}): \mathbf{t}\}, \\
+& \text{Quit}(): \parti{S}\to\parti{C}: \{\text{Terminate}(): \mathbf{end}\}\\
+\} &
+\end{array}
+\]
+
+\subsection{Endpoint Finite State Machines}
+% Show parallels between Scribble protocol-to-EFSM and MPST global-to-local projections
+The protocol specification language is a component of the broader Scribble project in \cite{Scribble}; through the project, Honda et al. also aims to facilitate the development of endpoint applications that conform to user-specified protocols.
+
+A Scribble global protocol can be projected to a role to obtain the local specification of said protocol from the role's viewpoint. This is analogous to the standard algorithmic projections in multiparty session type theory: the projected local specification, or local protocol, only preserves the interactions in which the target role is involved. Any user-defined type declarations in the global protocol will also be preserved. This allows local roles, also referred to as \term{endpoints}, to verify their implementation against their local protocol for conformance, independent of other endpoints. The communication safety guarantees from MPST theory also apply here: if the implementation for each endpoint is verified against its local protocol, the multiparty system as a whole will conform to the global protocol.
+
+% Formalise syntax and properties of EFSM derived from well-formed protocols
+To facilitate the verification process, a local protocol is converted into 
+an \term{endpoint finite state machine} (EFSM). An EFSM encodes the control flow of the local protocol, where an initial state is defined and each transition from some state to a successor state corresponds to a valid IO action (i.e. sending to or receiving from another role) permitted at the endpoint at that state. Figure \ref{fig:efsmsyntax} presents the EFSM formalism adopted from \cite{Hybrid2016}.
+
+\begin{figure}[!hb]
+\doublespacing
+\[
+\begin{array}{rlr}
+
+\text{EFSM} ::= & \mathbb{R} \times \mathbb{L} \times \mathbb{T} \times \Sigma \times \mathbb{S} \times \delta & \text{Endpoint FSM} \\
+
+\mathbb{R} ::= & r,~r',~\dots & \text{Role Identifiers} \\
+
+\mathbb{L} ::= & l,~l',~\dots & \text{Message Label Identifiers} \\
+
+\mathbb{T} ::= & \texttt{int},~\texttt{bool},~T,~T',~\dots & \text{Payload Format Types} \\
+
+\Sigma ::= & & \text{Actions} \\
+     & r!l(\tilde{T}) \quad \text{where } \tilde{T} \subseteq \mathbb{T} & \text{Output} \\
+\mid & r?l(\tilde{T}) \quad \text{where } \tilde{T} \subseteq \mathbb{T} & \text{Input} \\
+
+\mathbb{S} ::= & S,~S',\dots & \text{State Identifiers} \\
+
+\delta ::= & \mathbb{S} \times \Sigma \rightharpoonup \mathbb{S} & \text{State Transition Function} \\
+
+\end{array}
+\]
+\singlespacing
+\captionof{figure}{Syntax for Endpoint FSM}
+\label{fig:efsmsyntax}
+\end{figure}
+
+We highlight the semantics of the \term{state transition function}. Its domain defines the set of permitted actions for each state, and the range defines the successor state. Crucially, this is a \term{partial function} because the EFSM restricts what can be done (in terms of send and receive actions, and what label/payload types can be sent and received). 
+
+\begin{figure}[!h]
+\doublespacing
+\[
+\begin{array}{rl}
+
+\texttt{initial}_{EFSM}(S) \iff & \nexists S' \in \mathbb{S},\alpha \in \Sigma.~\delta(S',\alpha) = S \\
+\texttt{terminal}_{EFSM}(S) \iff & \delta(S) = \emptyset \\
+\texttt{output}_{EFSM}(S) \iff & \delta(S) = \{\,\alpha \in \Sigma \mid \exists l \in \mathbb{L}, \tilde{T} \subseteq{\mathbb{T}}.~\alpha = r!l(\tilde{T})\,\}~\text{for some}~r \in \mathbb{R} \\
+\texttt{input}_{EFSM}(S) \iff & \delta(S) = \{\,\alpha \in \Sigma \mid \exists l \in \mathbb{L}, \tilde{T} \subseteq{\mathbb{T}}.~\alpha = r?l(\tilde{T})\,\}~\text{for some}~r \in \mathbb{R}
+\end{array}
+\]
+\singlespacing
+\captionof{figure}{Types of EFSM States}
+\label{fig:efsmstates}
+\end{figure}
+
+We adopt the properties of EFSMs for well-formed protocol specifications from \cite{Hybrid2016} \textbf{(1)} there is exactly one initial state, \textbf{(2)} there is at most one terminal state, and \textbf{(3)} every non-terminal state is either an input state or output state. There are further restrictions on input and output states, namely these states must only send to or receive from the same role. We formalise these properties in Figure \ref{fig:efsmstates}.
+

@@ -1,0 +1,72 @@
+% Includes
+
+% Proof trees
+\usepackage{proof}
+\usepackage{bussproofs}
+
+% Code listing
+\usepackage{listings}
+\lstdefinelanguage{Scribble}{
+  keywords={module, type, from, as, global,protocol, role, to, choice, at, or, do},
+  keywordstyle=\color{blue}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{darkgray}\ttfamily,
+  stringstyle=\color{purple}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break, class, export, boolean, throw, implements, import, this, const, let, extends},
+  keywordstyle=\color{blue}\bfseries,
+%  ndkeywords={class, export, boolean, throw, implements, import, this},
+%  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{darkgray}\ttfamily,
+  stringstyle=\color{purple}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+\lstset{
+	basicstyle=\footnotesize\ttfamily,
+	numbers=left,
+	frame=single,
+	tabsize=4
+}
+
+% Figure and table counter
+\usepackage{chngcntr}
+\counterwithout{figure}{chapter}
+\counterwithout{table}{chapter}
+
+% Commands
+\newcommand{\term}[1]{\textit{#1}}
+\newcommand{\mathref}[1]{\textsection #1}
+
+\newcommand{\rulename}[1]{[\textsc{#1}]}
+
+\newcommand{\piin}[2]{#1(#2)}
+\newcommand{\piout}[2]{\bar{#1}\langle #2 \rangle }
+\newcommand{\parti}[1]{{\color{blue}\mathbf{#1}}}
+
+\newcommand{\send}[2]{#1!\langle #2 \rangle}
+\newcommand{\recv}[2]{#1?(#2)}
+\newcommand{\bra}[2]{#1 \rhd \left\{#2\right\}}
+\newcommand{\sel}[3]{#1 \lhd #2 \langle #3 \rangle}
+
+\newcommand{\tysend}[2]{#1![#2]}
+\newcommand{\tyrecv}[2]{#1?[#2]}
+\newcommand{\tybra}[2]{#1 \& \left\{#2\right\}}
+\newcommand{\tysel}[2]{#1 \oplus \left\{#2\right\}}
+
+
+% Typewriter font
+% \renewcommand{\ttdefault}{pcr} % selects Courier font
+
+% Citation style
+\setcitestyle{square}

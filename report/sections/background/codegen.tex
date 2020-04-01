@@ -1,0 +1,57 @@
+\section{Code Generation}
+The EFSM describes the local session type and provides guidance to developers for verifying that their endpoint implementation conforms to the communication protocol. However, a direct encoding of the local session type into the target language of the implementation is usually not feasible as the EFSM assumes IO objects as first-class citizens and communication channels are linear resources, features that are left to be desired in mainstream programming languages (such as Java and Python) used by the developers' implementations. We note that languages with native session type support (e.g. ATS \cite{ATS2016}) exist, but their usage largely remains for research purposes as supposed to real-world application development.
+
+Code generation is a common approach for verifying implementations written in the aforementioned mainstream languages against the EFSM. Approaches in the literature differ by how they leverage features in the target language (such as the type system), but generally define some interpretation of the EFSM in the target language and generate APIs which the developer can use to implement a target application that guarantees the following two properties:
+
+\begin{itemize}
+\item \textbf{Behavioural typing}: The execution trace of messages sent and received by the application is accepted by the EFSM.
+\item \textbf{Channel linearity}: Each transition in the EFSM represents a channel resource. When the application transitions from some state $S$ to some successor state $S'$, it must no longer be able to access a reference (e.g. have an alias) to $S$.
+\end{itemize}
+
+We outline the different existing approaches and summarise how they verify the aforementioned properties in \mathref{\ref{section:codegencompare}}.
+
+\subsection{Runtime Monitors}
+% What
+Neykova and Yoshida targeted the MPST methodology for Python programs in \cite{Python2017} and proposed to generate \term{runtime monitors} from the EFSM. These monitors expose APIs for sending and receiving messages, which is used by the developer in their implementation. The runtime monitor is an abstraction between the developer's implementation and the actual communication channel, and ``executes'' the EFSM internally to ensure protocol conformance. When the developer sends a message (with some label and payload) using the API, the runtime monitor checks whether this send action conforms to the current EFSM state, and if so, performs the send and advances to the successor state. Likewise, when the developer invokes a receive, the runtime monitor verifies that this is permitted at the current EFSM state before returning the received payload.
+
+We observe that this approach complements the dynamic typing nature of the Python language, which makes it sensible to perform behavioural typing at runtime. As the send and receive IO primitives are made available to the developer, there are no ``instances'' of channel resources created, so the developer cannot explicitly hold a reference to some state in the EFSM (let alone keep aliases), so channel linearity is trivially guaranteed here.
+
+\subsection{Type-Level Encoding}
+King et al. presented an approach in \cite{PureScript2019} for integrating session types into web development using the PureScript language, which takes advantage of its expressive type system to provide static guarantees on implementation conformance with respect to the protocol. We outline the main components of their EFSM encoding:
+
+\paragraph{Actions as type classes} The semantics of the state transition function in the EFSM formalism express that a tuple of state-action \textit{uniquely defines} a successor state. These semantics can be expressed by \textit{multi-parameter type classes (MPTC) with functional dependencies}: \texttt{class Send r s t a | s -> t r a} defines \texttt{Send} as a MPTC parameterised by recipient \texttt{r}, current state \texttt{s}, successor state \texttt{t} and payload type \texttt{a}, and \texttt{s -> t r a} expresses the functional dependency that, for an instance of this type class, the current state uniquely determines the successor state, the recipient and payload type. These type classes are independent of the EFSM.
+
+\paragraph{Transitions as instances of type classes} By encoding states as data types, valid EFSM transitions are encoded as \textit{instances} of the type classes. If \texttt{S1} is an output state, sending an \texttt{Int} to \texttt{Svr} with successor \texttt{S2}, we would encode \texttt{instance SendS1 :: Send Svr S1 S2 Int}. Because of the functional dependency, the developer cannot instantiate an invalid transition (e.g. \texttt{Send Svr S1 S3 Bool}, since \texttt{S1} uniquely determines the other type parameters. 
+
+This proposal is relevant to the problem we are tackling, and we appreciate that the intricacy of the library design in the communication combinators to conceal the channel resources is something we can build upon in our solution. We also observe the challenges of applying session types to the front-end environment, as shown by the careful choice made in \cite{PureScript2019} to use the \textit{Concur UI} framework which builds UI elements sequentially to model sequential sessions; not doing so would require binding channel resources into event listeners on UI elements, which makes linearity violation possible (e.g. by binding a send transition to a button click event, the user might click the button twice, thus reusing the channel).
+
+\subsection{Hybrid Session Verification}
+Whilst runtime monitors and type-level encoding achieve communication safety guarantees via dynamic and static approaches respectively, Hu and Yoshida implemented a workflow in \cite{Hybrid2016} that performs hybrid verification of communication protocol conformance for Java applications. We highlight the two main components below:
+
+\paragraph{Static session typing} States are represented as classes; supported transitions on each state are represented as instance methods, parameterised by the role, label and payload involved in the message exchange. A send method takes the payload to send as a parameter, whilst a receive method is a blocking call that requires the caller to allocate a \texttt{Buf<T>} wrapper on the stack (where \texttt{T} is the expected payload type), then the receive method populates the payload into the wrapper and returns upon receiving from the channel. These instance methods return a new instance of the successor state class.
+
+\paragraph{Runtime linear channel usage checks} Each state keeps track of its usage in a private boolean flag and throws an exception when the instance method is called twice, which signifies channel reuse and a linearity violation. Similarly, the \texttt{SessionEndpoint} class keeps track of whether the connection is open or close, and throws an exception when program execution exits the scope of the session endpoint and a terminal state has yet to be reached, signifying a protocol violation as the session hasn't completed yet but is now out of scope.
+
+We find that this proposal strikes a good balance between maximising static communication safety guarantees whilst providing an intuitive set of APIs for developers to efficiently write their applications. For example, the encoding of transitions as instance methods that return new instances of the successor state exposes the channel resource, and since Java does not build support for linear resources and does not monitor aliasing of variables, linear channel usage is monitored dynamically. However, this complements the imperative style of application code written in Java, and takes advantage of the type system to statically enforce valid transitions in the code.
+
+\subsection{Comparison}
+\label{section:codegencompare}
+
+We compare how these existing code generation approaches provide communication safety guarantees in Table \ref{table:comparison}.
+
+
+\begin{figure}[!h]
+\centering
+\begin{tabular}{l || p{0.35\textwidth} | p{0.35\textwidth}}
+%\begin{tabular}{l||l|l}
+Language & Behavioural typing & Channel linearity \\
+\hline\hline
+Python \cite{Python2017} & Dynamically enforced - runtime monitor represent the EFSM and only execute supported transitions. & Trivially guaranteed - channel resources not exposed, developer uses \texttt{send()} and \texttt{receive()} primitives. \\
+\hline
+PureScript \cite{PureScript2019} & Type-level encoding - EFSM states are encoded as types, IO actions are encoded as multi-parameter type classes (to express the semantics of the state transition function) and EFSM transitions are encoded as instances of said type classes. & Statically guaranteed - channels are not exposed in the provided combinators to prevent reuse, and session constructor requires a \texttt{Session} continuation parameterised by initial and terminal state to prevent incomplete sessions.  \\
+\hline
+Java \cite{Hybrid2016} & Statically guaranteed - states are encoded as classes; transitions are encoded as instance methods on the state class and return a new instance of the successor state class. & Checked at runtime - states keep \texttt{used} boolean flag to detect and prevent reuse, Session API implements \texttt{AutoCloseable} interface to be used in resource try-catch block to prevent unused.
+\end{tabular}
+\captionof{table}{Comparison between existing MPST code generation approaches.}
+\label{table:comparison}
+\end{figure}
