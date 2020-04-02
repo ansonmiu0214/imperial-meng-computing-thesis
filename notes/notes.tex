@@ -1,0 +1,206 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+
+\title{Project Notes}
+\author{Anson Miu}
+
+\begin{document}
+
+\nocite{*}
+
+\maketitle
+
+\section{Progress}
+
+\paragraph{01/04/2020}
+\begin{itemize}
+\item 
+Set up Node and TypeScript sandbox for testing.
+The idea is to have a workflow where the
+tool generates code for some protocol,
+then copies into the sandbox and runs
+the TypeScript compiler with the predefined
+\texttt{tsconfig.json}. 
+
+\item
+This guarantees that ``correct'' TypeScript is
+generated with respect to the TypeScript 
+language, not about correctness with respect
+to session.
+\end{itemize}
+
+
+\paragraph{02/04/2020}
+\begin{itemize}
+\item
+Set up React TypeScript sandbox for testing.
+No need \texttt{create-react-app} at
+the moment (which creates full application
+boilerplate) as we are just trying to check
+for TypeScript syntax.
+
+\item
+Piped the \texttt{tsfmt} into the code 
+generation workflow so no need to deal with
+spacing issues on Jinja template -- timesaver.
+
+\item
+The full code generation workflow ``works'' for 
+both targets. The validity of the generated 
+code works only for Node targets.
+
+\item
+Now focusing on formalising the React generated 
+code -- taking more time than planned because
+the TicTacToe example made more assumptions
+about the protocol than I thought
+\end{itemize}
+
+
+
+\section{MPST Encoding}
+
+
+\section{Code generation workflow}
+
+\section{Testing}
+
+\subsection{Unit tests}
+TODO -- typical, use \texttt{unittest} module
+to check for functionality of EFSM parsing
+etc.
+
+\subsection{Integration tests}
+For a given protocol and specified role/target,
+generate the TypeScript code, put into the
+sandbox environment and run \texttt{npm test} 
+(which is just a wrapper for 
+\texttt{tsc --noEmit})
+to expect success return code.
+
+\section{To fix later (most important first)}
+
+\subsection*{Receive transitions in React}
+This is the current workflow -- need to verify whether the receive transition is safe?
+
+\begin{enumerate}
+\item
+Assume you are on send state, user triggers
+event to perform send.
+\item
+Runtime performs the send over the WebSocket
+and renders the receive state \textbf{by
+calling \texttt{setState}}. Calling setState 
+schedules the state transition, just like
+how a Promise resolve scheduels the call in
+the high-priority callback queue.
+
+\item When the receive state is rendered (as a 
+result of \texttt{setState}), the lifecycle
+method \texttt{componentDidMount} will call \texttt{register} to add the receive handlers 
+
+\item \textbf{At the same time}, message is sent from
+other role to this user -- this triggers the 
+onMessage event listener on the WebSocket. 
+\textbf{There is no guarantee that \texttt{setState} 
+is called before the message event listener.}
+
+\end{enumerate}
+
+If the onMessage event listener
+is called before the setState,
+then the implementation breaks because there is no
+handler to use.
+
+\subsubsection*{Possible solution}
+
+Use the same approach as the backend.
+\textit{Ignoring the exact TypeScript types for now,}
+keep a message queue and a handler queue.
+
+On mounting the receive state (which is the actual
+transition), check whether there is a message in the 
+queue.
+\begin{itemize}
+\item
+If yes -- pop message and call handler based on label
+(and cast payload accordingly).
+
+\item
+If no -- add handler to queue.
+\end{itemize}
+
+On message receive, check whether there are handlers
+in the queue. 
+\begin{itemize}
+\item
+If yes -- call the correct one based on
+the label (and cast payload accordingly).
+
+\item
+If no -- add message to queue.
+\end{itemize}
+
+\begin{itemize}
+\item
+Do we need a queue? Is it possible for more than
+one message to be queued up, since you advance to
+a receive state and only expect to receive exactly
+one message? 
+
+\item
+Could use an optional-type variable
+but need to consider the types...
+\end{itemize}
+
+\subsection*{Send transition in React}
+Sends can only be event-driven --
+currently not possible to do this:
+
+\begin{enumerate}
+\item Server sends browser 
+\texttt{Offer(int)}
+\item Browser immediately sends 
+\texttt{Reject()} if payload is less than 0;
+otherwise attach a \texttt{Counter(int)} 
+send action to a user event.
+\end{enumerate}
+
+\section{Extensions}
+
+\subsection*{Explicit connection actions}
+
+See \cite{FASE2017} -- also refer to Battleships 
+example from Jonathan.
+
+\begin{lstlisting}
+explicit global protocol Game(role Svr, role P1, role P2) {
+  Play() connect P1 to Svr;
+  Play() connect P2 to Svr;
+  do OneGame(Svr, P1, P2);
+  disconnect P1 and Svr;
+  disconnect P2 and Svr;
+ }
+
+global protocol OneGame(role Svr, role P1, role P2)
+  Pos(Point) from P1 to Svr;
+  choice at Svr {
+    Lose(Point) from Svr to P2;
+    Win(Point) from Svr to P1;
+  } or {
+    Draw(Point) from Svr to P2;
+    Draw(Point) from Svr to P1;
+  } or {
+    Update(Point) from Svr to P2;
+    Update(Point) from Svr to P1;
+    do OneGame(Svr, P2, P1);
+  }
+}
+
+\end{lstlisting}
+
+\bibliographystyle{acm}
+\bibliography{notes}
+
+\end{document}
