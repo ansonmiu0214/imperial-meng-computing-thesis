@@ -5,9 +5,8 @@
 \title{Project Notes}
 \author{Anson Miu}
 
-\begin{document}
 
-\nocite{*}
+\begin{document}
 
 \maketitle
 
@@ -58,9 +57,15 @@ about the protocol than I thought
 \end{itemize}
 
 
-
 \section{MPST Encoding}
 
+\subsection{Node}
+
+TODO
+
+\subsection{Browser}
+
+TODO
 
 \section{Code generation workflow}
 
@@ -78,6 +83,9 @@ sandbox environment and run \texttt{npm test}
 (which is just a wrapper for 
 \texttt{tsc --noEmit})
 to expect success return code.
+
+\texttt{npm test} is already set up -- just need to
+set up the Python script to call for testing.
 
 \section{To fix later (most important first)}
 
@@ -122,25 +130,15 @@ keep a message queue and a handler queue.
 On mounting the receive state (which is the actual
 transition), check whether there is a message in the 
 queue.
-\begin{itemize}
-\item
 If yes -- pop message and call handler based on label
 (and cast payload accordingly).
-
-\item
 If no -- add handler to queue.
-\end{itemize}
 
 On message receive, check whether there are handlers
 in the queue. 
-\begin{itemize}
-\item
 If yes -- call the correct one based on
 the label (and cast payload accordingly).
-
-\item
 If no -- add message to queue.
-\end{itemize}
 
 \begin{itemize}
 \item
@@ -153,6 +151,10 @@ one message?
 Could use an optional-type variable
 but need to consider the types...
 \end{itemize}
+
+\subsection*{Exception handling}
+
+TODO read Exceptional GV paper \cite{ExceptionalGV}.
 
 \subsection*{Send transition in React}
 Sends can only be event-driven --
@@ -200,6 +202,46 @@ global protocol OneGame(role Svr, role P1, role P2)
 
 \end{lstlisting}
 
+\subsection*{Typestate in TypeScript}
+
+Look into TyoeScript transfomers -- the idea is
+to define typestate decorators, then augment the
+TypeScript compiler to transform the code into some
+intermediate layer to perform validation on
+typestate: for example, consider the example of a 
+stack that can either be full or empty.
+
+\section{Report Structure}
+
+\begin{enumerate}
+\item 
+Introduction -- as per PLACES (for now)
+
+\item
+Background -- process calculus, BST, MPST, code 
+generation, TypeScript; think about where React goes?
+
+\item
+MPST encoding in TypeScript (section 2 in these notes).
+Split into Node and browser targets, also talk about
+the different ideas building up to this (pros and
+cons of the experiments I did with Calculator in
+2019).
+
+Any of the new concepts (exception handling, etc.) will 
+go in this section too.
+
+TODO think about how to split into 
+more logical sections.
+
+\item
+Code generation workflow (section 3 in these notes)
+-- software architecture of
+toolchain implemented in Python.
+
+\end{enumerate}
+
+\nocite{*}
 \bibliographystyle{acm}
 \bibliography{notes}
 
