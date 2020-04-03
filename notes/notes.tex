@@ -53,7 +53,20 @@ code works only for Node targets.
 Now focusing on formalising the React generated 
 code -- taking more time than planned because
 the TicTacToe example made more assumptions
-about the protocol than I thought
+about the protocol than I thought.
+\end{itemize}
+
+
+\paragraph{03/04/2020}
+\begin{itemize}
+\item
+Build system testing pipeline -- register which
+Scribble protocols to test, specify which role
+(e.g. Bob) corresponds with which target (e.g. Node),
+then the pipeline will perform the code generation,
+check for success exit code, then invoke the
+TypeScript compiler to check the TypeScript code
+and also check for success exit code.
 \end{itemize}
 
 
