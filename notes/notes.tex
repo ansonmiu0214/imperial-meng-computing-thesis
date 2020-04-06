@@ -84,6 +84,50 @@ states and makes the runtime more lightweight.
 The generated code for BinaryNoPayload.scr is functional for both Node and browser targets.
 \end{itemize}
 
+\paragraph{06/04/2020}
+\begin{itemize}
+\item
+Modified Node.js code generation templates to
+take inspiration from the browser ones -- namely,
+to make the runtime more lightweight by pushing
+logic to the individual states; again, this means
+no more huge switch statement with duplication.
+
+\item
+New structure for Node.js generated code generally
+works. Explicitly used partial application to
+focus the types (e.g. State $\to$ ReceiveState $\to$
+ReceiveState.S12), and define each non-terminal
+state as a separate module to internally use
+its known message/label types to parse messages
+without having one large switch statement in the
+runtime. 
+
+\item
+Taking cues from Express middleware (with
+the \texttt{next} function) to allow the
+runtime to pass the send and receive functions
+into the individual states, and give a callback
+function for the individual states to pass any
+data back to the runtime. 
+
+\item
+An example of this is for receive states -- 
+the receive state needs to construct the message 
+receive handler \textbf{tailored to the types/labels of 
+that particular state}. This message receive handler
+will do the parsing, invoke the correct receive
+function, and advance the EFSM to the correct
+successor state (achieved by having the runtime
+pass the state-advancing function as param).
+
+\item
+Problem -- still need a type cast for the time being
+with the handler functions; not sure why the types
+aren't specific enough , trying to make sense of the 
+error message at the moment.
+\end{itemize}
+
 \section{MPST Encoding}
 
 \subsection{Node}
