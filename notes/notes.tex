@@ -140,6 +140,46 @@ required in the templates.
 
 \end{itemize}
 
+\paragraph{08/04/2020}
+\begin{itemize}
+\item
+Different MPST TypeSrcript encoding for Node targets --
+we consider the previous encodings (labelled callbacks for
+receive states, union types for send states) as ``handlers'',
+and the developer needs to wrap them in an ``implementation''
+class instance.
+
+\item
+The aim is for the runtime to be as lightweight as possible
+-- it only needs to concern with whether the new state
+is sending, receiving or terminal; and the state implementation
+deals with performing the corresponding channel action
+based on the particular label/payload types of that state.
+
+\item
+The class-based implementation/handler distinction allows
+the runtime to use \texttt{instanceof} to safely narrow the
+type of implementation. Each type of state essentially acts as
+an interface (but we use classes in TypeScript to take advantage
+of the \texttt{instanceof} function -- the equivalent notion
+of a Java interface can be expressed as a TypeScript abstract
+class with abstract methods and no properties defined). Because
+all receive states will expose the same method signature,
+everything type-checks.
+
+\end{itemize}
+
+\paragraph{09/04/2020}
+\begin{itemize}
+\item
+Fix label regex problem in EFSM parsing -- currently just
+allow alphabets, should allow more (i.e. alphanumeric
++ ``typical symbols'' like underscores and dashes).
+
+\item
+Could also look up source code of Scribble-Java to see what they use.
+\end{itemize}
+
 \section{MPST Encoding}
 
 \subsection{Node}
@@ -160,6 +200,11 @@ TODO - on OneNote
 TODO -- typical, use \texttt{unittest} module
 to check for functionality of EFSM parsing
 etc.
+
+\begin{itemize}
+\item EFSM parsing -- regexes, \dots
+\item EFSM API
+\end{itemize}
 
 \subsection{Integration tests}
 TODO -- integrate with external components, namely
