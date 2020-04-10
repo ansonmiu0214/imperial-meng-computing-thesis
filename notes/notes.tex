@@ -1,6 +1,8 @@
 \documentclass{article}
+\usepackage[margin=1in]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage{listings}
+\usepackage{amsmath}
 
 \title{Project Notes}
 \author{Anson Miu}
@@ -178,13 +180,111 @@ allow alphabets, should allow more (i.e. alphanumeric
 
 \item
 Could also look up source code of Scribble-Java to see what they use.
+
+\item
+Fix message payload parsing in EFSM to correctly strip and filter out whitespace.
+
+\item
+Adapt Node/React templates for message payload types -- the Calculator example
+(binary session with recursion, selection and branching) now produces valid TypeScript
+code for both browser and client.
+
 \end{itemize}
 
 \section{MPST Encoding}
 
 \subsection{Node}
 
-TODO - on OneNote
+\subsubsection{Encoding}
+We distinguish between \textbf{handler} (the PLACES encoding which handle the
+message sending and receiving) and \textbf{implementation} (the wrapper around the handler).
+
+\paragraph{Send / Selection}
+Assume state S1 can select from a list of [Label, Payload, Successor] such that Payload and Successor
+are dependent on Label.
+
+\begin{align}
+encoding_{Send}(S) &= handler_{Send}(S), impl_{Send}(S) \\
+handler_{Send}(S) &= \bigcup_{i \in labels(S)} [Labels_i,~Payload_i,~Impl(Succ_i)] \\
+impl_{Send}(S) &= sendImpl(Handler(S),~Message(S))
+\end{align}
+
+\texttt{sendImpl} defines a subclass of \texttt{Implementation.Send} based on the handler data type
+and message data type (the union of possible messages). It implements the abstract method
+\texttt{performSend} based on these parameters, which (1) sends the message using
+the method (or channel passed in by runtime), then (2) advances to next state (again, using
+function passed in by runtime which acts as a ``send``).
+
+\paragraph{Receive / Branching}
+
+\begin{align}
+encoding_{Recv}(S) &= handler_{Recv}(S), impl_{Recv}(S) \\
+handler_{Recv}(S) &= Map_{i \in labels(S)}\left<Labels_i, Function\left<Payload_i, Impl(Succ_i)\right>\right> \\
+impl_{Recv}(S) &= recvImpl(Handler(S), Message(S))
+\end{align}
+
+\texttt{recvImpl} defines a subclass of \texttt{Implementation.Recv} based on the handler data type
+and message data type (the union of possible messages). It implements the abstract method
+\texttt{performRecv} based on these parameters, which (1) prepares the receive handler (a function that takes
+(message: any) => void), then (2) registers this handler to the runtime using the passed-in callback
+(which acts as sending the handler to the runtime), and (3) when said handler in (1) gets called by the runtime
+(essentially receiving from the runtime), actually performs the receive and (4) advances to next state.
+
+\subsubsection{Runtime as session type}
+Loosely define the protocol for message passing between the runtime and the
+corresponding state implementation.
+
+\begin{lstlisting}[breaklines=true, tabsize=4, frame=single]
+protocol Next(role Runtime, role State) {
+	// not really a `choice`, more of `based on the type of State`\dots
+	choice at Runtime {
+		// non-terminal
+		choice at Runtime {
+			// send
+			PerformSend(???) from Runtime to State;
+			Send(role: string, label: string, payload: any[]) from State to Runtime;
+			
+			// runtime sends message through WebSocket
+			
+			// `Successor` is the state transition function in the literature
+			do Next(Runtime, Successor<State, label>);
+			
+		} or {
+			// receive
+			PrepareReceive(???) from Runtime to State;
+			do Receive(Runtime, State);
+		}
+		
+	} or {
+		// terminal
+	}
+}
+
+protocol Receive(role Runtime, role State) {
+	
+	/*
+	choice {
+		Message(label: string, payload: any[]) from ??? to Runtime;
+		Register(???) from State to Runtime;
+		PerfomReceive(???) from Runtime to State;
+		do Next(Runtime, Successor<State, label>);
+	} or {
+		Register(???) from State to Runtime;
+		Message(label: string, payload: any[]) from ??? to Runtime;
+		PerformReceive(???) from Runtime to State;
+		do Next(Runtime, Successor<State, label>); 
+	}
+	*/
+	
+	// State sends a Channel to Runtime
+	Register(performReceive: ???) from State to Runtime;
+	
+	// whenever the message arrives -- regardless whether it is before or after
+	performReceive({ label: string, payload: any[] }) from Runtime to State;
+	
+	do Next(Runtime, Successor<State, label>);
+}
+\end{lstlisting}
 
 \subsection{Browser}
 
