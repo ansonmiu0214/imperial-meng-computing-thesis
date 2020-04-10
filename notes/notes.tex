@@ -191,6 +191,14 @@ code for both browser and client.
 
 \end{itemize}
 
+\paragraph{10/04/2020}
+\begin{itemize}
+\item
+Start formalising the encoding for states and runtime for Node targets.
+
+
+\end{itemize}
+
 \section{MPST Encoding}
 
 \subsection{Node}
@@ -241,7 +249,7 @@ protocol Next(role Runtime, role State) {
 		// non-terminal
 		choice at Runtime {
 			// send
-			PerformSend(???) from Runtime to State;
+			PerformSend(send: ???, next: ???) from Runtime to State;
 			Send(role: string, label: string, payload: any[]) from State to Runtime;
 			
 			// runtime sends message through WebSocket
@@ -251,7 +259,7 @@ protocol Next(role Runtime, role State) {
 			
 		} or {
 			// receive
-			PrepareReceive(???) from Runtime to State;
+			PrepareReceive(register: ???, next: ???) from Runtime to State;
 			do Receive(Runtime, State);
 		}
 		
