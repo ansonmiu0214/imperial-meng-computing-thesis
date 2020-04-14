@@ -195,8 +195,15 @@ code for both browser and client.
 \begin{itemize}
 \item
 Start formalising the encoding for states and runtime for Node targets.
+\end{itemize}
 
-
+\paragraph{13/04/2020}
+\begin{itemize}
+\item
+Fix type signature for React event handler -- extract the 
+camelCase keys from \texttt{React.DOMAttributes} and infer
+the type of event (e.g. MouseEvent from `onClick') to correctly
+type the event handler.
 \end{itemize}
 
 \section{MPST Encoding}
