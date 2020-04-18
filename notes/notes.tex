@@ -228,6 +228,24 @@ Exploring the theory for reasoning about global types
 specific for web services generation.
 \end{itemize}
 
+\paragraph{18/04/2020}
+\begin{itemize}
+\item
+Implement utility tool to: (1) parse existing type declarations
+from Scribble file, (2) extract user custom types,
+(3) insert missing TypeScript primitive types, before proceeding
+with normal workflow.
+
+\item
+Adapt EFSM API -- previously, I use a metadata dictionary
+to store the protocol name and role name. Now that I need to
+propagate the custom type information too, I have a new 
+\texttt{Endpoint} API which holds the EFSM (without metadata)
+and the protocol/role name is lifted as a property of the 
+endpoint API. Jinja templates have been adapted with the
+API change.
+\end{itemize}
+
 \section{MPST Encoding}
 
 \subsection{Node}
