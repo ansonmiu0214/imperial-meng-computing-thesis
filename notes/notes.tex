@@ -3,6 +3,9 @@
 \usepackage[utf8]{inputenc}
 \usepackage{listings}
 \usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{wasysym}
+\usepackage{stmaryrd}
 
 \title{Project Notes}
 \author{Anson Miu}
@@ -250,6 +253,13 @@ Update Jinja templates to render custom type import
 statements in TypeScript.
 \end{itemize}
 
+\paragraph{19/04/2020}
+\begin{itemize}
+\item
+Draft theory of MPST for webservices over websockets 
+(on OneNote).
+\end{itemize}
+
 \section{MPST Encoding}
 
 \subsection{Node}
@@ -380,9 +390,94 @@ to expect success return code.
 \texttt{npm test} is already set up -- just need to
 set up the Python script to call for testing.
 
+\newpage
+
+\section{MPST for Web Services}
+
+\paragraph{Main Idea}
+Protocols for webservices implemented over WebSockets
+present additional constraints.
+
+\begin{enumerate}
+\item Exactly one server-side role.
+\item Client-side roles only \textit{directly} communicate 
+to the server-side role.
+\end{enumerate}
+
+\subsection*{Global types for webservices}
+
+Recall $G$, the global types from multiparty session types:
+
+\begin{align*}
+G ::&= \texttt{end} \\
+&\mid p \to q : \{ l_i: G_i \}_{i \in I} \\
+&\mid \mu t. G \\
+&\mid t
+\end{align*}
+
+We consider $G_{WS}$, global types for webservices over 
+websockets, defined as a tuple of the original global type $G$, 
+and a participant $p$ explicitly specified as the server role;
+all other participants $q \in pt(G)$ are assumed to take
+on browser roles:
+\begin{align*}
+G_{WS} ::= G \times p
+\end{align*}
+
+We also use the same process calculus defined before:
+
+\begin{align*}
+P ::&= 0 \mid \mu X. P \mid X \\
+&\mid p \rhd \{ l_i: P_i \}_{i \in I} \\
+&\mid p \lhd l. P \\
+&\mid \texttt{if e then } P \texttt{ else } P\\\\
+\mathcal{M} ::&= p :: P \\
+&\mid \mathcal{M} \mid \mathcal{M}
+\end{align*}
+
+The typing judgement for a multiparty session with respect
+to the webservice global type builds upon the \textsc{[MTy]}
+rule.
+
+
+\subsection*{Codegen}
+\texttt{codegen :: $\mathcal{M}$ $\times$ Role 
+$\to$ $\mathcal{M}$}
+
+
+\subsubsection*{Main rules}
+
+\begin{align*}
+&codegen~(p :: q \lhd l_j. P 
+\mid q :: p \rhd \{ l_i: Q_i \}_{i \in I} 
+\mid s :: S 
+\mid \mathcal{M})~s \\
+=~&codegen~(p :: s \lhd l. P 
+\mid q :: s \rhd \{l_i: Q_i\}_{i \in I}
+\mid s :: p \rhd )\\
+&where  \\
+\dots
+\end{align*}
+
+\subsubsection*{Trivial rules}
+
+\subsection*{Encoding}
+
+\subsection*{Preservation}
+Modifying the process through code generation preserves
+well-typedness of the session.
+
+\paragraph{To show:} let $G_{WS} = (G, p)$. 
+If $\mathcal{M}$ is well-typed with respect to $G_{WS}$,
+then \texttt{codegen($\mathcal{M},~p$)} is well-typed
+with respect to $\llbracket G_{WS} \rrbracket$
+
+
+\newpage
+
 \section{To fix later (most important first)}
 
-\subsection*{Receive transitions in React}
+\subsection*{[Done] Receive transitions in React}
 This is the current workflow -- need to verify whether the receive transition is safe?
 
 \begin{enumerate}
