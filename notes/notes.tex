@@ -260,6 +260,12 @@ Draft theory of MPST for webservices over websockets
 (on OneNote).
 \end{itemize}
 
+\paragraph{20/04/2020}
+\begin{itemize}
+\item
+Prove preservation of wellformedness.
+\end{itemize}
+
 \section{MPST Encoding}
 
 \subsection{Node}
@@ -424,54 +430,33 @@ on browser roles:
 G_{WS} ::= G \times p
 \end{align*}
 
-We also use the same process calculus defined before:
+We define an encoding $\llbracket \cdot \rrbracket :: G_{WS} \to G$
+which replaces client-to-client interactions to be routed via
+the server role.
 
-\begin{align*}
-P ::&= 0 \mid \mu X. P \mid X \\
-&\mid p \rhd \{ l_i: P_i \}_{i \in I} \\
-&\mid p \lhd l. P \\
-&\mid \texttt{if e then } P \texttt{ else } P\\\\
-\mathcal{M} ::&= p :: P \\
-&\mid \mathcal{M} \mid \mathcal{M}
-\end{align*}
+\paragraph{Well-formedness} A global type is well-formed if its
+projections exist for all participants. Formally,
 
-The typing judgement for a multiparty session with respect
-to the webservice global type builds upon the \textsc{[MTy]}
-rule.
+\[ \text{wellFormed}(G) \Longleftrightarrow 
+\forall p \in \texttt{pt}(G). \exists S. (G \upharpoonright p = S) \]
 
+This naturally extends to $G_{WS} = (G, s)$ as we just require that
+the server role is a participant in $G$.
 
-\subsection*{Codegen}
-\texttt{codegen :: $\mathcal{M}$ $\times$ Role 
-$\to$ $\mathcal{M}$}
+\[ \text{wellFormed}_{WS}(G, s) = \text{wellFormed}(G)
+\wedge s \in \texttt{pt}(G) \]
 
+\subsection*{Preservation of well-formedness} 
 
-\subsubsection*{Main rules}
+Take $G_{WS} = 
+(G, s)$ for some global type $G$ and server role $s$. 
 
-\begin{align*}
-&codegen~(p :: q \lhd l_j. P 
-\mid q :: p \rhd \{ l_i: Q_i \}_{i \in I} 
-\mid s :: S 
-\mid \mathcal{M})~s \\
-=~&codegen~(p :: s \lhd l. P 
-\mid q :: s \rhd \{l_i: Q_i\}_{i \in I}
-\mid s :: p \rhd )\\
-&where  \\
-\dots
-\end{align*}
+\paragraph{Proposition}
+If $\text{wellFormed}_{WS}(G_{WS})$, 
+then $\text{wellFormed}(\llbracket G_{WS} \rrbracket)$.
 
-\subsubsection*{Trivial rules}
-
-\subsection*{Encoding}
-
-\subsection*{Preservation}
-Modifying the process through code generation preserves
-well-typedness of the session.
-
-\paragraph{To show:} let $G_{WS} = (G, p)$. 
-If $\mathcal{M}$ is well-typed with respect to $G_{WS}$,
-then \texttt{codegen($\mathcal{M},~p$)} is well-typed
-with respect to $\llbracket G_{WS} \rrbracket$
-
+\paragraph{Proof}
+By induction on structure of $G$.
 
 \newpage
 
