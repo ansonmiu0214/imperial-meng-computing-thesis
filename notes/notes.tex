@@ -266,6 +266,30 @@ Draft theory of MPST for webservices over websockets
 Prove preservation of wellformedness.
 \end{itemize}
 
+\paragraph{23/04/2020}
+\begin{itemize}
+\item
+Prove preservation of full-mergeability -- for global types
+$G_1, G_2$ and role $r$, if $(G_1 \upharpoonright r)
+\sqcap (G_2 \upharpoonright r)$ exists, then the projections 
+from the encodings should be mergeable too, i.e. 
+($\llbracket G_1, s \rrbracket \upharpoonright r)
+\sqcap (\llbracket G_2, s \rrbracket \upharpoonright r)$
+exists too.
+
+\item
+Implement the TwoBuyer protocol in code -- modified templates
+for routing messages in server role.
+
+\item
+Identified additional lemmas to prove for full-mergeability;
+likewise for the well-formedness proof (found a caveat with
+inductive case for proving encoding of recursion, because
+the way the encoding handles recursion is different from how
+projection handles recursion -- the latter projects depending
+on whether the role to project to is a participant).
+\end{itemize}
+
 \section{MPST Encoding}
 
 \subsection{Node}
