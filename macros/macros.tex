@@ -94,11 +94,11 @@
 \subsection{Participants}
 \doublespacing
 \[
-\begin{array}{>{\displaystyle}r>{\displaystyle}c>{\displaystyle}l}
-		\pt{\tyend} & = & \left\{\right\} \\
-		\pt{\tyrecvar} & = & \left\{\right\} \\
-		\pt{\tyrec{G}} & = & \pt{G} \\
-		\pt{\gcomm{p}{q}{l_i(\vec{U_i}): G_i}{i \in I}} & = & \left\{\role{p},\role{q}\right\} \cup \bigcup_{i \in I}\pt{G_i} \\
+\begin{array}{>{\displaystyle}r>{\displaystyle}l}
+		\pt{\tyend} & = \left\{\right\} \\
+		\pt{\tyrecvar} & = \left\{\right\} \\
+		\pt{\tyrec{G}} & = \pt{G} \\
+		\pt{\gcomm{p}{q}{l_i(\vec{U_i}): G_i}{i \in I}} & = \left\{\role{p},\role{q}\right\} \cup \bigcup_{i \in I}\pt{G_i} \\
 \end{array}
 \]
 \singlespacing
@@ -106,14 +106,14 @@
 \subsection{Projection}
 \doublespacing
 \[
-\begin{array}{>{\displaystyle}r>{\displaystyle}c>{\displaystyle}l>{\displaystyle}l}
-		\proj{\tyend}{p} & = & \tyend & \\
-		\proj{\tyrecvar}{p} & = & \tyrecvar & \\
-		\proj{\tyrec{G}}{p} & = & \tyrec{(\proj{G}{p})} & \textit{, if }\role{p} \in \pt{G}\\
-		\proj{\tyrec{G}}{p} & = & \tyend & \textit{, if }\role{p} \notin \pt{G}\\
-		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = & \tysel{q}{l_i: (\proj{G_i}{r})}{i \in I} & \textit{, if }\role{r} = \role{p} \\
-		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = & \tybra{p}{l_i: (\proj{G_i}{r})}{i \in I} & \textit{, if }\role{r} = \role{q} \\
-		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = & \underset{i \in I}{\tyMERGEOP}{(\proj{G_i}{r})} & \textit{, if }\role{r} \notin \left\{\role{p},\role{q}\right\}
+\begin{array}{>{\displaystyle}r>{\displaystyle}l>{\displaystyle}l}
+		\proj{\tyend}{p} & = \tyend & \\
+		\proj{\tyrecvar}{p} & = \tyrecvar & \\
+		\proj{\tyrec{G}}{p} & = \tyrec{(\proj{G}{p})} & \textit{, if }\role{p} \in \pt{G}\\
+		\proj{\tyrec{G}}{p} & = \tyend & \textit{, if }\role{p} \notin \pt{G}\\
+		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = \tysel{q}{l_i: (\proj{G_i}{r})}{i \in I} & \textit{, if }\role{r} = \role{p} \\
+		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = \tybra{p}{l_i: (\proj{G_i}{r})}{i \in I} & \textit{, if }\role{r} = \role{q} \\
+		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = \underset{i \in I}{\tyMERGEOP}{(\proj{G_i}{r})} & \textit{, if }\role{r} \notin \left\{\role{p},\role{q}\right\}
 \end{array}
 \]
 \singlespacing
@@ -121,17 +121,18 @@
 \subsection{Full Merge}
 \doublespacing
 \[
-\begin{array}{>{\displaystyle}r>{\displaystyle}c>{\displaystyle}ll}
-		\tymerge{S}{T} & = & S & \textit{, if $S = T$} \\
-		\tymerge{\left(\tybra{p}{l_i: S_i}{i \in I}\right)}{\left(\tybra{p}{l_j: T_j}{j \in J}\right)} & = & \dots & \textit{, where } S_k = \begin{cases}
-0 & 0 \\
-1 & 1 \\
-2 & 2
+\begin{array}{>{\displaystyle}r>{\displaystyle}ll}
+		\tymerge{S}{T} & = S & \textit{, if $S = T$} \\
+		\tymerge{\left(\tybra{p}{l_i: S_i}{i \in I}\right)}{\left(\tybra{p}{l_j: T_j}{j \in J}\right)} & = \tybra{p}{l_k: S_k}{k \in (I \cup J)} & \textit{, where } S_k = \begin{cases}
+S_k & , k \in I \setminus J \\
+T_k & , k \in J \setminus I \\
+\tymerge{S_k}{T_k} & , k \in I \cap  J
 \end{cases} \\
-		\tymerge{S}{T} & = & \textit{undefined} & \textit{, otherwise}\\
+		\tymerge{S}{T} & = \textit{undefined} & \textit{, otherwise}\\
 \end{array}
 \]
 \singlespacing
 
+\section{Scribble}
 
 \end{document}
