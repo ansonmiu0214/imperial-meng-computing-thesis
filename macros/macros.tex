@@ -75,6 +75,18 @@
 \]
 \singlespacing
 
+\subsection{Partial Projection (ECOOP)}
+\doublespacing
+\[
+\begin{array}{rcl}
+		\proj{\tyend}{p} & = & \tyend \\
+		\proj{\tyrecvar}{p} & = & \tyrecvar \\
+		\proj{\tyrec{S}}{p} & = & \tyrec{\left(\proj{S}{p}\right)} \\
+		\proj{\left(\tybra{p}{l_i(\vec{U_i}): S_i}{i \in I}\right)}{r} & = & \tybra{p}{l_i(\vec{U_i}): \proj{S_i}{r}}{i \in I} \\
+\end{array}
+\]
+\singlespacing
+
 \section{Multiparty Session Types}
 
 \subsection{Global Types}
