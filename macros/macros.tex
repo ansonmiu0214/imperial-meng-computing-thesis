@@ -1,0 +1,137 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{setspace}
+
+\input{mpst.tex}
+
+\title{Multiparty Session Type Macros}
+
+\begin{document}
+
+\maketitle
+
+\section{Asynchronous $\pi$-Calculus}
+\doublespacing
+\[
+\begin{array}{rlr}
+    P, Q ::= & & \text{Processes} \\
+     & \nil & \text{Nil Process} \\
+		\mid & \piin{u}{x}.P & \text{Input} \\
+		\mid & \piout{u}{v} & \text{Output} \\
+		\mid & \pipar{P}{Q} & \text{Parallel Composition} \\
+		\mid & \pirepl{P} & \text{Replication} \\
+		\mid & \pires{a}{P} & \text{Restriction} \\
+    u, v ::= & & \text{Identifiers} \\
+     & x, y, z, \dots & \text{Variables} \\
+		\mid & a, b, c, \dots & \text{Channels} \\
+\end{array}
+\]
+\singlespacing
+
+\section{Process Calculus}
+
+\doublespacing
+\[
+\begin{array}{rlr}
+    P, Q ::= & & \text{Processes} \\
+     & \nil & \text{Nil Process} \\
+		\mid & \bra{p}{l_i(\vec{x_i}): P_i}{i \in I} & \text{Branching} \\
+		\mid & \sel{p}{l \langle \vec{e}\,\rangle. P} & \text{Selection} \\
+		\mid & \cond{e}{P}{Q} & \text{Conditional} \\
+		\mid & \rec{P} & \text{Recursive Process} \\
+		\mid & \recvar & \text{Process Variable} \\
+\end{array}
+\]
+\singlespacing
+
+\section{Binary Session Types}
+
+\subsection{Session Types}
+
+\doublespacing
+\[
+\begin{array}{rlr}
+    S ::= & & \text{Session Types} \\
+     & \tyend & \text{Termination} \\
+		\mid & \tybra{p}{l_i(\vec{U_i}): S_i}{i \in I} & \text{Branching} \\
+		\mid & \tysel{p}{l_i \langle\vec{U_i}\rangle: S_i}{i \in I} & \text{Selection} \\
+		\mid & \tyrec{S} & \text{Recursion} \\
+		\mid & \tyrecvar & \text{Type Variable} \\
+\end{array}
+\]
+\singlespacing
+
+\subsection{Duality}
+\doublespacing
+\[
+\begin{array}{rcl}
+		\dual{\tyend} & = & \tyend \\
+		\dual{\tyrecvar} & = & \tyrecvar \\
+		\dual{\tyrec{S}} & = & \tyrec{\dual{S}} \\
+		\dual{\tybra{p}{l_i(\vec{U_i}): S_i}{i \in I}} & = & \tybra{p}{l_i(\vec{U_i}): \dual{S_i}}{i \in I} \\
+		\dual{\tysel{p}{l_i(\vec{U_i}): S_i}{i \in I}} & = & \tysel{p}{l_i(\vec{U_i}): \dual{S_i}}{i \in I} \\
+\end{array}
+\]
+\singlespacing
+
+\section{Multiparty Session Types}
+
+\subsection{Global Types}
+
+\doublespacing
+\[
+\begin{array}{rlr}
+    G ::= & & \text{Global Types} \\
+     & \tyend & \text{Termination} \\
+	\mid & \tyrecvar & \text{Type Variable} \\
+	\mid & \tyrec{G} & \text{Recursion} \\
+	\mid & \gcomm{p}{q}{l_i(\vec{U_i}): G_i}{i \in I} & \text{Communication} \\
+\end{array}
+\]
+\singlespacing
+
+\subsection{Participants}
+\doublespacing
+\[
+\begin{array}{>{\displaystyle}r>{\displaystyle}c>{\displaystyle}l}
+		\pt{\tyend} & = & \left\{\right\} \\
+		\pt{\tyrecvar} & = & \left\{\right\} \\
+		\pt{\tyrec{G}} & = & \pt{G} \\
+		\pt{\gcomm{p}{q}{l_i(\vec{U_i}): G_i}{i \in I}} & = & \left\{\role{p},\role{q}\right\} \cup \bigcup_{i \in I}\pt{G_i} \\
+\end{array}
+\]
+\singlespacing
+
+\subsection{Projection}
+\doublespacing
+\[
+\begin{array}{>{\displaystyle}r>{\displaystyle}c>{\displaystyle}l>{\displaystyle}l}
+		\proj{\tyend}{p} & = & \tyend & \\
+		\proj{\tyrecvar}{p} & = & \tyrecvar & \\
+		\proj{\tyrec{G}}{p} & = & \tyrec{(\proj{G}{p})} & \textit{, if }\role{p} \in \pt{G}\\
+		\proj{\tyrec{G}}{p} & = & \tyend & \textit{, if }\role{p} \notin \pt{G}\\
+		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = & \tysel{q}{l_i: (\proj{G_i}{r})}{i \in I} & \textit{, if }\role{r} = \role{p} \\
+		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = & \tybra{p}{l_i: (\proj{G_i}{r})}{i \in I} & \textit{, if }\role{r} = \role{q} \\
+		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = & \underset{i \in I}{\tyMERGEOP}{(\proj{G_i}{r})} & \textit{, if }\role{r} \notin \left\{\role{p},\role{q}\right\}
+\end{array}
+\]
+\singlespacing
+
+\subsection{Full Merge}
+\doublespacing
+\[
+\begin{array}{>{\displaystyle}r>{\displaystyle}c>{\displaystyle}ll}
+		\tymerge{S}{T} & = & S & \textit{, if $S = T$} \\
+		\tymerge{\left(\tybra{p}{l_i: S_i}{i \in I}\right)}{\left(\tybra{p}{l_j: T_j}{j \in J}\right)} & = & \dots & \textit{, where } S_k = \begin{cases}
+0 & 0 \\
+1 & 1 \\
+2 & 2
+\end{cases} \\
+		\tymerge{S}{T} & = & \textit{undefined} & \textit{, otherwise}\\
+\end{array}
+\]
+\singlespacing
+
+
+\end{document}

@@ -1,0 +1,100 @@
+% PROOF TREES
+
+% CODE LISTING
+
+% COMMANDS
+\usepackage{ wasysym }
+\usepackage{ amssymb }
+\usepackage{ xcolor }
+\usepackage{ bm }
+\usepackage{ cmll }
+\usepackage{ array } 
+
+%% TEXT
+\newcommand{\rulename}[1]{
+[\textsc{#1}]
+}
+
+%% SYMBOLS
+\newcommand{\role}[1]{
+{\color{blue}\bm{\mathsf{#1}}}
+}
+
+%% PI CALCULUS
+\newcommand{\nil}{
+\mathbf{0}
+}
+\newcommand{\piin}[2]{
+{#1}({#2})
+}
+\newcommand{\piout}[2]{
+\bar{#1}\langle {#2} \rangle
+}
+\newcommand{\pipar}[2]{
+\left({#1}\mid{#2}\right)
+}
+\newcommand{\pirepl}[1]{
+!{#1}
+}
+\newcommand{\pires}[2]{
+(\nu{#1})~{#2}
+}
+
+%% SESSION CALCULUS
+\newcommand{\bra}[3]{
+\role{#1} \rhd \left\{ {#2} \right\}_{#3}
+}
+\newcommand{\sel}[2]{
+\role{#1} \lhd {#2}
+}
+\newcommand{\cond}[3]{
+\texttt{if}~{#1}~\texttt{then}~{#2}~\texttt{else}~{#3}
+}
+\newcommand{\rec}[1]{
+\mu X.{#1}
+}
+\newcommand{\recvar}{X}
+\newcommand{\sess}[2]{
+\role{#1}::{#2}
+}
+
+%% SESSION TYPE
+\newcommand{\tyend}{
+\textbf{\texttt{end}}
+}
+
+\newcommand{\tybra}[3]{
+\role{#1} \with \left\{ #2 \right\}_{#3}
+}
+\newcommand{\tysel}[3]{
+\role{#1} \oplus \left\{ {#2} \right\}_{#3}
+}
+\newcommand{\tyrec}[1]{
+\mu\tyrecvar.{#1}
+}
+\newcommand{\tyrecvar}{
+\textbf{\texttt{t}}
+}
+\newcommand{\dual}[1]{
+\overline{#1}
+}
+
+%% GLOBAL TYPE
+\newcommand{\pt}[1]{
+\texttt{pt}\left({#1}\right)
+}
+\newcommand{\gcomm}[4]{
+\role{#1} \to \role{#2} : \left\{ {#3} \right\}_{#4}
+}
+\newcommand{\proj}[2]{
+{#1} \upharpoonright \role{#2}
+}
+\newcommand{\tymergeop}{
+\sqcap
+}
+\newcommand{\tyMERGEOP}{
+{\mbox{\LARGE$\sqcap$}}
+}
+\newcommand{\tymerge}[2]{
+{#1}\,{\tymergeop}\,{#2}
+}
