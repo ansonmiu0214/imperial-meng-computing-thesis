@@ -55,7 +55,7 @@
     S ::= & & \text{Session Types} \\
      & \tyend & \text{Termination} \\
 		\mid & \tybra{p}{l_i(\vec{U_i}): S_i}{i \in I} & \text{Branching} \\
-		\mid & \tysel{p}{l_i \langle\vec{U_i}\rangle: S_i}{i \in I} & \text{Selection} \\
+		\mid & \tysel{p}{l_i(\vec{U_i}): S_i}{i \in I} & \text{Selection} \\
 		\mid & \tyrec{S} & \text{Recursion} \\
 		\mid & \tyrecvar & \text{Type Variable} \\
 \end{array}
@@ -71,18 +71,6 @@
 		\dual{\tyrec{S}} & = & \tyrec{\dual{S}} \\
 		\dual{\tybra{p}{l_i(\vec{U_i}): S_i}{i \in I}} & = & \tybra{p}{l_i(\vec{U_i}): \dual{S_i}}{i \in I} \\
 		\dual{\tysel{p}{l_i(\vec{U_i}): S_i}{i \in I}} & = & \tysel{p}{l_i(\vec{U_i}): \dual{S_i}}{i \in I} \\
-\end{array}
-\]
-\singlespacing
-
-\subsection{Partial Projection (ECOOP)}
-\doublespacing
-\[
-\begin{array}{rcl}
-		\proj{\tyend}{p} & = & \tyend \\
-		\proj{\tyrecvar}{p} & = & \tyrecvar \\
-		\proj{\tyrec{S}}{p} & = & \tyrec{\left(\proj{S}{p}\right)} \\
-		\proj{\left(\tybra{p}{l_i(\vec{U_i}): S_i}{i \in I}\right)}{r} & = & \tybra{}{l_i(\vec{U_i}): \left(\proj{S_i}{r}\right)}{i \in I} \\
 \end{array}
 \]
 \singlespacing
@@ -134,13 +122,23 @@
 \doublespacing
 \[
 \begin{array}{>{\displaystyle}r>{\displaystyle}ll}
-		\tymerge{S}{T} & = S & \textit{, if $S = T$} \\
-		\tymerge{\left(\tybra{p}{l_i: S_i}{i \in I}\right)}{\left(\tybra{p}{l_j: T_j}{j \in J}\right)} & = \tybra{p}{l_k: S_k}{k \in (I \cup J)} & \textit{, where } S_k = \begin{cases}
-S_k & , k \in I \setminus J \\
-T_k & , k \in J \setminus I \\
-\tymerge{S_k}{T_k} & , k \in I \cap  J
+		\tymerge{S}{S'} & = S & \textit{, if $S = S'$} \\
+		\tymerge{\left(\tybra{p}{l_i: S_i}{i \in I}\right)}{\left(\tybra{p}{l_j: S'_j}{j \in J}\right)} & = \tybra{p}{l_k: T_k}{k \in (I \cup J)} & \textit{, where } T_k = \begin{cases}
+S_k & , k \in \left(I \setminus J\right) \\
+S'_k & , k \in \left(J \setminus I\right) \\
+\tymerge{S_k}{S'_k} & , k \in \left(I \cap J\right)
 \end{cases} \\
-		\tymerge{S}{T} & = \textit{undefined} & \textit{, otherwise}\\
+		\tymerge{S}{S'} & = \textit{undefined} & \textit{, otherwise}\\
+\end{array}
+\]
+\singlespacing
+
+\subsection{Type Consumption and Reduction}
+\doublespacing
+\[
+\begin{array}{rcll}
+	\tyreduct{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{p}{q}{l_k} & = & G_k & \textit{, if $k \in I$}\\
+	\tyreduct{\left(\gcomm{r}{s}{l_i: G_i}{i \in I}\right)}{p}{q}{l_k} & = & \dots & \dots \\
 \end{array}
 \]
 \singlespacing

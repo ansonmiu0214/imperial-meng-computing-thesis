@@ -9,6 +9,7 @@
 \usepackage{ bm }
 \usepackage{ cmll }
 \usepackage{ array } 
+\usepackage{ mathtools }
 
 %% TEXT
 \newcommand{\rulename}[1]{
@@ -97,4 +98,10 @@
 }
 \newcommand{\tymerge}[2]{
 {#1}\,{\tymergeop}\,{#2}
+}
+\newcommand{\tyreduct}[4]{
+{#1}\setminus\role{#2} \xrightarrow{#4} \role{#3}
+}
+\newcommand{\tyreductset}[5]{
+{#1}\setminus\role{#2} \xrightarrow{{#4},\,{#5}} \role{#3}
 }
