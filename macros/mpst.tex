@@ -10,6 +10,7 @@
 \usepackage{ cmll }
 \usepackage{ array } 
 \usepackage{ mathtools }
+\usepackage{ stmaryrd } 
 
 %% TEXT
 \newcommand{\rulename}[1]{
@@ -104,4 +105,33 @@
 }
 \newcommand{\tyreductset}[5]{
 {#1}\setminus\role{#2} \xrightarrow{{#4},\,{#5}} \role{#3}
+}
+
+%% NEW TYPES
+\newcommand{\gcommroute}[5]{
+\role{#1} \xrightarrow[\role{#3}]{} \role{#2} : \left\{ {#4} \right\}_{#5}
+}
+\newcommand{\tyroute}[5]{
+\texttt{route}\left(\role{#1} \to \role{#2}: \left\{{#3}\right\}_{#4}\right) \mid {#5}
+}
+\newcommand{\encode}[1]{
+\llbracket{#1}\rrbracket
+}
+\newcommand{\tyencode}[2]{
+\encode{{#1},\role{#2}}
+}
+
+%% LTS
+\newcommand{\ltsroute}[1]{
+\texttt{via}\left({#1}\right)
+}
+
+\newcommand{\ltssend}[3]{
+\role{#1}\role{#2}!{#3}
+}
+\newcommand{\ltsreduce}[1]{
+\xrightarrow{#1}
+}
+\newcommand{\ltsreduceroute}[2]{
+\xrightarrow[#2]{#1}
 }

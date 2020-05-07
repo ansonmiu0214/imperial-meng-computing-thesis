@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
 \usepackage{amsmath}
 \usepackage{setspace}
 
@@ -10,6 +11,95 @@
 \begin{document}
 
 \maketitle
+
+\section{Full Merge}
+
+\paragraph{Example: Recursive Types}
+Given the global type $G$ defined as
+\[
+\begin{array}{rl}
+G &= \gcomm{p}{q}{l_1: G_1,~l_2: G_2}{} \\
+G_1 &= \tyrec{\gcomm{q}{r}{l_3: \gcomm{r}{q}{l_3: \tyrecvar}{}}{}} \\
+G_2 &= \tyrec{\gcomm{q}{r}{l_3: \gcomm{r}{q}{l_3: \tyrecvar}{}, l_4: \tyend}{}}
+\end{array}
+\]
+
+the local type for $\role{r}$ should intuitively be
+\[
+\tyrec{
+\tybra{q}{l_3: \tysel{q}{l_3: \tyrecvar}{},~l_4: \tyend}{}
+}
+\]
+
+but by definition of the full merge operator,
+\[
+\begin{array}{rl}
+\proj{G}{r} &= \tymerge{\left(\proj{G_1}{r}\right)}{\left(\proj{G_2}{r}\right)} \\
+\proj{G_1}{r} &= \tyrec{\tybra{q}{l_3: \tysel{q}{l_3: \tyrecvar}{}}{}} \\
+\proj{G_2}{r} &= \tyrec{\tybra{q}{l_3: \tysel{q}{l_3: \tyrecvar}{},~l_4: \tyend}{}}
+\end{array}
+\]
+
+$\tymerge{\left(\proj{G_1}{r}\right)}{\left(\proj{G_2}{r}\right)}$ is undefined as the $\rulename{Mrg-Id}$ rule
+cannot be applied
+
+\paragraph{Example: Selection}
+Given the global type $G$ defined as
+\[
+\begin{array}{rl}
+G &= \gcomm{p}{q}{l_1: G_1,~l_2: G_2}{} \\
+G_1 &= \gcomm{r}{q}{l_3: \gcomm{q}{r}{l_3: \tyend}{}}{} \\
+G_2 &= \gcomm{r}{q}{l_3: \gcomm{q}{r}{l_3: \tyend,~l_4: \gcomm{r}{q}{l_4: \tyend}{}}{}}{}
+\end{array}
+\]
+
+the local type for $\role{r}$ should intuitively be
+
+\[
+\tysel{q}{l_3: \tybra{q}{l_3: \tyend,~l_4: \tysel{q}{l_4: \tyend}{}}{}}{}
+\]
+
+but by definition of the full merge operator,
+\[
+\begin{array}{rl}
+\proj{G}{r} &= \tymerge{\left(\proj{G_1}{r}\right)}{\left(\proj{G_2}{r}\right)} \\
+\proj{G_1}{r} &= \tysel{q}{l_3: \tybra{q}{l_3: \tyend}{}}{} \\
+\proj{G_2}{r} &= \tysel{q}{l_3: \tybra{q}{l_3: \tyend,~l_4: \tysel{q}{l_4: \tyend}{}}{}}{}
+\end{array}
+\]
+
+$\tymerge{\left(\proj{G_1}{r}\right)}{\left(\proj{G_2}{r}\right)}$ is undefined as the $\rulename{Mrg-Id}$ rule
+cannot be applied
+
+
+\paragraph{Proposed modification} 
+Define the full merge operator $\tymerge{S}{S'}$ inductively on
+both $S$ and $S'$. Expand the $\rulename{Mrg-Id}$ rule
+to recursively push the full merge operator into the
+``inner'' session types for recursive types and selection
+(so both $S$ and $S'$ must support the same labels). 
+Leave the $\rulename{Mrg-Bra}$ rule as-is.
+
+\doublespacing
+\[
+\begin{array}{>{\displaystyle}r>{\displaystyle}ll}
+		\tymerge{\tyend}{\tyend} & = \tyend &  \\
+		\tymerge{\tyrecvar}{\tyrecvar} & = \tyrecvar &  \\
+		\tymerge{\left(\tyrec{S}\right)}{\left(\tyrec{S'}\right)} & = \tyrec{\left(\tymerge{S}{S'}\right)} &  \\
+		\tymerge{\left(\tysel{p}{l_i: S_i}{i \in I}\right)}{\left(\tysel{p}{l_j: S'_j}{j \in J}\right)} & = \tysel{p}{l_k: \left(\tymerge{S_k}{S'_k}\right)}{k \in I} &  \textit{, if $I = J$} \\
+		\tymerge{\left(\tybra{p}{l_i: S_i}{i \in I}\right)}{\left(\tybra{p}{l_j: S'_j}{j \in J}\right)} & = \tybra{p}{l_k: T_k}{k \in (I \cup J)} & \textit{, where } T_k = \begin{cases}
+S_k & , k \in \left(I \setminus J\right) \\
+S'_k & , k \in \left(J \setminus I\right) \\
+\tymerge{S_k}{S'_k} & , k \in \left(I \cap J\right)
+\end{cases} \\
+		\tymerge{S}{S'} & = \textit{undefined} & \textit{, otherwise}\\
+\end{array}
+\]
+\singlespacing
+
+\clearpage
+
+\appendix
 
 \section{Asynchronous $\pi$-Calculus}
 \doublespacing
@@ -142,6 +232,70 @@ S'_k & , k \in \left(J \setminus I\right) \\
 \end{array}
 \]
 \singlespacing
+
+\section{Multiparty Session Types with Routing}
+
+\subsection{Global Types}
+\doublespacing
+\[
+\begin{array}{rlr}
+    G ::= & & \text{Global Types} \\
+     & \tyend & \text{Termination} \\
+	\mid & \tyrecvar & \text{Type Variable} \\
+	\mid & \tyrec{G} & \text{Recursion} \\
+	\mid & \gcomm{p}{q}{l_i(\vec{U_i}): G_i}{i \in I} & \text{Communication} \\
+	\mid & \gcommroute{p}{q}{s}{l_i(\vec{U_i}): G_i}{i \in I} & \text{$\role{s}$-Routed Communication} \\
+
+\end{array}
+\]
+\singlespacing
+
+\subsection{Local Types}
+\doublespacing
+\[
+\begin{array}{rlr}
+    S ::= & & \text{Session Types} \\
+     & \tyend & \text{Termination} \\
+		\mid & \tybra{p}{l_i(\vec{U_i}): S_i}{i \in I} & \text{Branching} \\
+		\mid & \tysel{p}{l_i(\vec{U_i}): S_i}{i \in I} & \text{Selection} \\
+		\mid & \tyrec{S} & \text{Recursion} \\
+		\mid & \tyrecvar & \text{Type Variable} \\
+		\mid & \tyroute{p}{q}{l_i}{i \in I}{S} & \text{Routed} \\
+\end{array}
+\]
+\singlespacing
+
+\subsection{Encoding}
+\doublespacing
+\[
+\begin{array}{rcll}
+		\tyencode{\tyend}{s} & = & \tyend & \\
+		\tyencode{\tyrecvar}{s} & = & \tyrecvar & \\
+		\tyencode{\tyrec{G}}{s} & = & \tyrec{\left(\tyencode{G}{s}\right)} & \\
+		\tyencode{\gcomm{p}{q}{l_i: G_i}{i \in I}}{s} & = & \gcomm{p}{q}{l_i: \left(\tyencode{G_i}{s}\right)}{i \in I} & \textit{, if $\role{s} \in \left\{\role{p}, \role{q}\right\}$} \\
+		\tyencode{\gcomm{p}{q}{l_i: G_i}{i \in I}}{s} & = & \gcommroute{p}{q}{s}{l_i: \left(\tyencode{G_i}{s}\right)}{i \in I} & \textit{, if $\role{s} \notin \left\{\role{p}, \role{q}\right\}$} \\
+\end{array}
+\]
+\singlespacing
+
+\subsection{FIXME: Projection}
+\doublespacing
+\[
+\begin{array}{>{\displaystyle}r>{\displaystyle}l>{\displaystyle}l}
+		\proj{\tyend}{p} & = \tyend & \\
+		\proj{\tyrecvar}{p} & = \tyrecvar & \\
+		\proj{\tyrec{G}}{p} & = \tyrec{(\proj{G}{p})} & \textit{, if }\role{p} \in \pt{G}\\
+		\proj{\tyrec{G}}{p} & = \tyend & \textit{, if }\role{p} \notin \pt{G}\\
+		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = \tysel{q}{l_i: (\proj{G_i}{r})}{i \in I} & \textit{, if }\role{r} = \role{p} \\
+		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = \tybra{p}{l_i: (\proj{G_i}{r})}{i \in I} & \textit{, if }\role{r} = \role{q} \\
+		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = \underset{i \in I}{\tyMERGEOP}{(\proj{G_i}{r})} & \textit{, if }\role{r} \notin \left\{\role{p},\role{q}\right\}
+\end{array}
+\]
+\singlespacing
+
+\subsection{FIXME: Full Merge}
+
+\subsection{FIXME: LTS}
 
 \section{Scribble}
 
