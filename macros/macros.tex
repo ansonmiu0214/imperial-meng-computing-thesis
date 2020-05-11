@@ -12,6 +12,114 @@
 
 \maketitle
 
+\section{Multiparty Session Types with Routing}
+
+
+\subsection{Global Types}
+\doublespacing
+\[
+\begin{array}{rlr}
+	\newglobal ::= & & \text{Global Types} \\
+     & \tyend & \text{Termination} \\
+	\mid & \tyrecvar & \text{Type Variable} \\
+	\mid & \tyrec{\newglobal} & \text{Recursion} \\
+	\mid & \gcomm{p}{q}{l_i(\vec{U_i}): \newglobal_i}{i \in I} & \text{Communication} \\
+	\mid & \gcommroute{p}{q}{s}{l_i(\vec{U_i}): \newglobal_i}{i \in I} & \text{Routed Communication through $\role{s}$} \\
+\end{array}
+\]
+\singlespacing
+
+\subsection{Local Types}
+\doublespacing
+\[
+\begin{array}{rlr}
+    \newlocal ::= & & \text{Session Types} \\
+     & \tyend & \text{Termination} \\
+     	\mid & \tyrecvar & \text{Type Variable} \\
+     	\mid & \tyrec{\newlocal} & \text{Recursion} \\
+		\mid & \tybra{p}{l_i(\vec{U_i}): \newlocal_i}{i \in I} & \text{Branching} \\
+		\mid & \tysel{p}{l_i(\vec{U_i}): \newlocal_i}{i \in I} & \text{Selection} \\
+		\mid & \tyroutepar{\newroute}{\newlocal} & \text{Router Session} \\
+	\newroute ::= & & \text{Router Types} \\
+	 & \tyend & \text{Termination} \\
+     	\mid & \tyrecvar & \text{Type Variable} \\
+     	\mid & \tyrec{\newroute} & \text{Recursion} \\
+     	\mid & \tyroute{p}{q}{l_i: \newroute_i}{i \in I} & \text{Routed} \\
+\end{array}
+\]
+\singlespacing
+
+\subsection{Encoding}
+Let $\encode{\cdot} :: G \to \role{p} \to \newglobal$ represent an encoding for the global
+type $G$ with respect to the server role $\role{p}$.
+
+\doublespacing
+\[
+\begin{array}{rcll}
+		\tyencode{\tyend}{s} & = & \tyend & \\
+		\tyencode{\tyrecvar}{s} & = & \tyrecvar & \\
+		\tyencode{\tyrec{G}}{s} & = & \tyrec{\left(\tyencode{G}{s}\right)} & \\
+		\tyencode{\gcomm{p}{q}{l_i: G_i}{i \in I}}{s} & = & \gcomm{p}{q}{l_i: \left(\tyencode{G_i}{s}\right)}{i \in I} & \textit{, if $\role{s} \in \left\{\role{p}, \role{q}\right\}$} \\
+		\tyencode{\gcomm{p}{q}{l_i: G_i}{i \in I}}{s} & = & \gcommroute{p}{q}{s}{l_i: \left(\tyencode{G_i}{s}\right)}{i \in I} & \textit{, if $\role{s} \notin \left\{\role{p}, \role{q}\right\}$} \\
+\end{array}
+\]
+\singlespacing
+
+\subsection{Projection}
+We extend the original projection operator $\projop\,:: \newglobal \to \role{p} \to \newlocal$.
+To handle the projections for routed communication,
+we introduce a new operator $\projrouteop\,:: \newglobal \to \role{p} \to (\newroute, \newlocal)$
+which, given $\newglobal$ and projection target $\role{p}$,
+returns a tuple of the routed projection and ``normal'' local type projection.
+
+Recursion presents an edge case: if $\role{s}$ does not participate in
+$\tyrec{G}$, we know that $\proj{(\tyrec{G})}{s} = \tyend$.
+But if $\role{s}$ needs to route messages in $\tyrec{\newglobal}$ 
+where $\newglobal = \tyencode{G}{s}$, then $\proj{\newglobal}{s} \neq \tyend$.
+
+\doublespacing
+\[
+\begin{array}{>{\displaystyle}rc>{\displaystyle}l>{\displaystyle}l}
+	\proj{(\tyrec{\newglobal})}{p} & = & \tyrec{(\proj{\newglobal}{p})} & \textit{, if }\role{p} \in \pt{\newglobal} \\
+	\proj{(\tyrec{\newglobal})}{p} & = & \tyroutepar{\routify{\tyrec{\newglobal}}}{\tyend} & \textit{, if }\role{p} \notin \pt{\newglobal} \wedge \{\role{p}\} = \ptroute{\newglobal} \\
+	\proj{(\tyrec{\newglobal})}{p} & = & \tyend & \textit{, if }\role{p} \notin \pt{\newglobal} \wedge \{\role{p}\} \neq \ptroute{\newglobal} \\
+	\proj{\newglobal}{p} & = & \newlocal & \textit{, if } \newroute = \tyend \textit{, where } (\newroute, \newlocal) = \projroute{\newglobal}{p} \\
+	\proj{\newglobal}{p} & = & \tyroutepar{\newroute}{\newlocal} & \textit{, if } \newroute \neq \tyend \textit{, where } (\newroute, \newlocal) = \projroute{\newglobal}{p} \\
+\end{array}
+\]
+\singlespacing
+
+We define $\projroute{\newglobal}{p}$ on the structure of $\newglobal$.
+
+\doublespacing
+\[
+\begin{array}{>{\displaystyle}rc>{\displaystyle}l>{\displaystyle}l}
+	\projroute{\tyend}{p} & = & (\tyend, \tyend) & \\
+	\projroute{\tyrecvar}{p} & = & (\tyend, \tyrecvar) & \\
+	\projroute{\tyrec{\newglobal}}{p} & = & (\tyend, \proj{\tyrec{\newglobal}}{p}) & \textit{, delegated to top-level function} \\
+	\projroute{\gcomm{p}{q}{l_i: \newglobal_i}{i \in I}}{r} & = & (\tyend, \tysel{q}{l_i: \left(\proj{\newglobal_i}{r}\right)}{i \in I}) & \textit{, if } \role{r} = \role{p} \\
+	\projroute{\gcomm{p}{q}{l_i: \newglobal_i}{i \in I}}{r} & = & (\tyend, \tybra{p}{l_i: \left(\proj{\newglobal_i}{r}\right)}{i \in I}) & \textit{, if } \role{r} = \role{q} \\
+	\projroute{\gcomm{p}{q}{l_i: \newglobal_i}{i \in I}}{r} & = & (\tyend, \underset{i \in I}{\tyMERGEOP}(\proj{\newglobal_i}{r})) & \textit{, if } \role{r} \notin \{\role{p}, \role{q}\} \\
+	\projroute{\gcommroute{p}{q}{s}{l_i: \newglobal_i}{i \in I}}{r} & = & (\tyend, \tysel{s}{l_i: \left(\proj{\newglobal_i}{r}\right)}{i \in I}) & \textit{, if } \role{r} = \role{p} \\
+	\projroute{\gcommroute{p}{q}{s}{l_i: \newglobal_i}{i \in I}}{r} & = & (\tyend, \tybra{s}{l_i: \left(\proj{\newglobal_i}{r}\right)}{i \in I}) & \textit{, if } \role{r} = \role{q} \\
+	\projroute{\gcommroute{p}{q}{s}{l_i: \newglobal_i}{i \in I}}{s} & = & (\tyend, \tyroutepar{\tyroute{p}{q}{l_i: T_i}{i \in I}}{\underset{i \in I}{\tyMERGEOP}\newlocal_i}) & \textit{, if } \forall i, j. \newroute_i = \newroute_j \textit{, where } (\newroute_i, \newlocal_i) = \projroute{\newglobal_i}{s} \\
+	\projroute{\gcommroute{p}{q}{s}{l_i: \newglobal_i}{i \in I}}{r} & = & (\tyroute{p}{q}{l_i: T_i}{i \in I}, \underset{i \in I}{\tyMERGEOP}\newlocal_i) & \textit{, if } \role{r} = \role{s} \textit{, where } (\newroute_i, \newlocal_i) = \projroute{\newglobal_i}{s} \\
+
+	\projroute{\gcommroute{p}{q}{s}{l_i: \newglobal_i}{i \in I}}{r} & = & (\tyend, \underset{i \in I}{\tyMERGEOP}(\proj{\newglobal_i}{r})) & \textit{, if } \role{r} \notin \{\role{p}, \role{q}\} \\
+\end{array}
+\]
+\singlespacing
+
+\subsection{Examples}
+
+\subsection{Properties}
+
+\paragraph{Encoding preserves projection}
+
+\paragraph{Encoding preserves trace}
+
+\clearpage
+
 \section{Full Merge}
 
 \paragraph{Example: Recursive Types}
@@ -232,70 +340,6 @@ S'_k & , k \in \left(J \setminus I\right) \\
 \end{array}
 \]
 \singlespacing
-
-\section{Multiparty Session Types with Routing}
-
-\subsection{Global Types}
-\doublespacing
-\[
-\begin{array}{rlr}
-    G ::= & & \text{Global Types} \\
-     & \tyend & \text{Termination} \\
-	\mid & \tyrecvar & \text{Type Variable} \\
-	\mid & \tyrec{G} & \text{Recursion} \\
-	\mid & \gcomm{p}{q}{l_i(\vec{U_i}): G_i}{i \in I} & \text{Communication} \\
-	\mid & \gcommroute{p}{q}{s}{l_i(\vec{U_i}): G_i}{i \in I} & \text{$\role{s}$-Routed Communication} \\
-
-\end{array}
-\]
-\singlespacing
-
-\subsection{Local Types}
-\doublespacing
-\[
-\begin{array}{rlr}
-    S ::= & & \text{Session Types} \\
-     & \tyend & \text{Termination} \\
-		\mid & \tybra{p}{l_i(\vec{U_i}): S_i}{i \in I} & \text{Branching} \\
-		\mid & \tysel{p}{l_i(\vec{U_i}): S_i}{i \in I} & \text{Selection} \\
-		\mid & \tyrec{S} & \text{Recursion} \\
-		\mid & \tyrecvar & \text{Type Variable} \\
-		\mid & \tyroute{p}{q}{l_i}{i \in I}{S} & \text{Routed} \\
-\end{array}
-\]
-\singlespacing
-
-\subsection{Encoding}
-\doublespacing
-\[
-\begin{array}{rcll}
-		\tyencode{\tyend}{s} & = & \tyend & \\
-		\tyencode{\tyrecvar}{s} & = & \tyrecvar & \\
-		\tyencode{\tyrec{G}}{s} & = & \tyrec{\left(\tyencode{G}{s}\right)} & \\
-		\tyencode{\gcomm{p}{q}{l_i: G_i}{i \in I}}{s} & = & \gcomm{p}{q}{l_i: \left(\tyencode{G_i}{s}\right)}{i \in I} & \textit{, if $\role{s} \in \left\{\role{p}, \role{q}\right\}$} \\
-		\tyencode{\gcomm{p}{q}{l_i: G_i}{i \in I}}{s} & = & \gcommroute{p}{q}{s}{l_i: \left(\tyencode{G_i}{s}\right)}{i \in I} & \textit{, if $\role{s} \notin \left\{\role{p}, \role{q}\right\}$} \\
-\end{array}
-\]
-\singlespacing
-
-\subsection{FIXME: Projection}
-\doublespacing
-\[
-\begin{array}{>{\displaystyle}r>{\displaystyle}l>{\displaystyle}l}
-		\proj{\tyend}{p} & = \tyend & \\
-		\proj{\tyrecvar}{p} & = \tyrecvar & \\
-		\proj{\tyrec{G}}{p} & = \tyrec{(\proj{G}{p})} & \textit{, if }\role{p} \in \pt{G}\\
-		\proj{\tyrec{G}}{p} & = \tyend & \textit{, if }\role{p} \notin \pt{G}\\
-		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = \tysel{q}{l_i: (\proj{G_i}{r})}{i \in I} & \textit{, if }\role{r} = \role{p} \\
-		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = \tybra{p}{l_i: (\proj{G_i}{r})}{i \in I} & \textit{, if }\role{r} = \role{q} \\
-		\proj{\left(\gcomm{p}{q}{l_i: G_i}{i \in I}\right)}{r} & = \underset{i \in I}{\tyMERGEOP}{(\proj{G_i}{r})} & \textit{, if }\role{r} \notin \left\{\role{p},\role{q}\right\}
-\end{array}
-\]
-\singlespacing
-
-\subsection{FIXME: Full Merge}
-
-\subsection{FIXME: LTS}
 
 \section{Scribble}
 

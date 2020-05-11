@@ -89,8 +89,9 @@
 \role{#1} \to \role{#2} : \left\{ {#3} \right\}_{#4}
 }
 \newcommand{\proj}[2]{
-{#1} \upharpoonright \role{#2}
+{#1} \projop \role{#2}
 }
+\newcommand{\projop}{\upharpoonright}
 \newcommand{\tymergeop}{
 \sqcap
 }
@@ -111,14 +112,32 @@
 \newcommand{\gcommroute}[5]{
 \role{#1} \xrightarrow[\role{#3}]{} \role{#2} : \left\{ {#4} \right\}_{#5}
 }
-\newcommand{\tyroute}[5]{
-\texttt{route}\left(\role{#1} \to \role{#2}: \left\{{#3}\right\}_{#4}\right) \mid {#5}
+\newcommand{\tyroute}[4]{
+\texttt{route}\left(\role{#1} \to \role{#2}: \left\{{#3}\right\}_{#4}\right)
+}
+\newcommand{\tyroutepar}[2]{
+{#1}\mid{#2}
 }
 \newcommand{\encode}[1]{
 \llbracket{#1}\rrbracket
 }
 \newcommand{\tyencode}[2]{
 \encode{{#1},\role{#2}}
+}
+\newcommand{\newglobal}{\mathcal{G}}
+\newcommand{\newlocal}{\mathcal{S}}
+\newcommand{\newroute}{\mathcal{R}}
+\newcommand{\projrouteop}{
+\projop^\newroute
+}
+\newcommand{\routify}[1]{
+\texttt{routify}(#1)
+}
+\newcommand{\projroute}[2]{
+{#1} \projrouteop \role{#2}
+}
+\newcommand{\ptroute}[1]{
+\texttt{pt}^\newroute ({#1})
 }
 
 %% LTS
