@@ -3,6 +3,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath}
 \usepackage{setspace}
+\usepackage{proof}
 
 \input{mpst.tex}
 
@@ -13,7 +14,6 @@
 \maketitle
 
 \section{Multiparty Session Types with Routing}
-
 
 \subsection{Global Types}
 \doublespacing
@@ -97,18 +97,62 @@ We define $\projroute{\newglobal}{p}$ on the structure of $\newglobal$.
 	\projroute{\tyend}{p} & = & (\tyend, \tyend) & \\
 	\projroute{\tyrecvar}{p} & = & (\tyend, \tyrecvar) & \\
 	\projroute{\tyrec{\newglobal}}{p} & = & (\tyend, \proj{\tyrec{\newglobal}}{p}) & \textit{, delegated to top-level function} \\
-	\projroute{\gcomm{p}{q}{l_i: \newglobal_i}{i \in I}}{r} & = & (\tyend, \tysel{q}{l_i: \left(\proj{\newglobal_i}{r}\right)}{i \in I}) & \textit{, if } \role{r} = \role{p} \\
-	\projroute{\gcomm{p}{q}{l_i: \newglobal_i}{i \in I}}{r} & = & (\tyend, \tybra{p}{l_i: \left(\proj{\newglobal_i}{r}\right)}{i \in I}) & \textit{, if } \role{r} = \role{q} \\
+	\projroute{\gcomm{p}{q}{l_i: \newglobal_i}{i \in I}}{p} & = & (\tyend, \tysel{q}{l_i: \left(\proj{\newglobal_i}{r}\right)}{i \in I}) &  \\
+	\projroute{\gcomm{p}{q}{l_i: \newglobal_i}{i \in I}}{q} & = & (\tyend, \tybra{p}{l_i: \left(\proj{\newglobal_i}{r}\right)}{i \in I}) & \\
 	\projroute{\gcomm{p}{q}{l_i: \newglobal_i}{i \in I}}{r} & = & (\tyend, \underset{i \in I}{\tyMERGEOP}(\proj{\newglobal_i}{r})) & \textit{, if } \role{r} \notin \{\role{p}, \role{q}\} \\
-	\projroute{\gcommroute{p}{q}{s}{l_i: \newglobal_i}{i \in I}}{r} & = & (\tyend, \tysel{s}{l_i: \left(\proj{\newglobal_i}{r}\right)}{i \in I}) & \textit{, if } \role{r} = \role{p} \\
-	\projroute{\gcommroute{p}{q}{s}{l_i: \newglobal_i}{i \in I}}{r} & = & (\tyend, \tybra{s}{l_i: \left(\proj{\newglobal_i}{r}\right)}{i \in I}) & \textit{, if } \role{r} = \role{q} \\
+	\projroute{\gcommroute{p}{q}{s}{l_i: \newglobal_i}{i \in I}}{p} & = & (\tyend, \tysel{s}{l_i: \left(\proj{\newglobal_i}{r}\right)}{i \in I}) & \\
+	\projroute{\gcommroute{p}{q}{s}{l_i: \newglobal_i}{i \in I}}{q} & = & (\tyend, \tybra{s}{l_i: \left(\proj{\newglobal_i}{r}\right)}{i \in I}) & \\
 	\projroute{\gcommroute{p}{q}{s}{l_i: \newglobal_i}{i \in I}}{s} & = & (\tyend, \tyroutepar{\tyroute{p}{q}{l_i: T_i}{i \in I}}{\underset{i \in I}{\tyMERGEOP}\newlocal_i}) & \textit{, if } \forall i, j. \newroute_i = \newroute_j \textit{, where } (\newroute_i, \newlocal_i) = \projroute{\newglobal_i}{s} \\
-	\projroute{\gcommroute{p}{q}{s}{l_i: \newglobal_i}{i \in I}}{r} & = & (\tyroute{p}{q}{l_i: T_i}{i \in I}, \underset{i \in I}{\tyMERGEOP}\newlocal_i) & \textit{, if } \role{r} = \role{s} \textit{, where } (\newroute_i, \newlocal_i) = \projroute{\newglobal_i}{s} \\
+	\projroute{\gcommroute{p}{q}{s}{l_i: \newglobal_i}{i \in I}}{s} & = & (\tyroute{p}{q}{l_i: T_i}{i \in I}, \underset{i \in I}{\tyMERGEOP}\newlocal_i) & \textit{, where } (\newroute_i, \newlocal_i) = \projroute{\newglobal_i}{s} \\
 
 	\projroute{\gcommroute{p}{q}{s}{l_i: \newglobal_i}{i \in I}}{r} & = & (\tyend, \underset{i \in I}{\tyMERGEOP}(\proj{\newglobal_i}{r})) & \textit{, if } \role{r} \notin \{\role{p}, \role{q}\} \\
 \end{array}
 \]
 \singlespacing
+
+\subsection{LTS}
+
+\paragraph{Actions}
+We retain the sending and reception of a message of label $a$ from $\role{p}$
+to $\role{q}$ from the literature, but allow this ``base'' action to be
+routed through some server role $\role{s}$.
+
+\doublespacing
+\[
+\begin{array}{rlr}
+	l^\newroute ::= &  & \text{Actions} \\
+	& l & \text{Base Action} \\
+	\mid & \dots & \text{Routed Action} \\
+	
+	l ::= & & \text{Base Action} \\
+	& pq!a & \text{Send} \\
+	\mid & pq?a & \text{Receive} \\
+\end{array}
+\]
+\singlespacing
+
+\subparagraph{Encoding over actions}
+
+\doublespacing
+\[
+\begin{array}{rcl}
+\tyencode{pq!a}{s} & = & \begin{cases}
+ pq!a & \textit{, if } \role{s} \in \{\} \\ 
+ via_s(pq!a) & \textit{, otherwise} \end{cases}\\
+\tyencode{pq?a}{s} & = & \\
+\end{array}
+\]
+\singlespacing
+
+\paragraph{LTS over global types}
+
+\[
+\infer[GR1]{\dots}{}
+\]
+
+\paragraph{LTS over local types}
+
+\paragraph{LTS over collection of local types}
 
 \subsection{Examples}
 
