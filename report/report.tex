@@ -1,5 +1,8 @@
 \documentclass[12pt,twoside]{report}
 
+\newcommand\hmmax{0}
+\newcommand\bmmax{0}
+
 \newcommand{\reporttitle}{Generating Interactive WebSocket Applications in TypeScript}
 \newcommand{\reportauthor}{Anson Miu}
 \newcommand{\reporttype}{MEng Individual Project}
@@ -11,11 +14,11 @@
 \input{includes} % various packages needed for maths etc.
 \input{notation} % short-hand notation and macros
 
-
 \usepackage[nottoc]{tocbibind}
 \setcitestyle{numbers}
 	
 \input{custom_includes}
+%\input{../macros/mpst}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -39,11 +42,61 @@
 
 \input{sections/introduction.tex}
 
-\input{sections/background.tex}
+\chapter{Background}
 
-\input{sections/projectplan.tex}
+\section{Session Types}
 
-\input{sections/evaluationplan.tex}
+\subsection{Process Calculus}
+\subsection{Binary Session Types}
+\subsection{Multiparty Session Types}
+\subsection{The Scribble Protocol Language}
+
+\section{Recent Work on Session Types in Web Development}
+
+\section{TypeScript}
+
+\part{Implementing Server-Centric Topologies over WebSockets}
+
+\chapter{TypeScript Code Generation Toolchain}
+
+\section{Workflow}
+
+\section{\textsc{Scribble} Integration}
+
+\chapter{Server-Side Code Generation}
+
+\chapter{Browser-Side Code Generation}
+
+\chapter{Extensions}
+
+\section{Asynchronous Operations}
+
+\section{Error Handling}
+
+\part{Implementing Arbitrary Topologies over WebSockets}
+
+\chapter{Theory: Multiparty Session Types with Routing}
+
+\chapter{Implementation}
+
+\part{Evaluation and Conclusion}
+
+\chapter{Evaluation}
+%benchmark -- compile time / benchmarking 
+
+\chapter{Conclusion}
+
+\section{Contributions}
+
+\section{Future Work}
+
+%\input{sections/background.tex}
+
+%\input{sections/lemmas.tex}
+
+%\input{sections/projectplan.tex}
+
+%\input{sections/evaluationplan.tex}
 
 \clearpage
 

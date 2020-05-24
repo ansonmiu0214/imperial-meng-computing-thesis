@@ -83,13 +83,26 @@
 \usepackage{tcolorbox}
 
 % various theorems
-\usepackage{ntheorem}
-\theoremstyle{break}
+\usepackage{amsthm}
+\theoremstyle{plain}
 \newtheorem{lemma}{Lemma}
 \newtheorem{theorem}{Theorem}
-\newtheorem{remark}{Remark}
+
+\theoremstyle{definition}
 \newtheorem{definition}{Definition}
-\newtheorem{proof}{Proof}
+
+\newtheoremstyle{proof}% name
+  {\topsep}% space above
+  {\topsep}% space below
+  {}% body font
+  {}% indent amount
+  {\itshape}% theorem head font
+  {.}% punctuation after theorem head
+  {.5em}% space after theorem head
+  {\thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}}% theorem head spec
+\theoremstyle{proof}
+\newtheorem*{remark}{Remark}
+\newtheorem*{thmproof}{Proof}
 
 % example-environment
 \newenvironment{example}[1][]
