@@ -1,0 +1,17 @@
+\section{Future Work}
+
+\paragraph{Note: from PLACES}
+Future work includes incorporating \textit{explicit connection actions}
+introduced in \cite{ExplicitConnections} in our API generation to better model
+real-world communication protocols that may feature in interactive web
+applications.
+% REVIEW: asynchronous
+Server-side implementations may perform asynchronous operations on the
+received messages, so supporting asynchronous values (such as JavaScript
+\textit{Promises} \cite{promise}) in IO actions would be a welcome addition.
+Whilst our approach supports multiparty sessions, the nature of
+WebSockets require some server-based role in the communication protocol and
+clients to interact via the server.
+Extending support to WebRTC \cite{WebRTC} would
+cater for peer-to-peer communication between browsers, which further opens up
+possibilities for communication protocols supported by our approach.
