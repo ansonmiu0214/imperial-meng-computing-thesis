@@ -1,0 +1,20 @@
+\chapter{Motivation: Supporting Peer-to-Peer Interactions}
+
+\section{\fancyname{Two Buyer} Protocol}
+\begin{itemize}
+\item TwoBuyer example
+\item Not possible with WebSocket topology
+\end{itemize}
+
+\section{Server as a Router}
+\begin{itemize}
+\item How to make TwoBuyer example work just with WebSockets
+\item Essentially `decomposing' multiparty session into binary interactions with respect to the server
+\end{itemize}
+
+\section{Challenges}
+\begin{itemize}
+\item Routed communication is different from `normal' communication
+- server cannot overserialise interactions
+\item Existing work in decomposing multiparty sessions (see LinearDecompScala paper and the binary one it references) assume the `server' takes on the pure role as a router -- our work argues that the server can still participate in the multiparty session and concurrently route messages between clients in a way that does not overserialise the interactions and allow the routing to be transparent to other roles.
+\end{itemize}
