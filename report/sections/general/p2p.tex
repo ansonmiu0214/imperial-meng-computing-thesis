@@ -2,13 +2,14 @@
 
 \section{\fancyname{Two Buyer} Protocol}
 \begin{itemize}
-\item TwoBuyer example
+\item TwoBuyer example -- highlight the sections that show the `arbitrary topology'
 \item Not possible with WebSocket topology
 \end{itemize}
 
 \section{Server as a Router}
 \begin{itemize}
 \item How to make TwoBuyer example work just with WebSockets
+\item Quickly highlight WebRtC as an option, but it has its own proprietary connection `protocol', and will still need to rely on a centralised server role to set up the peer to peer connection; including the setup in the code generation will introduce unnecessary complications in error handling which deviates from the focus of implementing typesafe web services
 \item Essentially `decomposing' multiparty session into binary interactions with respect to the server
 \end{itemize}
 
@@ -17,4 +18,6 @@
 \item Routed communication is different from `normal' communication
 - server cannot overserialise interactions
 \item Existing work in decomposing multiparty sessions (see LinearDecompScala paper and the binary one it references) assume the `server' takes on the pure role as a router -- our work argues that the server can still participate in the multiparty session and concurrently route messages between clients in a way that does not overserialise the interactions and allow the routing to be transparent to other roles.
+\item theory side -- need to prove that it is indeed possible for the server to carry out its own interactions and perform routing in a transparent way, as if the messages were directly peer to peer
+\item implementation side -- changes need to reflect the theory and be as transparent to the developer as possible
 \end{itemize}

@@ -1,7 +1,17 @@
 \chapter{Implementation}
 
+\begin{itemize}
+\item key property from the theory is that the server's actions are effectively transparent, so we reflect that in the implementation
+\end{itemize}
+
 \section{Extending \fancyname{NodeMPST}}
+\begin{itemize}
+\item all messages have a recipient role
+\item for messages not intended for server, simply route transparently
+\end{itemize}
 
 \section{Extending \fancyname{ReactMPST}}
-
-\section{Limitations}
+\begin{itemize}
+\item receive as before, but determine the sender from the payload since it could have originated from a non-server role
+\item the double-queue system required for sending and receiving now need to be a map for React targets because the ordering is not preserved between roles (give example: A to B. C to B, server can route C's message before A's but B has to process A's first by protocol).
+\end{itemize}
