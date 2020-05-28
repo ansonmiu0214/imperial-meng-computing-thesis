@@ -2,21 +2,171 @@
 \label{chap:react}
 
 \section{Motivation}
+\begin{itemize}
+\item challenges of session typing user interface logic -- how does one formalise channel linearity? (give example of how complicated this actually is -- e.g. how to guarantee that, if a button is triggered for sending, that the action will not be triggered at other states?)
+\item existing works use non-mainstream language -- motivate Fowler LINKS, PureScript ConcurUI, identify that it needs some form of linear typing mechanism or `sequential building' UI to provide the safety properties
+\item challenge -- provide the same static communication safety guarantees for front-end logic written in typescript, in a way that is usable and idiomatic for the average typescript developer?
+\end{itemize}
 
 \section{Approach}
+\begin{itemize}
+\item leverage existing front-end frameworks that support reactive programming -- identify the parallel ideas that the UI element rendered on the screen needs to be reactive with respect to -- not only user interaction, but also channel actions.
+\item for example, UI should react to a receive state in the EFSM, and once the message is received on the channel, transition to a different UI with the supported actions
+\item main goal -- statically ensure that whatever IO actions are `present' on the window at any given time must respect the protocol
+\end{itemize}
 
 \subsection{The React Framework}
+\begin{itemize}
+\item use a class-based Counter example to explain the terms: props, state, uni-directional data flow, virtual DOM, reconciliation
+\end{itemize}
+
+\paragraph{Note: from PLACES}
+Our browser-side session type encodings for browser-side targets build upon the
+\emph{React.js} framework, developed by Facebook \cite{React} for the
+\textit{Model-View-Controller} (MVC) architecture.
+React is widely used in industry to create scalable single-page TypeScript
+applications, and we intend for our proposed workflow to be beneficial in an
+industrial context.
+We introduce the key features of the framework.
+
+\paragraph{Components}
+A component is a reusable UI element which
+contains its own markup and logic.
+Components implement a \texttt{render()} function which returns a React
+element, the smallest building blocks of a React application, analogous to the
+view function in the MVU architecture.
+Components can keep \textit{state}s and the \texttt{render()} function is
+invoked upon a change of state.
+
+For example, a simple counter can be implemented as a component,
+with its \texttt{count} stored as state.
+When rendered, it displays a button which increments \texttt{count}
+when clicked and a \texttt{div} that renders the current
+\texttt{count}.
+If the button is clicked, the \texttt{count} is incremented, which triggers a
+re-rendering (since the state has changed), and the updated \texttt{count} is
+displayed.
+
+Components can also render other components, which gives rise
+to a parent/child relationship between components.
+Parents can pass data to children as \textit{props} (short for properties).
+Going back to the aforementioned example, the counter component could
+render a child component \texttt{<StyledDiv count=\{this.state.count\} />} in
+its \texttt{render()} function, propagating the \texttt{count} from its state
+to the child.
+This enables reusability, and for our use case, gives control to the parent
+on what data to pass to its children (e.g. pass the payload of a received
+message to a child to render).
+
+\subsection{Model Types Revisited}
+\paragraph{Note: from PLACES paper}
+For browser-side targets, we extend the approach presented in \cite{MVU2019} on
+\textit{multiple model types} motivated by the \textit{Model-View-Update} (MVU)
+architecture.
+% FEEDBACK: introduce MVU and model type
+An MVU application features a \textit{model} encapsulating application
+state, a \textit{view function} rendering the state on the Document Object Model (DOM), and an
+\textit{update function} handling \textit{messages} produced by the
+rendered model to produce a new model.
+The concept of model types express type dependencies between these
+components: a \emph{model type} uniquely defines a \textit{view function},
+set of \textit{messages} and \textit{update function} -- rather than
+producing a new model, the update function defines valid transitions to
+other model types.
+We leverage the correspondence between model types and states in the EFSM:
+each state in the EFSM is a model type, the set of messages represent
+the possible (IO) actions available at that state,
+and the update function defines which successor state to transition to,
+given the supported IO actions at this state.
 
 \section{State Encodings}
 
+\begin{itemize}
+\item motivated by the idea of model types, each state is encoded as a react component, where the user provides a view function (i.e. render())
+\item channel actions are abstracted by the runtime and passed to state implementations as props
+\item the developer provides an implementation of the state, i.e. ``uses the APIs'', by extending the abstract base classes and providing their own implementations
+\end{itemize}
+
 \subsection{Send}
+\begin{itemize}
+\item make the assumption that channel send actions are triggered by UI elements -- for example, clicking a button or typing enter in a textbox
+\item pre-session-types -- the developer will attach an event listener
+\item enhanced factory approach -- given an event and a event handler, return a react component that binds the handler to that event, and injects the channel action; the developer can use this API by putting the UI elements that represent the event action as children.
+\item the event handler is conditionally parameterised by the event type (achievable by typescript conditional types -- eg, if event is click, then the event handler parameter is a React.MouseEvent), and the return type is the payload type
+\item the abstract base class will set up the factory methods to be used by the developer
+\end{itemize}
+
+\subsubsection{Alternative Designs}
+\begin{itemize}
+\item not sure whether to put this in the subsection above so it flows better?
+\item naive implementation is to pass the send() function as a prop for the developer to incorporate in their event listener -- this is most flexible, but we cannot provide static guarantees
+\item factory approach -- the runtime could pass a factory function which, takes an UI element and performs the binding; this is better, as channel resources are not exposed, but the adversarial-minded developer can later override the event listener in the DOM etc
+\end{itemize}
 
 \subsection{Receive}
+\begin{itemize}
+\item receive state is `shown' when waiting for a receive event
+\item base class has abstract methods -- one for each possible receive -- so the user must implement these when they extend the abstract base class
+\item each abstract method is named after the message label expected to be received, and parameterised by the payload
+\item no channel actions are passed to the state -- instead, once the receive state is mounted on the DOM (i.e. rendered), the abstract base class will register the event handlers to the runtime (using the register method passed as props)
+\item when the message arrives, the runtime will invoke the registered function (+ forward reference the next section with the edge case that the message arrives before handler registration occurs)
+\end{itemize}
 
 \subsection{Terminal}
+\begin{itemize}
+\item by convention and design choice, the client gracefully closes the connection with the server role
+\end{itemize}
 
-\section{EFSM Execution Runtime}
+\section{Runtime}
+\begin{itemize}
+\item public API - accept websocket endpoint URL, a mapping of state to user implementation, and UI elements to render when waiting for connection to occur, and connection failure
+\item private API - carry out the session (just like Node)
+\end{itemize}
 
-\section{Alternative Designs and Limitations}
+\subsection{Session Joining}
+\begin{itemize}
+\item separate into two react components, since the websocket connection cannot be opened in the constructor by React StrictMode
+\item `outer' class sets websocket to undefined, but upon componentDidMount, creates the actual connection
+\item renders the `inner' class component upon websocket not being undefined, so it can be typed appropriately (otherwise, need to always use bang operator)
+\item on connection, send join request message to the server, wait for serber response before executing the EFSM at the initial state
+\end{itemize}
+
+\subsection{Executing the EFSM}
+\begin{itemize}
+\item same concept as node -- implementation details delegated to the actual classes
+\item constructor binds methods
+\item advance takes the enum instead of the class (since unlike the node example, it is not instantiated) -- uses custom type guards to distinguish between the type of state
+\end{itemize}
+
+\subsection{Handling Message Sends}
+\begin{itemize}
+\item passes in the factory prop, which is a factoryfactory to be precise;
+\item sendMessage is bound in the closure and sends the message in the same way as how Node codegen does, by convention
+\item (if not already mentioned in the node section) send is asynchronous
+\end{itemize}
+
+\subsection{Handling Message Receives}
+\begin{itemize}
+\item same edge case as the back-end code generation, as message can arrive before handlers are registered
+\item use the same two-queue mechanism to keep track of `what comes first' -- i.e. if message comes first, then put in message queue, so handler can pop off when registered; vice-versa, if handler is registered first, put in handler queue so message can be processed when that is received
+\item importantly -- only one queue is required, as server-centric topologies only have the client talk to the server
+\end{itemize}
+
+\subsection{Handling Termination}
+\begin{itemize}
+\item close the websocket with a clean exit code
+\end{itemize}
+
+\section{Limitations}
+\begin{itemize}
+\item affine channel usage guarantees -- cannot statically guarantee that the factory is attached to an event visible on the DOM
+\item decoupling communication state management from business logic state management -- runtime design does not permit passing non-communication-related data as props; need to use other methods for propagating applicaton data (such as React Context API or Redux)
+\item the point above might not be a `limitation', but more of an encouragement to change practices because it makes sense, architecturally, to separate concerns
+\end{itemize}
 
 \section{Summary}
+\begin{itemize}
+\item static guarantees on avoiding communication mismatch
+\item static guarantees on affine channel usage
+\item leverage the react framework to express the model types approach from Fowler 2020 appropriately, to provide static guarantees, by construction, that the channel actions made available at each state respect the protocol, and by definition, multiparty session type safety
+\end{itemize}

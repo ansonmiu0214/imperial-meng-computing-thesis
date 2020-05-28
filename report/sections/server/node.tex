@@ -1,4 +1,5 @@
 \chapter{\fancyname{NodeMPST}: Back-End Session Type Web Development}
+\label{chap:node}
 
 \section{Motivation}
 \begin{itemize}
@@ -19,10 +20,10 @@
 \section{State Encodings}
 
 \begin{itemize}
-\item callbacks => type aliases for each state (handler)
+\item callbacks -- type aliases for each state (handler)
 \item need a way for the runtime to distinguish between states
 \item attempt at using conditional types, but because they handle conditional union types in a distributed way (give example), cannot be statically typed
-\item alternative => use discriminated union by wrapping in an Implementation class
+\item alternative -- use discriminated union by wrapping in an Implementation class
 \item all non-terminal states will `return' the successor implementation -- very difficult to resolve in the type-checker in the runtime (give example of what it may look like) -- solve by giving each state implementation the `advance' function to respect the event-driven nature of everything, so they can call it on completion
 \item visualise the interaction between runtime and states as a sequence diagram for message passing
 \end{itemize}
