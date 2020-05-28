@@ -1,0 +1,46 @@
+\section{Error Handling}
+
+\subsection{Motivation}
+\begin{itemize}
+\item existing work extends theory based on canonical session cancellations are from exceptions raised by logic
+\item refer to 2FA example in Fowler paper on exceptional session types
+\item need to also consider cancellations in a web-based scenario -- server dead, client closing their browser
+\item need to also offer developer a seam for handling cancellations -- this needs to be well-parameterised so the developer knows how to handle the cancellation (for example, which role cancelled -- e.g. if it is a multi-way transaction, the server needs to know which role cancelled, so they can update the database accordingly).
+\end{itemize}
+
+\subsection{API Extension}
+\begin{itemize}
+\item developers just need to provide cancellation handlers along with the initial state
+\item we standardise on parameterising it with role and reason: the reason is typed `any' to give developers the autonomy for implementation details
+\end{itemize}
+
+\subsection{Runtime Extension}
+\begin{itemize}
+\item build upon websocket RFC which specifies the `base' closing (or exit) code
+\item we additionally define contracts for exit codes in our use case (e.g. role occupied, logical error), and make sure it does not override any websocket `traditions' as per the RFC
+\item all based on well-defined event listeners on the websocket close and error events
+\item must consider cancellation in two phases
+\end{itemize}
+
+\subsubsection{Cancellations during Session Joining}
+
+\begin{itemize}
+\item server -- emits role occupied
+\item client -- closes browser whilst waiting for others
+\end{itemize}
+
+\subsubsection{Cancellations during EFSM Execution}
+
+\begin{itemize}
+\item server -- dies
+\item server -- logical error
+\item client -- dies
+\item client -- logical error
+\end{itemize}
+
+\subsection{Limitations}
+\begin{itemize}
+\item Cancellation handlers are not typed -- namely, we use `any';
+\item exception handler blocks in typescript are not typed
+\item the `logical error' idea is also very vague as all code can be effectful in typescript (statically); cannot specifically say that the implementation is expected to `send payload of type int, but possibly throw error of type Error', which would otherwise be possible in other languages(?)
+\end{itemize}

@@ -1,0 +1,34 @@
+\section{Supporting Asynchronous Implementations}
+
+\subsection{Motivation}
+
+\begin{itemize}
+\item developer implementation in javascript -- let alone typescript -- will need asynchronous operations
+\item backend -- database calls are asynchronous (e.g. for a multiplayer game, server may update database before sending the game results)
+\item frontend -- may invoke third-party API calls (that are not part of the protocol) which return promises
+\item how to support asynchronous developer implementations
+\end{itemize}
+
+\subsubsection{Concurrency Primitives in TypeScript}
+\begin{itemize}
+\item use an example to go over callbacks, promise and async/await functions
+\item compare promises to java futures
+\end{itemize}
+
+\subsection{API Extension}
+\begin{itemize}
+\item should be very short section -- use union type MaybePromise so developer can provide either
+\end{itemize}
+
+\subsection{Runtime Extension}
+\begin{itemize}
+\item server send actions -- use the Thunk pattern to wrap the existing logic, the thunk takes the original payload type (extracted using conditional infer types) as parameter; implementation either returns promise or not-promise, so the implementation will either pass thunk as resolve or call thunk as-is
+\item server receive actions - thunk pattern as well
+\item browser send action -- need a runtime flag to silently disable channel reuse (which would otherwise violate linearity) because the sending action is delayed by the Promise resolve
+\item browser receive action -- thunk pattern
+\end{itemize}
+
+\subsection{Limitations}
+\begin{itemize}
+\item for the browser target, we technically still provide affine linearity in the code, but the user would be able to click a button twice when it is sending as the promise resolution is asynchronous; to solve this, we add the used flag which is used in java paper for detecting channel reuse, which is `technically' a runtime check, depending on how one interprets
+\end{itemize}
