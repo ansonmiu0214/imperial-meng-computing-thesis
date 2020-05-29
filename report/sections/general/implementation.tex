@@ -1,4 +1,5 @@
 \chapter{Implementation}
+\label{chap:impl}
 
 \begin{itemize}
 \item key property from the theory is that the server's actions are effectively transparent, so we reflect that in the implementation
@@ -12,6 +13,7 @@
 
 \section{Extending \fancyname{ReactMPST}}
 \begin{itemize}
+\item add the recipient to the message before sending
 \item receive as before, but determine the sender from the payload since it could have originated from a non-server role
 \item the double-queue system required for sending and receiving now need to be a map for React targets because the ordering is not preserved between roles (give example: A to B. C to B, server can route C's message before A's but B has to process A's first by protocol).
 \end{itemize}
