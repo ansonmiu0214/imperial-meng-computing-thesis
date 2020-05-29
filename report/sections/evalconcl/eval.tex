@@ -1,10 +1,33 @@
 \chapter{Evaluation}
+\label{chap:eval}
 %benchmark -- compile time / benchmarking 
 
 \section{Binary Sessions: \fancyname{Calculator}}
+\begin{itemize}
+\item sample client implementation + snippet of generated code (full in appendix)
+\item show that not all the UI is being controlled by the runtime (i.e. calculator app has a header/fake navbar)
+\item show the calculator logic achievable using React Context
+\item sample server implementation + snippet of generated code (full in appendix)
+\end{itemize}
 
 \section{Multiparty Sessions: \fancyname{Noughts and Crosses}}
+\begin{itemize}
+\item sample client implementation -- show the flexibility of factory API for sending to be used in the UI part (since move selection can be be made )
+\end{itemize}
 
 \section{Routed Multiparty Sessions: \fancyname{Two Buyers}}
+\begin{itemize}
+\item show that the routing aspect is transparent to both sides
+\end{itemize}
 
 \section{Benchmarks}
+\begin{itemize}
+\item compile time: \begin{itemize}
+\item use the examples from above to compare compilation time
+\end{itemize}
+\item execution time: based on parameterised ping pong with n messages
+\begin{itemize}
+\item n = 10, 100, 1000
+\item benchmark using node timer tools in the backend as it knows when the protocol ends
+\end{itemize}
+\end{itemize}
