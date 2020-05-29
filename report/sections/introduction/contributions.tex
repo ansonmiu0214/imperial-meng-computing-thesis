@@ -1,9 +1,78 @@
 \section{Contributions}
 
-We present \dots
+We present an implementation of the MPST framework for developing
+interactive web applications over WebSocket transport. 
+Related work \citep{PureScript2019, MVU2020, LINKS, Tiers} requires the 
+developer to implement their application using tools that are 
+unconventional for web development.
+To the best of our knowledge, this is the first work on multiparty session
+type-safe web development that provides the same communication safety 
+guarantees using familiar industry tools in TypeScript and React.
 
-\paragraph{\cref{part:server}} \dots
+In \cref{chap:background}, we introduce the core session type theory
+and provide an overview of related work on integrating session types into
+application development. We also introduce TypeScript and highlight some 
+interesting features and caveats in the language.
 
-\paragraph{\cref{part:general}} \dots
+The remainder of the report is organised in three parts as such:
 
-\paragraph{\cref{part:evalconcl}} \dots
+\paragraph{\cref{part:server}}
+We present an end-to-end workflow for generating TypeScript APIs for 
+\emph{server-centric} communication protocols over WebSockets. Server-centric 
+protocols feature exactly one server role that is involved in all interactions.
+
+In \cref{chap:codegen}, we introduce the system architecture for our
+code generator, \fancyname{SessionTS}. 
+The implementation integrates with the \fancyname{Scribble}
+toolchain to generate handler style APIs that the developer can use to write 
+their web applications to guarantee protocol conformance by construction.
+
+We present two code generation strategies for back-end and front-end
+TypeScript web development as \fancyname{NodeMPST} and \fancyname{ReactMPST}
+in \cref{chap:node} and \cref{chap:react} respectively.
+
+In \cref{chap:ext}, we extend \fancyname{SessionTS} to support advanced
+practices commonly found in full-stack web development in a way that
+preserves communication safety. We modify the API generation strategies
+to support asynchronous implementations and introduce how to 
+gracefully handle errors and session cancellation 
+in the context of interactive web applications.
+
+\paragraph{\cref{part:general}} 
+We present a method to relax the server-centric constraint over WebSocket
+transport in order to support peer-to-peer interactions amongst 
+client roles, through the concept of \emph{routing}.
+
+In \cref{chap:p2p}, we introduce the \fancyname{TwoBuyer} multiparty
+protocol to motivate our proposal of providing the server role with 
+routing responsibilities in addition to its existing interactions
+specified in the protocol.
+
+In \cref{chap:theory}, we introduce a variant of multiparty 
+session type theory with routing. We prove that our extensions preserve 
+properties required for communication safety, 
+session fidelity and deadlock freedom.
+We provide an encoding for global types into routed multiparty 
+session type theory, and prove the preservation of well-formedness
+and communication. Detailed lemmas and proofs in this section can
+be found in \cref{appendix:proofs}.
+
+In \cref{chap:impl}, we demonstrate how our API generation strategies
+implement our routed session type theory to support arbitrary communication
+topologies.
+
+\paragraph{\cref{part:evalconcl}}
+In \cref{chap:eval}, we evaluate our work through case studies of communication
+protocols implemented as webservices. Through examples of binary sessions,
+multiparty sessions and routed multiparty sessions, we demonstrate how the
+developer may implement the generated APIs and consider the impact of our work
+on developer productivity.
+
+Finally, we summarise our work in \cref{chap:concl} and propose potential
+areas of improvement and future work.
+
+This project was published as \emph{Generating Interactive WebSocket 
+Applications in TypeScript} in the Proceedings of the 
+12th International Workshop on Programming Language Approaches to 
+Concurrency- \& Communication-cEntric Software (PLACES 2020) 
+\cite{PLACES2020}.
