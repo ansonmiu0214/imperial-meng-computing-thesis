@@ -1,5 +1,42 @@
 \section{Workflow}
 
+We introduce the high-level system architecture of \fancyname{SessionTS}
+in \cref{fig:workflow}.
+
+\begin{itemize}
+
+\item We integrate with the \fancyname{Scribble} toolchain to
+specify the protocol, validate its well-formedness and 
+formalise and validate the well-formedness of the communication protocol.
+
+The communication protocol is specified using \fancyname{Scribble},
+
+
+\end{itemize}
+
+\cref{fig:cmdline} outlines the information required at the entry
+point of \fancyname{SessionTS}:
+
+\begin{itemize}
+
+\item The protocol and role name are required to 
+
+\end{itemize}
+
+The developer provides the following information at the 
+command line entry point:
+\textbf{(1)} the protocol to generate,
+\textbf{(2)} the role to generate for, 
+\textbf{(3)} the code generation target.
+We adopt different code generation strategies for back-end 
+(\cref{chap:node}) and front-end (\cref{chap:react}) implementations.
+
+
+, and conditionally
+\textbf{(4)} the server role.
+
+
+
 \begin{itemize}
 \item introduce end-to-end workflow
 \item must have diagram
