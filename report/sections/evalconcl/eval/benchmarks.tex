@@ -1,6 +1,6 @@
 \section{Performance Benchmarks}
 
-Whilst web applications that implement our generated APIs enjoy
+Whilst web applications implementing our generated APIs enjoy
 communication safety guarantees, the presence of the session runtime acts
 as an additional layer of abstraction between the application logic and the
 WebSocket transport, which is likely to present a performance trade-off.
@@ -22,9 +22,9 @@ global protocol PingPong(role Client, role Svr) {
 \end{figure}
 
 To measure the overhead of our implementation, we compare the
-execution time of an interactive web application implementing the
-Ping Pong protocol (\cref{lst:pingpong}) using our generated APIs,
-against implementations of the protocol \textit{without} session types.
+execution time of web-based implementations of the
+Ping Pong protocol (\cref{lst:pingpong}) with and without
+our generated APIs.
 
 We parameterise the Ping Pong protocol by $n > 0$, the number of
 round-trip messages. This is standardised in the application logic
@@ -54,8 +54,8 @@ closing the connection, thus ending the experiment.
 
 We note that the Ping Pong protocol implements a \textit{binary} session. 
 It would be interesting to observe the overhead in a \textit{multiparty}
-context, but due to limited time constraints, we were unable to 
-extend our benchmarking suite to support multiple browser targets.
+context, but due to limited time constraints,
+our benchmarking suite does not support multiple browser targets.
 Benchmarking multiparty protocols would also require writing multiple
 distinct React applications using the generated APIs -- as this is currently
 a manual process, doing this for multiple roles requires more time than
