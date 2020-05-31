@@ -1,7 +1,20 @@
 \chapter{\fancyname{SessionTS}: Session Type API Generation for TypeScript}
 \label{chap:codegen}
 
-In this chapter, we \dots
+In this chapter, we present
+\fancyname{SessionTS}, an API generation toolchain for building
+web applications in TypeScript that conform to a communication protocol 
+based on multiparty session type theory.
+
+\fancyname{SessionTS} supports communication protocols that define 
+\emph{server-centric} topologies, meaning that: 
+\textbf{(1)} there is exactly one participant executed on the 
+Node.js runtime; 
+\textbf{(2)} all other participants run on the web browser; and
+\textbf{(3)} all non-server participants only communicate with the server.
+We relax this assumption in \cref{part:general}.
+
+The toolchain is publicly available at \cite{repo}.
 
 \input{sections/server/codegen/workflow}
 
