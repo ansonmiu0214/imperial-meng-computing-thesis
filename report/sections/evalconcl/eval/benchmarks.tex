@@ -197,7 +197,15 @@ received in \cref{fig:execution}.
 \end{figure}
 
 Relative to the two \texttt{bare} implementations, the
-\texttt{mpst} implementation shows more consistency.
+\texttt{mpst} version performs more consistently, perhaps as a result
+of the session runtimes handling all WebSocket interactions in a
+systematic way. The gradient of the graph represents the rate at which
+a Ping-Pong round trip takes place. 
+We observe a steeper gradient when the protocol begins, 
+which illustrates the overhead incurred in the 
+session joining phase in our generated APIs.
+Aside from these factors, all three implementations generally share
+similar characteristics in their protocol execution.
 
 \subsection{Overhead}
 We compare the total execution time (\textit{Exec. Time}) 
@@ -343,11 +351,11 @@ socket.onmessage = ({ data }) => {
 			}));
 		}
 	} else {
-		throw new Error(`Unrecognised label: ${label}`)
+		throw new Error(`Unrecognised label: ${label}`);
 	}
 }
 \end{lstlisting}
-\caption{\texttt{bare}}
+\caption{\texttt{bare} implementation of Ping Pong \trole{Svr}}
 \label{lst:nodepingpongbare}
 \end{subfigure}
 \hfill
@@ -356,20 +364,21 @@ socket.onmessage = ({ data }) => {
 \begin{lstlisting}[language=javascript,tabsize=2]
 // NOTE: `Implementation' namespace omitted for brevity.
 
-const logic = new Initial({
+const logic = new S14({
 	PING: (count) => {
 		console.timeLog(LABEL, ++count);
 		if (count === MSGS) {
-			return new S16([Labels.S16.BYE, [count], new Terminal()]);
+			return new S16([Labels.S16.BYE, [count], new S15()]);
 		} else {
 			return new S16([Labels.S16.PONG, [count], logic]);
 		}
  	}
 });
 \end{lstlisting}
-\caption{\texttt{mpst}}
+\caption{\texttt{mpst} implementation of Ping Pong \trole{Svr}}
 \label{lst:nodepingpongmpst}
 \end{subfigure}
-\captionof{figure}{Comparison of \trole{Svr} implementations in benchmark}
+\captionof{figure}{Comparison of \texttt{bare} and \texttt{mpst}
+implementations for Ping Pong \trole{Svr}}
 \label{fig:nodepingpong}
 \end{figure}
