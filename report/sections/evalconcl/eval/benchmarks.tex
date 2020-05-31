@@ -111,11 +111,11 @@ elapsed time for every \tmsg{PING} message received.
 using headless browsing functionality from 
 the Zombie.js \cite{zombie} package.
 
-\item The entry point to the \trole{Svr} logic is parameterised by the
-number of messages, $n$, configured through an environment variable
-passed through the command line.
+\item \trole{Svr} logic is parameterised by the number of round trips,
+$n$, configured through an environment variable passed through 
+the command line.
 
-\item We use the transpiled JavaScript versions of all \trole{Svr}
+\item We use the transpiled JavaScript versions of all \trole{Svr}s
 for the experiments.
 
 \end{itemize}
@@ -136,7 +136,7 @@ We standardise all packages used in the front- and back-end
 implementations across experiments. Details can be found in their
 corresponding \texttt{package.json} manifests (\cref{appendix:eval}).
 
-We run our experiments using three implementations of the Ping Pong protocol:
+The benchmark compares three implementations of the Ping Pong protocol:
 
 \subparagraph{bare:}
 The \texttt{bare} implementation directly interfaces with 
@@ -158,17 +158,19 @@ but a response has yet to be received; a \texttt{visible} boolean flag
 is used to explicitly manage which \texttt{<button>} to render.
 
 \subparagraph{mpst:}
-The \texttt{mpst} implementation follows the MPST framework and
-uses the APIs generated from \fancyname{SessionTS}, so it enjoys the
+The \texttt{mpst} implementation uses the APIs generated from 
+\fancyname{SessionTS}, so it enjoys the
 communication safety guarantees from our methodology.
 
 \subsection{Execution Pattern}
+\label{section:execpattern}
+
 We compare the execution patterns of exchanging 10,000 Ping-Pongs
 throughout 20 repeated experiments across the three implementations.
 We visualise the elapsed time with respect to the number of \tmsg{PING}s
 received in \cref{fig:execution}.
 
-\begin{figure}[!h]
+\begin{figure}[!ht]
 \centering
 \begin{subfigure}[b]{0.3\textwidth}
 \centering
@@ -194,23 +196,24 @@ received in \cref{fig:execution}.
 \label{fig:execution}
 \end{figure}
 
-
+Relative to the two \texttt{bare} implementations, the
+\texttt{mpst} implementation shows more consistency.
 
 \subsection{Overhead}
-We compare the total execution time (\textit{Exe. Time}) 
-and execution time per round trip (\textit{Exe. Time / Ping-Pong}) -- 
+We compare the total execution time (\textit{Exec. Time}) 
+and execution time per round trip (\textit{Exec. Time / Ping-Pong}) -- 
 averaged over 20 repeated experiments -- across the three implementations,
 for $n \in \{10^2, 10^3, 10^4\}$.
 We summarise the results in \cref{table:overhead}.
 
 \renewcommand{\arraystretch}{1.5}
-\begin{table}[!h]
+\begin{table}[!ht]
 \centering
 \begin{tabular}{||c||c|c|c||c|c|c||}
 \hline
 \multirow{2}{*}{$n$} & 
-\multicolumn{3}{c||}{Exe. Time} & 
-\multicolumn{3}{c||}{Exe. Time / Ping-Pong} \\
+\multicolumn{3}{c||}{Exec. Time} & 
+\multicolumn{3}{c||}{Exec. Time / Ping-Pong} \\
 \cline{2-7}
  & \texttt{bare} & \texttt{bare_safe} & \texttt{mpst} 
  & \texttt{bare} & \texttt{bare_safe} & \texttt{mpst} \\
@@ -232,7 +235,7 @@ This is made apparent when looking closely at
 \textit{Exe. Time / Ping-Pong};
 we visualise this in \cref{fig:timepermsg}.
 
-\begin{figure}[!h]
+\begin{figure}[!ht]
 \centering
 \includegraphics[width=\textwidth]{timepermsg}
 \captionof{figure}{Comparing Average Time per Ping-Pong 
@@ -242,4 +245,131 @@ Across Implementations}
 
 The \texttt{mpst} implementation records greater round trip times compared
 to both \texttt{bare} and \texttt{bare_safe} variants. This is expected,
-as \dots
+as the runtime for \textit{each} role performs additional logic during
+\textit{both} the sending and receiving of messages. 
+For example, receiving a message involves performing
+(albeit $O(1)$ time complexity) operations on the message queue and
+handler queue. As for browser-side implementations, every EFSM transition
+invokes an updated \texttt{render()} on the VDOM, which requires
+reconciliation internally by React to update the browser DOM accordingly.
+
+We also observe that the (round trip time) performance gap between 
+the \texttt{mpst} implementation and the two 
+\texttt{bare} implementations narrows as the number of round trips 
+increase. This suggests that the session joining logic in our
+implementation yields greater overhead than the additional processing
+logic injected during communication, which is consistent with 
+our findings in \cref{section:execpattern}.
+
+We interpret the overhead as a trade-off between maximising performance and
+maximising the \textbf{static} communication safety guarantees for
+web applications. In particular, the event-driven nature of 
+browser-side logic makes it highly challenging to guarantee 
+communication safety, as having ``active'' channel actions on the DOM
+allows linearity to be violated by the user, even if one verifies
+linear channel usage in the source code. The \texttt{mpst} implementation
+properly addresses the problem by statically guaranteeing,
+by construction, that the UI component rendered on the DOM will only
+contain channel actions permitted at that state in the EFSM execution.
+
+One may argue that the \texttt{bare_safe} implementation also
+provides said guarantee but adds negligible overhead. 
+By inspecting the workaround in the \texttt{bare_safe} implementation
+(\cref{lst:workaround}),
+it is clear that this does not scale for more complicated protocols with
+larger EFSMs. 
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=javascript, tabsize=2]
+click() {
+	this.state.ws?.send(JSON.stringify({
+		label: 'PING',
+		payload: [this.context.count],
+	}));
+	this.setState({ visible: false });
+}
+
+render() {
+	return this.state.visible 
+		? <button
+		   ref={this.state.button}
+		   onClick={this.click.bind(this)}
+		   >Ping</button>
+		: <button>Ping</button>;
+}
+\end{lstlisting}
+\captionof{lstlisting}{Preventing user-triggered linearity violation in
+\texttt{bare_safe} Ping Pong}
+\label{lst:workaround}
+\end{figure}
+
+The workaround is tailored to the Ping Pong protocol
+and toggles the \texttt{visible} flag to hide the button that triggers
+a send action when \trole{Client} transitions to a receive state.
+In fact, this ``workaround'' precisely generalises to our 
+\texttt{mpst} implementation of having some form of wrapper
+component that renders the UI component corresponding to the
+current EFSM state. Our API generation strategy formally implements
+the EFSM for browser-side logic.
+
+We also compare the server-side logic between the \texttt{base} and
+\texttt{mpst} implementations in \cref{fig:nodepingpong}, and observe
+that our generated APIs (\cref{lst:nodepingpongmpst}) 
+allow the developer to focus on the
+implementation detail, whilst the naive bare implementation 
+(\cref{lst:nodepingpongbare}) chooses to interleave communication logic
+with application logic, which arguably contributes towards a hidden
+source of bugs found when implementing more complex protocols.
+
+\begin{figure}[!ht]
+\centering
+\begin{subfigure}[b]{\textwidth}
+\centering
+\begin{lstlisting}[language=javascript,tabsize=2]
+socket.onmessage = ({ data }) => {
+	const { label, payload } = JSON.parse(data.toString());
+	if (label === 'PING') {
+		let count: number = payload[0];
+		console.timeLog(LABEL, ++count);
+		if (count === MSGS) {
+			socket.send(JSON.stringify({
+				label: 'BYE',
+				payload: [count],
+			}));
+		} else {
+			socket.send(JSON.stringify({
+				label: 'PONG',
+				payload: [count],
+			}));
+		}
+	} else {
+		throw new Error(`Unrecognised label: ${label}`)
+	}
+}
+\end{lstlisting}
+\caption{\texttt{bare}}
+\label{lst:nodepingpongbare}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{\textwidth}
+\centering
+\begin{lstlisting}[language=javascript,tabsize=2]
+// NOTE: `Implementation' namespace omitted for brevity.
+
+const logic = new Initial({
+	PING: (count) => {
+		console.timeLog(LABEL, ++count);
+		if (count === MSGS) {
+			return new S16([Labels.S16.BYE, [count], new Terminal()]);
+		} else {
+			return new S16([Labels.S16.PONG, [count], logic]);
+		}
+ 	}
+});
+\end{lstlisting}
+\caption{\texttt{mpst}}
+\label{lst:nodepingpongmpst}
+\end{subfigure}
+\captionof{figure}{Comparison of \trole{Svr} implementations in benchmark}
+\label{fig:nodepingpong}
+\end{figure}
