@@ -1,0 +1,45 @@
+\section{Implementation}
+
+\fancyname{SessionTS} is written in Python. 
+It offers flexible syntax, a rich standard library, and 
+a healthy ecosystem of DOT graph parsers and template engines,
+making it a suitable choice for implementing our code generator.
+We provide a simple command line interface (\cref{lst:cmdline})
+for the developer to supply the required information 
+to use \fancyname{SessionTS}.
+
+\begin{figure}[!ht]
+\begin{lstlisting}
+root@mpst_ts:/home# python3.7 -m mpst_ts --help
+usage: __main__.py [-h] [-s SERVER] [-o OUTPUT]
+                   filename protocol role {browser,node}
+
+positional arguments:
+  filename       Path to Scribble protocol
+  protocol       Name of protocol
+  role           Role to project
+  {browser,node} Code generation target
+
+optional arguments:
+  -h, --help     show this help message and exit
+  -s SERVER, --server SERVER
+                 Server role (only applicable for browser targets)
+  -o OUTPUT, --output OUTPUT
+                 Output directory for generation
+\end{lstlisting}
+\captionof{figure}{Entry Point for \fancyname{SessionTS}}
+\label{lst:cmdline}
+\end{figure}
+
+We use Docker \cite{docker} to encapsulate our code generator
+and its dependencies -- we found the canonical Python virtual environment
+solution to be insufficient, as the Scribble toolchain is
+a standalone Java executable with non-trivial setup procedures.
+The Dockerfile builds a Docker image with \fancyname{Scribble} and
+the Python dependencies all pre-configured, and the provided
+\texttt{build.sh} script instantiates the image as a container 
+for development.
+The \texttt{start.sh} script enters the Docker container
+development environment and mounts the local project directory
+onto the container as a volume to synchronise changes between the
+two environments.
