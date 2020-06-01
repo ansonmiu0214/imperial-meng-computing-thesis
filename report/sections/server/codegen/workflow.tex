@@ -92,15 +92,85 @@ to demonstrate how our work performs TypeScript API generation.
 \subsection{From \fancyname{Scribble} to EFSM}
 \label{subsection:efsm}
 
-\begin{itemize}
-\item scribble validates the protocol
-\item use flag to obtain EFSM representation
-\item DOT graph output
-\item parse in python -- use open-source library for this
-\end{itemize}
+Given the protocol and endpoint, we use \fancyname{Scribble}
+to validate the well-formedness of the protocol and extract
+information from the protocol relevant for the endpoint.
+The latter is expressed as a finite state machine
+where each state restricts the possible transitions, 
+and transitions between states are represented by
+communication actions, i.e. the sending or receiving of a message.
 
-\subsection{Code Generation}
+\fancyname{Scribble} expresses the EFSM using the 
+DOT graph description language \cite{dot}, with each
+communication action encoded as the label of the corresponding
+state transition. 
+\fancyname{SessionTS} uses the pydot library \cite{pydot}
+to parse the graph into an internal representation of the EFSM.
+We define an \texttt{EfsmBuilder} class with APIs designed for
+constructing the EFSM representation by iterating over the 
+state transitions from the DOT representation.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=Python]
+@dataclass
+class Endpoint:
+    protocol: str
+    role    : str
+    server  : str
+    efsm    : EFSM
+    types   : typing.Iterable[DataType]
+\end{lstlisting}
+\captionof{lstlisting}{The Endpoint API}
+\label{lst:endpointapi}
+\end{figure}
+
+As the code generation process requires additional information,
+we define an \texttt{Endpoint} dataclass\footnote{
+A Python dataclass uses the decorator to generate
+``boilerplate'' methods, such as the constructor, based on the
+properties listed in the annotations.} (\cref{lst:endpointapi})
+to contain the \texttt{EFSM}
+representation, along with the information passed in from the
+command line (\texttt{protocol}, \texttt{role}, \texttt{server}) 
+and the custom type declarations (\texttt{types}) parsed from the
+protocol specification.
+
+\subsection{API Generation}
 \label{subsection:apigen}
+
+Formally, API generation is a function of the constructed
+\texttt{Endpoint} instance
+\textit{and} the target specified in the command line. We use a 
+different code generation strategy for implementations running on
+Node.js versus the browser -- we discuss in greater depth in 
+\cref{chap:node} and \cref{chap:react} respectively. 
+In this subsection, we explain how we perform API generation
+at a higher level of abstraction.
+
+Traditional methods of code generation involve applying the
+Visitor pattern on the internal representation. 
+In the context of the MPST framework,
+this may involve defining a Visitor class that implements a
+\texttt{generate()} operation to be performed on the EFSM states,
+such that the \texttt{generate()} implementation specialises to the
+type of EFSM state, i.e. send, receive or terminal.
+This is not straightforward in Python, as method overloading is not 
+supported, so the ``visit'' methods would need different names.
+More importantly, it is less straightforward to visualise
+the structure of the generated code, as the string interpolation
+aspect is likely to be interleaved with source code implementing
+additional logic for code generation.
+
+For \fancyname{SessionTS}, we opt to use a template engine for code
+generation, namely Jinja \cite{jinja}.
+
+\dots %what is a template, 
+\dots %template focuses on how the generated code looks (which makes it easy to debug etc), and uses lightweight markup syntax to inject dynamic content (from our endpoint API)
+
+The main advantage of using a template engine for 
+our code generation task is that it decouples the ``presentation''
+from the ``content'': in the \fancyname{SessionTS}
+% so it is easy to prototype and extend without touching the source code
 
 \begin{itemize}
 \item api generation is a function of the EFSM representation
