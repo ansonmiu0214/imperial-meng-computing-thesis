@@ -58,6 +58,16 @@
   morestring=[b]',
   morestring=[b]"
 }
+\lstdefinelanguage{Python}{
+  keywords={class, self, def, cls, int, str, bool, pass, return, from, import, and, if, else, None, is, not},
+  keywordstyle=\color{blue}\bfseries,
+  identifierstyle=\color{black},
+  comment=[l]{\#},
+  commentstyle=\color{darkgray}\ttfamily,
+  stringstyle=\color{purple}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
 \lstset{
 	basicstyle=\footnotesize\ttfamily,
 	numberstyle=\tiny\ttfamily,
@@ -65,7 +75,8 @@
 	frame=single,
 	tabsize=4,
     xleftmargin=2em,
-    framexrightmargin=-0.5em
+    framexrightmargin=-0.5em,
+    escapeinside={(*@}{@*)}
 }
 
 % Figure and table counter

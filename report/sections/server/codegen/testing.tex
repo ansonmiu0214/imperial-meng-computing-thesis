@@ -1,6 +1,70 @@
 \section{Testing}
-\begin{itemize}
-\item unit tests for code generator executable
-\item systems tests for type checking the generated output with the typescript compiler
-\item sandbox environment set up on the docker container to set up different tsconfig.json files for both react/node targets
-\end{itemize}
+
+The usual unit testing practices from software engineering
+apply to our code generator -- the built-in \texttt{unittest} 
+package is more than sufficient for our use case. 
+Instead, we detail our methodology for \textit{system testing} -- 
+executing \fancyname{SessionTS} end-to-end and testing
+the generated code.
+
+We implement a test suite on top of \texttt{unittest} APIs
+for verifying that \fancyname{SessionTS}
+generates \textit{valid TypeScript code}. This is especially useful as
+our templates contain both TypeScript syntax and Jinja markup, 
+so we cannot easily make sure that each template generates valid code,
+let alone checking that the collection of templates generate a valid
+TypeScript project altogether.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=python,tabsize=4]
+def test_code_generation(self):
+	flags = [scr, protocol, role, target]
+	if svr is not None:
+		flags.append('-s')
+		flags.append(svr)
+
+	rc = mpst_ts.main(flags) (*@\label{line:testmain}@*)
+	self.assertEqual(rc, 0)  (*@\label{line:testmainrc}@*)
+
+	completion = subprocess.run(self.npm_test_cmd, shell=True) (*@\label{line:testtsc}@*)
+	self.assertEqual(completion.returncode, 0) (*@\label{line:testtscrc}@*)
+
+	shutil.rmtree(self.output_dir)
+\end{lstlisting}
+\captionof{lstlisting}{Main logic in \fancyname{SessionTS} system testing
+test case}
+\label{lst:systemtest}
+\end{figure}
+
+We provide a collection of Scribble protocols under \texttt{protocols/}
+to generate test cases, one per protocol participant.
+For each test case, the test suite (\cref{lst:systemtest}) will:
+
+\begin{enumerate}
+\item Invoke \fancyname{SessionTS} to generate the TypeScript project 
+(\cref{line:testmain}), 
+expecting a zero exit code (\cref{line:testmainrc});
+\item Run the TypeScript Compiler on the generated directory 
+(\cref{line:testtsc}),
+passing the \texttt{noEmit} flag to purely perform type-checking,
+and expecting a zero exit code (\cref{line:testtscrc}).
+\end{enumerate}
+
+As the generated TypeScript code makes assumptions about the
+environment in which it is used (for example, having the \texttt{ws}
+WebSocket package installed on server-side targets), we require a
+sandbox environment to type-check the generated code. 
+The sandbox contains the minimal boilerplate required
+for testing -- this involves having the WebSocket package installed
+for server-side targets, the React.js framework (\cref{section:react})
+instantiated for browser-side targets,
+and corresponding \texttt{tsconfig.json} files for both targets to
+be picked up by the TypeScript Compiler.
+
+For convenience, we extend the
+Dockerfile and \texttt{build.sh} script 
+to set up the sandbox environments. 
+We also make use of the optional
+\texttt{--output} flag exposed by the \fancyname{SessionTS} CLI
+to redirect the generated code to the correct sandbox environment
+to simply the testing process.

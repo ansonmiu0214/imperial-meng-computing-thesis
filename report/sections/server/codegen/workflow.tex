@@ -1,7 +1,7 @@
 \section{Development Workflow}
 
 We motivate our development workflow from previous work 
-\cite{PureScript2019} by extending the \fancyname{Scribble} toolchain
+\cite{PureScript2019} by extending the Scribble toolchain
 and generating APIs that integrate the developer's 
 application logic
 into the execution of the communication automata.
@@ -12,14 +12,14 @@ and provide a brief overview:
 \begin{enumerate}
 
 \item The developer supplies the communication protocol written in
-\fancyname{Scribble} (\cref{subsection:scribble}), 
+Scribble (\cref{subsection:scribble}), 
 stating the role (hereafter \textit{endpoint})
 to generate APIs for,
 and the code generation \textit{target} 
 (i.e. whether the role runs on the server or the web browser).
 
 \item \fancyname{SessionTS} delegates to the 
-\fancyname{Scribble} toolchain for verifying the well-formedness of
+Scribble toolchain for verifying the well-formedness of
 the protocol and expects to receive a DOT graph representation of
 the endpoint FSM (\cref{subsection:efsm}). 
 \fancyname{SessionTS} parses the endpoint's 
@@ -41,16 +41,16 @@ communication errors by session type theory.
 \label{fig:devworkflow}
 \end{figure}
 
-\subsection{Protocol Specification with \fancyname{Scribble}}
+\subsection{Protocol Specification with Scribble}
 \label{subsection:scribble}
 
-We use the \fancyname{Scribble} protocol description language, 
+We use the Scribble protocol description language, 
 as presented in
 \cite{Scribble}, for formalising the communication structure. This is
 inspired by existing work on implementing session type theory 
 in mainstream programming languages
 \cite{Hybrid2016, PureScript2019, Python2017}. 
-We use the variant of the \fancyname{Scribble} language 
+We use the variant of the Scribble language 
 previously introduced in \cref{subsection:bgscribble}.
 
 \subparagraph{Type declaration statements}
@@ -58,7 +58,7 @@ Specific to our TypeScript API generation toolchain,
 the developer is \textit{not} required to explicitly
 add type declaration statements for built-in types.
 \cref{lst:adder} is a \textit{syntactically correct}
-\fancyname{Scribble} protocol as far as 
+Scribble protocol as far as 
 \fancyname{SessionTS} is concerned. 
 Internally, \fancyname{SessionTS} inspects the protocol file
 and parses existing type declarations using regular expressions
@@ -66,7 +66,7 @@ and parses existing type declarations using regular expressions
 custom data types that will appear in the communication (for example,
 \cref{lst:game}), and allows \fancyname{SessionTS} to inject
 ``boilerplate'' type declarations for built-in TypeScript types before
-calling \fancyname{Scribble}.
+calling Scribble.
 
 \begin{figure}[!ht]
 \begin{lstlisting}[language=Scribble]
@@ -89,10 +89,10 @@ global protocol Adder(role Client, role Svr) {
 We will use the \tprotocol{Adder} protocol as a running example
 to demonstrate how our work performs TypeScript API generation.
 
-\subsection{From \fancyname{Scribble} to EFSM}
+\subsection{From Scribble to EFSM}
 \label{subsection:efsm}
 
-Given the protocol and endpoint, we use \fancyname{Scribble}
+Given the protocol and endpoint, we use Scribble
 to validate the well-formedness of the protocol and extract
 information from the protocol relevant for the endpoint.
 The latter is expressed as a finite state machine
@@ -100,7 +100,7 @@ where each state restricts the possible transitions,
 and transitions between states are represented by
 communication actions, i.e. the sending or receiving of a message.
 
-\fancyname{Scribble} expresses the EFSM using the 
+Scribble expresses the EFSM using the 
 DOT graph description language \cite{dot}, with each
 communication action encoded as the label of the corresponding
 state transition. 
@@ -142,8 +142,7 @@ Formally, API generation is a function of the constructed
 \texttt{Endpoint} instance
 \textit{and} the target specified in the command line. We use a 
 different code generation strategy for implementations running on
-Node.js versus the browser -- we discuss in greater depth in 
-\cref{chap:node} and \cref{chap:react} respectively. 
+the servre (\cref{chap:node}) versus the browser (\cref{chap:react}).
 In this subsection, we explain how we perform API generation
 at a higher level of abstraction.
 
@@ -161,20 +160,86 @@ the structure of the generated code, as the string interpolation
 aspect is likely to be interleaved with source code implementing
 additional logic for code generation.
 
-For \fancyname{SessionTS}, we opt to use a template engine for code
-generation, namely Jinja \cite{jinja}.
+For \fancyname{SessionTS}, we leverage the Jinja \cite{jinja} 
+template engine library for code generation. 
+We first construct templates for the TypeScript files we wish to generate,
+specifying placeholders for dynamic content (to be extracted
+from the \texttt{Endpoint} object); 
+we then provide Jinja with the template path and the 
+\texttt{Endpoint} object, and the template engine renders the
+TypeScript code by filling in the dynamic placeholders. 
+We show an example in \cref{lst:jinja}.
 
-\dots %what is a template, 
-\dots %template focuses on how the generated code looks (which makes it easy to debug etc), and uses lightweight markup syntax to inject dynamic content (from our endpoint API)
+\begin{figure}[!ht]
+\begin{lstlisting}[language=javascript, title=efsm.ts.j2]
+export namespace Message {
+{% for state in endpoint.efsm.nonterminal_states %}
+  {% for action in state.actions -%}
+  export type S{{ state ~ action.label }} = {
+    label: Labels.S{{ state }}.{{ action.label }},
+    payload: [{{ action.payloads|join(', ') }}],
+  };
+  {% endfor %}
+  export type S{{ state }} = {% for action in state.actions -%}
+  | S{{ state ~ action.label }}{% endfor %};
+{% endfor %}
+\end{lstlisting}
+\captionof{lstlisting}{Example Jinja Template for
+\fancyname{SessionTS} API Generation}
+\label{lst:jinja}
+\end{figure}
 
-The main advantage of using a template engine for 
-our code generation task is that it decouples the ``presentation''
-from the ``content'': in the \fancyname{SessionTS}
-% so it is easy to prototype and extend without touching the source code
+Jinja provides lightweight syntax for injecting content and
+markup for simple control structure: \texttt{\{\{ state \}\}} 
+denotes a placeholder for Jinja to render the \texttt{state} variable,
+and the \texttt{\{\% \%\}} syntax  is used for conditionals and
+control structures 
+(such as for loops, to dynamically render the enclosing ``sub-template''
+by iterating over a collection).
+The main advantage that Jinja brings is that 
+it decouples the ``presentation''
+from the ``content'' and makes it quick to prototype and extend
+the generated code, \textit{usually} without modifications to the 
+code generator.
 
-\begin{itemize}
-\item api generation is a function of the EFSM representation
-\item traditional methods -- visitor pattern on the EFSM and using stringbuilder to build the file
-\item templating library is more suitable to decouple the ``presentation'' (how the code should look) from the ``content'' (the EFSM which is used to build the code)
-\item strategy pattern to support the two required build targets (in node and react)
-\end{itemize}
+\begin{figure}[!ht]
+\begin{lstlisting}[language=python]
+class CodeGenerationStrategy(ABC):
+
+    target_to_strategy = {} (*@\label{line:mapping}@*)
+
+    def __init__(self):
+        super().__init__()
+
+    @classmethod
+    def __init_subclass__(cls, *, target):
+        CodeGenerationStrategy.target_to_strategy[target] = cls (*@\label{line:register}@*)
+        return super().__init_subclass__()
+    
+    @abstractmethod
+    def generate(self, endpoint: Endpoint):
+        pass
+\end{lstlisting}
+\captionof{lstlisting}{Implementing \texttt{CodeGenerationStrategy}}
+\label{lst:codegenerationstrategy}
+\end{figure}
+
+As we generate a different set of TypeScript artefacts depending
+on the specified target, we structure the different code generators
+using the Strategy design pattern. Each target extends the
+abstract base class \texttt{CodeGenerationStrategy} 
+and implements its own \texttt{generate()}
+method to return a list of \texttt{(path, content)} tuples. 
+We define a \texttt{CodeGenerator} class that is parameterised 
+by \texttt{target}: when instantiated, it will select and perform 
+the specialised \texttt{generate()} method based on \texttt{target}, 
+before formatting and committing the generated code 
+to the file system.
+We implement a subclass hook in \texttt{CodeGenerationStrategy}
+(\cref{lst:codegenerationstrategy}),
+such that each derived class must provide the target name to
+``register'' with the base class (\cref{line:register}),
+and the base class keeps an internal
+mapping of the concrete strategies (\cref{line:mapping}); 
+\texttt{CodeGenerator} accesses
+this mapping to select the appropriate strategy.
