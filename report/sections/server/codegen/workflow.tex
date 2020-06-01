@@ -1,16 +1,10 @@
 \section{Development Workflow}
 
-% input: protocol, role, target
-% then: verify well-formedness
-% then: obtain EFSM for role
-% then: parse EFSM
-% then: generate code for said target
-% output: API
-
 We motivate our development workflow from previous work 
 \cite{PureScript2019} by extending the \fancyname{Scribble} toolchain
-and generating APIs that integrate developer implementation
-into the EFSM execution.
+and generating APIs that integrate the developer's 
+application logic
+into the execution of the communication automata.
 
 We visualise the workflow in \cref{fig:devworkflow} 
 and provide a brief overview:
@@ -50,10 +44,50 @@ communication errors by session type theory.
 \subsection{Protocol Specification with \fancyname{Scribble}}
 \label{subsection:scribble}
 
-\begin{itemize}
-\item see notes from PLACES paper on scribble
-\item scribble language definition (unless already in background)
-\end{itemize}
+We use the \fancyname{Scribble} protocol description language, 
+as presented in
+\cite{Scribble}, for formalising the communication structure. This is
+inspired by existing work on implementing session type theory 
+in mainstream programming languages
+\cite{Hybrid2016, PureScript2019, Python2017}. 
+We use the variant of the \fancyname{Scribble} language 
+previously introduced in \cref{subsection:bgscribble}.
+
+\subparagraph{Type declaration statements}
+Specific to our TypeScript API generation toolchain,
+the developer is \textit{not} required to explicitly
+add type declaration statements for built-in types.
+\cref{lst:adder} is a \textit{syntactically correct}
+\fancyname{Scribble} protocol as far as 
+\fancyname{SessionTS} is concerned. 
+Internally, \fancyname{SessionTS} inspects the protocol file
+and parses existing type declarations using regular expressions
+(or \textit{regex}) -- this is necessary to extract any
+custom data types that will appear in the communication (for example,
+\cref{lst:game}), and allows \fancyname{SessionTS} to inject
+``boilerplate'' type declarations for built-in TypeScript types before
+calling \fancyname{Scribble}.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=Scribble]
+module Adder;
+
+global protocol Adder(role Client, role Svr) {
+	choice at Client {
+		ADD(number, number) from Client to Svr;
+		RES(number)         from Svr to Client;	
+	} or {
+		QUIT(string) from Client to Svr;	
+		TERMINATE()  from Svr to Client;
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{The \tprotocol{Adder} Protocol}
+\label{lst:adder}
+\end{figure}
+
+We will use the \tprotocol{Adder} protocol as a running example
+to demonstrate how our work performs TypeScript API generation.
 
 \subsection{From \fancyname{Scribble} to EFSM}
 \label{subsection:efsm}
