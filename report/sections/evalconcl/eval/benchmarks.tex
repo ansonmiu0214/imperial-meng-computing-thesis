@@ -17,7 +17,7 @@ global protocol PingPong(role Client, role Svr) {
 	}
 }
 \end{lstlisting}
-\captionof{figure}{Ping Pong Protocol}
+\captionof{lstlisting}{The \tprotocol{Ping Pong} Protocol}
 \label{lst:pingpong}
 \end{figure}
 
@@ -26,7 +26,7 @@ execution time of web-based implementations of the
 Ping Pong protocol (\cref{lst:pingpong}) with and without
 our generated APIs.
 
-We parameterise the Ping Pong protocol by $n > 0$, the number of
+We parameterise the \tprotocol{Ping Pong} protocol by $n > 0$, the number of
 round-trip messages. This is standardised in the application logic
 across experiments.
 Upon establishing a connection, the experiment proceeds as follow:
@@ -52,7 +52,8 @@ closing the connection, thus ending the experiment.
 
 \end{enumerate}
 
-We note that the Ping Pong protocol implements a \textit{binary} session. 
+We note that the \tprotocol{Ping Pong} protocol 
+implements a \textit{binary} session. 
 It would be interesting to observe the overhead in a \textit{multiparty}
 context, but due to limited time constraints,
 our benchmarking suite does not support multiple browser targets.
@@ -69,11 +70,11 @@ we outline the logic that all implementations must follow:
 \begin{figure}[!ht]
 \centering
 \includegraphics[width=0.5\textwidth]{pingpongclient}
-\captionof{figure}{User interface of Ping Pong \trole{Client}}
+\captionof{figure}{User interface of \tprotocol{Ping Pong} \trole{Client}}
 \label{fig:pingpongclient}
 \end{figure}
 
-\subparagraph{Ping Pong \trole{Client} on React:}
+\subparagraph{\tprotocol{Ping Pong} \trole{Client} on React:}
 \begin{itemize}
 
 \item All \trole{Client}s implement the same user interface 
@@ -98,7 +99,7 @@ transpilation into JavaScript. We serve the production build using the
 
 \end{itemize}
 
-\subparagraph{Ping Pong \trole{Svr} on Node:}
+\subparagraph{\tprotocol{Ping Pong} \trole{Svr} on Node:}
 \begin{itemize}
 
 \item We use the built-in \texttt{console.time} function to record
@@ -138,12 +139,12 @@ We standardise all packages used in the front- and back-end
 implementations across experiments. Details can be found in their
 corresponding \texttt{package.json} manifests (\cref{appendix:eval}).
 
-The benchmark compares three implementations of the Ping Pong protocol:
+The benchmark compares three implementations of the \tprotocol{Ping Pong} protocol:
 
 \subparagraph{bare:}
 The \texttt{bare} implementation directly interfaces with 
 WebSocket primitives for sending and receiving. 
-The implementation executes the Ping Pong protocol, but does not 
+The implementation executes the \tprotocol{Ping Pong} protocol, but does not 
 guarantee communication safety by construction -- e.g. the user can click
 the \tmsg{PING} button multiple times before a \tmsg{PONG} message 
 is received, violating channel linearity. 
@@ -308,12 +309,12 @@ render() {
 		: <button>Ping</button>;
 }
 \end{lstlisting}
-\captionof{figure}{Preventing user-triggered linearity violation in
-\texttt{bare_safe} Ping Pong}
+\captionof{lstlisting}{Preventing user-triggered linearity violation in
+\texttt{bare_safe} \tprotocol{Ping Pong}}
 \label{lst:workaround}
 \end{figure}
 
-The workaround is tailored to the Ping Pong protocol
+The workaround is tailored to the \tprotocol{Ping Pong} protocol
 and toggles the \texttt{visible} flag to hide the button that triggers
 a send action when \trole{Client} transitions to a receive state.
 In fact, this ``workaround'' precisely generalises to our 
@@ -357,7 +358,7 @@ socket.onmessage = ({ data }) => {
 	}
 }
 \end{lstlisting}
-\caption{\texttt{bare} implementation of Ping Pong \trole{Svr}}
+\caption{\texttt{bare} implementation of \tprotocol{Ping Pong} \trole{Svr}}
 \label{lst:nodepingpongbare}
 \end{subfigure}
 \hfill
@@ -377,10 +378,10 @@ const logic = new S14({
  	}
 });
 \end{lstlisting}
-\caption{\texttt{mpst} implementation of Ping Pong \trole{Svr}}
+\caption{\texttt{mpst} implementation of \tprotocol{Ping Pong} \trole{Svr}}
 \label{lst:nodepingpongmpst}
 \end{subfigure}
 \captionof{figure}{Comparison of \texttt{bare} and \texttt{mpst}
-implementations for Ping Pong \trole{Svr}}
+implementations for \tprotocol{Ping Pong} \trole{Svr}}
 \label{fig:nodepingpong}
 \end{figure}

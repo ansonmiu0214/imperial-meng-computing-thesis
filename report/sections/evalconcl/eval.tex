@@ -11,15 +11,83 @@
 \item sample server implementation + snippet of generated code (full in appendix)
 \end{itemize}
 
+\begin{figure}[!ht]
+\begin{lstlisting}[language=Scribble, tabsize=2]
+module BinarySession;
+
+global protocol Calculator(role Svr, role Client) {
+  choice at Client {
+    Add(number, number) from Client to Svr;
+    Res(number)         from Svr to Client;
+    do Calculator(Svr, Client);
+  } or {
+    Mult(number, number) from Client to Svr;
+    Res(number)          from Svr to Client;
+    do Calculator(Svr, Client);
+  } or {
+    Quit()               from Client to Svr;
+    Terminate()          from Svr to Client;
+  }
+}
+\end{lstlisting}
+\captionof{lstlisting}{The \tprotocol{Calculator} Protocol}
+\label{lst:calculator}
+\end{figure}
+
 \section{Multiparty Sessions: \fancyname{Noughts and Crosses}}
 \label{section:evalgame}
 \begin{itemize}
 \item sample client implementation -- show the flexibility of factory API for sending to be used in the UI part (since move selection can be be made )
 \end{itemize}
 
+\begin{figure}[!ht]
+\begin{lstlisting}[language=Scribble, tabsize=2]
+module NoughtsAndCrosses;
+type <typescript> "Coordinate" from "./Types" as Point;
+
+global protocol Game(role Svr, role P1, role P2) {
+	Pos(Point) from P1 to Svr;
+	choice at Svr {
+		Lose(Point)   from Svr to P2;
+		Win(Point)    from Svr to P1;
+	} or {
+		Draw(Point)   from Svr to P2;
+		Draw(Point)   from Svr to P1;
+	} or {
+		Update(Point) from Svr to P2;
+		Update(Point) from Svr to P1;
+		do Game(Svr, P2, P1);
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{The \tprotocol{Noughts and Crosses} Protocol}
+\label{lst:game}
+\end{figure}
+
 \section{Routed Multiparty Sessions: \fancyname{Two Buyers}}
 \begin{itemize}
 \item show that the routing aspect is transparent to both sides
 \end{itemize}
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=Scribble, tabsize=2]
+module ClientClient;
+
+global protocol TwoBuyer(role A, role B, role S) {
+	title(string)      from A to S;
+	quote(number)      from S to A;
+	quote(number)      from S to B;
+	quoteByTwo(number) from A to B;
+	choice at B {
+		ok(string)     from B to S;
+		date(string)   from S to B;
+	} or {
+		quit()         from B to S;
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{The \tprotocol{Two Buyer} Protocol}
+\label{lst:twobuyer}
+\end{figure}
 
 \input{sections/evalconcl/eval/benchmarks}
