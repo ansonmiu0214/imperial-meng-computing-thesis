@@ -2,10 +2,53 @@
 \label{chap:p2p}
 
 \section{\fancyname{Two Buyer} Protocol}
+
+We present the \tprotocol{Two Buyer} protocol in \cref{lst:twobuyer}.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=Scribble, tabsize=2]
+module ClientClient;
+
+global protocol TwoBuyer(role A, role B, role S) {
+	title(string)      from A to S;
+	quote(number)      from S to A;
+	quote(number)      from S to B;
+	quoteByTwo(number) from A to B;
+	choice at B {
+		ok()           from B to S;
+		date(string)   from S to B;
+	} or {
+		quit()         from B to S;
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{The \tprotocol{Two Buyer} Protocol}
+\label{lst:twobuyer}
+\end{figure}
+
+Assume \trole{S} is the server, and roles \trole{A}, \trole{B} run on the 
+browser:
+
+\begin{enumerate}
+\item \trole{A} sends to \trole{S} the title of an item to sell;
+\item \trole{S} sends a quote for said item to \trole{A} and \trole{B};
+\item \trole{A} privately sends a separate quote to \trole{B};
+\item \trole{B} makes a choice:
+\begin{itemize}
+\item if \trole{B} prefers the offer from \trole{S}, 
+\trole{B} replies \tmsg{ok()} to \trole{S}, and \trole{S} informs
+\trole{B} of the delivery date;
+
+\item otherwise, \trole{B} takes the offer from \trole{A} and simply
+responds \tmsg{quit()} to \trole{S}.
+\end{itemize} 
+\end{enumerate}
+
 \begin{itemize}
 \item TwoBuyer example -- highlight the sections that show the `arbitrary topology'
 \item Not possible with WebSocket topology
 \end{itemize}
+
 
 \section{Server as a Router}
 \begin{itemize}

@@ -69,25 +69,4 @@ global protocol Game(role Svr, role P1, role P2) {
 \item show that the routing aspect is transparent to both sides
 \end{itemize}
 
-\begin{figure}[!ht]
-\begin{lstlisting}[language=Scribble, tabsize=2]
-module ClientClient;
-
-global protocol TwoBuyer(role A, role B, role S) {
-	title(string)      from A to S;
-	quote(number)      from S to A;
-	quote(number)      from S to B;
-	quoteByTwo(number) from A to B;
-	choice at B {
-		ok(string)     from B to S;
-		date(string)   from S to B;
-	} or {
-		quit()         from B to S;
-	}
-}
-\end{lstlisting}
-\captionof{lstlisting}{The \tprotocol{Two Buyer} Protocol}
-\label{lst:twobuyer}
-\end{figure}
-
 \input{sections/evalconcl/eval/benchmarks}
