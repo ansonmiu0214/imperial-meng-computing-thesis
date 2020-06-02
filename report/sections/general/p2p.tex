@@ -119,37 +119,86 @@ through the server. This means that the server has information about
 all browser endpoints, 
 and is capable to perform the routing.
 
-Returning to the \tprotocol{Two Buyer} example,
+Returning to \cref{lst:twobuyer} \cref{line:twobuyersplit},
 \trole{A} sends the \tmsg{split} message through its existing
 WebSocket connection (with \trole{S}eller on the other side),
 noting that \trole{B} is the intended recipient;
 \trole{S}eller receives this through the WebSocket bound to
 \trole{A}, and routes the message to \trole{B}, who receives it through
 its existing connection with \trole{S}eller.
-It is trivial that the three properties listed previously are still
-satisfied: considering the relaxed version of point 3,
-the semantics of routing a message corresponds to that of
-overseeing the communication, in the sense that \trole{S}eller 
-does not tamper with the payload or drop the message, so it is simply
-overseeing the message being passed through.
+It is trivial that the three properties\footnote{Here, we use the relaxed
+version of point 3 mentioned previously.} listed previously are still
+satisfied: 
+
+\begin{enumerate}
+\item
+\textit{As far as \trole{A} is concerned, \trole{A} is sending
+a message that will be received by \trole{B}} -- 
+the intended recipient is specified in the message.
+
+\item
+\textit{As far as \trole{B} is concerned, \trole{B} is receiving
+a message that was sent by \trole{A}} --
+the original sender is specified in the message.
+
+\item
+\textit{\trole{S}eller cannot intervene or hijack the communication} --
+this remains true, as \trole{S}eller simply receives the message
+from the WebSocket bound to \trole{A} and sends it through the
+WebSocket bound to \trole{B}.
+
+\end{enumerate}
 
 \section{Challenges}
 \label{section:routerchallenges}
 
-% routing needs to be treated very carefully in the theory,
-% we want to preserve communication, so the routed constructs must not % overserialise
-% example: A->B: M1; S->B: M2.
-% a valid trace is SB!M2, AB!M1;
-% 
-% if we treat routing messages with the same constructs,
-% we get A->S: M1; S->B:M1; S->B:M2;
-% then S
-%}
+We need to formalise our concept of routing by extending session
+type theory, such that, given a communication protocol implementing 
+an arbitrary topology, we can encode it into our extended theory and
+prove that safety properties (e.g. well-formedness, deadlock freedom)
+are preserved, and that communication traces are preserved.
+This must be done \textit{very carefully}, as
+naive definitions risk over-serialising the original communication,
+thereby not preserving all communication traces.
 
-\begin{itemize}
-\item Routed communication is different from `normal' communication
-- server cannot overserialise interactions
-\item Existing work in decomposing multiparty sessions (see LinearDecompScala paper and the binary one it references) assume the `server' takes on the pure role as a router -- our work argues that the server can still participate in the multiparty session and concurrently route messages between clients in a way that does not overserialise the interactions and allow the routing to be transparent to other roles.
-\item theory side -- need to prove that it is indeed possible for the server to carry out its own interactions and perform routing in a transparent way, as if the messages were directly peer to peer
-\item implementation side -- changes need to reflect the theory and be as transparent to the developer as possible
-\end{itemize}
+For example, consider the global type
+\[
+A \to B: \tmsg{M1}. S \to B: \tmsg{M2}. \texttt{end}
+\]
+By existing LTS semantics over
+global types (\cref{subsubsection:lts}), the sequence 
+$[SB!\tmsg{M2}, AB!\tmsg{M1}]$
+is a prefix of a valid execution trace.
+If we define our routing construct simply by replacing every single
+$A \to B: \tmsg{M}$ interaction with $A \to S: \tmsg{M}.
+S \to B: \tmsg{M}$, we transform the global type into
+\[
+A \to S: \tmsg{M1}. S \to B: \tmsg{M1}. S \to B: \tmsg{M2}. \texttt{end}
+\]
+our naive definition of routing has over-serialised the protocol
+since $SB!\tmsg{M2}$ can no longer occur before $AB!\tmsg{M1}$.
+This implies that we need to handle routing interactions differently
+from ``normal'' send/receive actions.
+
+Existing work in decomposing multiparty sessions into a collection
+of binary sessions do resemble our routing proposal, but their approach
+involves having an endpoint to exclusively carry out
+routing responsibilities and act as a centralised orchestrator 
+for the multiparty session.
+Our proposal recognises that, in the context of web applications,
+there is a need for server-side endpoints to implement business logic
+so enforcing the server to be an exclusive orchestrator makes our work
+incompatible with webservice protocols; 
+we also argue that the server can still participate in the 
+multiparty session and concurrently perform its routing duties
+in a way that is transparent to non-server endpoints, and crucially,
+does not overserialise the permitted interactions. 
+We introduce our extension as \textit{Routed Session Types},
+and proceed to prove these claims in \cref{chap:theory}.
+
+Likewise, the implementation of routed session types 
+in \fancyname{SessionTS} needs to accurately reflect the theory
+and be as transparent to the developer as possible to minimise
+the learning curve overhead demanded 
+by complicating the generated APIs -- we document our extensions
+to \fancyname{SessionTS} in \cref{chap:impl}.
