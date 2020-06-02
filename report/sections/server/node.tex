@@ -1,6 +1,9 @@
 \chapter{\fancyname{NodeMPST}: Back-End Session Type Web Development}
 \label{chap:node}
 
+In this chapter, 
+we \dots
+
 \section{Motivation}
 \begin{itemize}
 \item session type implementation on the node runtime
@@ -65,6 +68,14 @@
 \item advance -- use discriminated union to figure out what to pass to the state (send -- sendMessage, receive -- register)
 \end{itemize}
 
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.5\textwidth]{NodeRuntimeEFSM}
+\captionof{figure}{Informal Abstraction of EFSM Execution for
+Server Endpoints}
+\label{fig:noderuntimeefsm}
+\end{figure}
+
 \subsection{Handling Message Sends}
 \begin{itemize}
 \item very short (just for completeness in the report) -- messages are serialised JS objects (in JSON notation) sent and decoded on the other end, type-correct by construction
@@ -76,6 +87,26 @@
 \item motivate the edge case that message can arrive `out of protocol order' 
 \item explain the double queue system and how that provides consistency -- emphasising that this works because of the single-threaded typescript runtime
 \end{itemize}
+
+\begin{figure}[!ht]
+\centering
+\begin{subfigure}[b]{0.8\textwidth}
+\centering
+\includegraphics[width=\textwidth]{NodeRuntimeReceive2}
+\caption{Message processed before transitioning to receive state}
+\label{subfig:nodereceivemsgfirst}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.8\textwidth}
+\centering
+\includegraphics[width=\textwidth]{NodeRuntimeReceive1}
+\caption{Message processed after transitioning to receive state}
+\label{subfig:nodereceivehandlefirst}
+\end{subfigure}
+\captionof{figure}{Possible Orderings for Handling Message Event and Preparing
+Receive State}
+\label{fig:nodereceivecompare}
+\end{figure}
 
 \subsection{Handling Termination}
 \begin{itemize}
