@@ -1,24 +1,42 @@
 \chapter{Motivation: Supporting Peer-to-Peer Interactions}
 \label{chap:p2p}
 
-\section{\fancyname{Two Buyer} Protocol}
+In this chapter,
+we demonstrate how to support peer-to-peer interactions
+between web browser endpoints over WebSocket transport,
+thus relaxing the server-centric topology assumption from 
+\cref{part:server}.
 
-We present the \tprotocol{Two Buyer} protocol in \cref{lst:twobuyer}.
+We motivate the problem using the 
+\tprotocol{Two Buyer} protocol (\cref{section:twobuyer}),
+outline our approach (\cref{section:routerapproach}),
+and discuss the challenges we need to address 
+(\cref{section:routerchallenges}) in order to validate the
+correctness of our approach.
+
+\section{\tprotocol{Two Buyer} Protocol}
+\label{section:twobuyer}
+
+We present the \tprotocol{Two Buyer} protocol in \cref{lst:twobuyer},
+which describes a protocol between two buyers \trole{A}, \trole{B}
+and a \trole{S}eller. We assume that the \trole{S}eller runs on
+the server, and the buyers run on the browser.
 
 \begin{figure}[!ht]
-\begin{lstlisting}[language=Scribble, tabsize=2]
+\begin{lstlisting}[language=scribble]
 module ClientClient;
 
 global protocol TwoBuyer(role A, role B, role S) {
-	title(string)      from A to S;
-	quote(number)      from S to A;
-	quote(number)      from S to B;
-	quoteByTwo(number) from A to B;
+	title(string)   from A to S;
+	quote(number)   from S to A;
+	quote(number)   from S to B;
+	split(number)   from A to B; (*@\label{line:twobuyersplit}@*)
 	choice at B {
-		ok()           from B to S;
-		date(string)   from S to B;
+		accept()    from B to A; (*@\label{line:twobuyerok}@*)
+		buy()       from A to S;
 	} or {
-		quit()         from B to S;
+		reject()    from B to A; (*@\label{line:twobuyerno}@*)
+		cancel()    from A to S;
 	}
 }
 \end{lstlisting}
@@ -26,38 +44,108 @@ global protocol TwoBuyer(role A, role B, role S) {
 \label{lst:twobuyer}
 \end{figure}
 
-Assume \trole{S} is the server, and roles \trole{A}, \trole{B} run on the 
-browser:
+In the protocol, \trole{A} asks the \trole{S}eller for the quote
+of a book \tmsg{title}. \trole{S}eller sends the \tmsg{quote}
+to both buyers \trole{A} and \trole{B}. \trole{A} privately asks
+proposes a \tmsg{split} with \trole{B}. Now, \trole{B} must make
+a choice: 
+either \trole{B} can \tmsg{accept} the split, where \trole{A} confirms
+to \tmsg{buy} from the \trole{S}eller;
+otherwise, \trole{B} will \tmsg{reject} the split, which
+\tmsg{cancel}s the purchase.
+
+\cref{line:twobuyersplit,line:twobuyerok,line:twobuyerno}
+illustrate that the \tprotocol{Two Buyer} protocol 
+does not implement a server-centric communication topology,
+since these lines reference communication actions between
+the two client browsers. 
+As a result, \fancyname{SessionTS} cannot correctly generate
+APIs that support the specified interactions 
+for buyers \trole{A} and \trole{B}.
+
+\section{Proposal: Server as a Router}
+\label{section:routerapproach}
+
+We acknowledge that peer-to-peer browser interactions
+could be achieved via different transport abstractions, 
+such as the WebRTC framework \cite{WebRTC}. 
+However, WebRTC has its own proprietary ``protocol'' 
+for establishing connections and exchanging network information,
+which isn't formalised in session type theory. This setup phase
+generally requires a \textit{signalling server} \cite{WebRTCSignaling},
+which brings our problem full circle, as it can be implemented
+over WebSocket transport. Extending API generation to also include
+the boilerplate for initialising WebRTC connections could be an option,
+but would introduce complications in the session runtime and
+error handling (e.g. how to handle cancellations during the connection
+phase?).
+We believe that adopting WebRTC deviates from the focus of project in 
+implementing type-safe webservices.
+
+Hence, for the purpose of our work in this part,
+we establish that WebSocket transport is an invariant, 
+and proceed to build up our approach. 
+We start by breaking down the concept of 
+``peer-to-peer communication''.
+Focusing on \cref{lst:twobuyer} \cref{line:twobuyersplit},
+we can say that the interaction satisfies three properties:
 
 \begin{enumerate}
-\item \trole{A} sends to \trole{S} the title of an item to sell;
-\item \trole{S} sends a quote for said item to \trole{A} and \trole{B};
-\item \trole{A} privately sends a separate quote to \trole{B};
-\item \trole{B} makes a choice:
-\begin{itemize}
-\item if \trole{B} prefers the offer from \trole{S}, 
-\trole{B} replies \tmsg{ok()} to \trole{S}, and \trole{S} informs
-\trole{B} of the delivery date;
+\item 
+As far as \trole{A} is concerned, \trole{A} is sending
+a message that will be received by \trole{B}.
 
-\item otherwise, \trole{B} takes the offer from \trole{A} and simply
-responds \tmsg{quit()} to \trole{S}.
-\end{itemize} 
+\item
+As far as \trole{B} is concerned, \trole{B} is receiving
+a message that was sent by \trole{A}.
+
+\item
+The \trole{S}eller is not involved in this interaction.
 \end{enumerate}
 
-\begin{itemize}
-\item TwoBuyer example -- highlight the sections that show the `arbitrary topology'
-\item Not possible with WebSocket topology
-\end{itemize}
+We proceed to relax point 3: for the \trole{S}eller to be
+not involved in the interaction, it suffices to guarantee that
+the \trole{S}eller cannot intervene or hijack the communication.
+This allows \trole{S}eller to ``oversee'' the communication.
 
+On this basis, we motivate our approach to empower the 
+server endpoint to act as a \textit{router}. 
+That is to say, if the server endpoint receives a message
+of which it isn't the intended recipient for, 
+it routes the message to the intended recipient. 
+Based on the WebSocket transport invariant,
+all browser endpoints must join the session
+through the server. This means that the server has information about
+all browser endpoints, 
+and is capable to perform the routing.
 
-\section{Server as a Router}
-\begin{itemize}
-\item How to make TwoBuyer example work just with WebSockets
-\item Quickly highlight WebRtC as an option, but it has its own proprietary connection `protocol', and will still need to rely on a centralised server role to set up the peer to peer connection; including the setup in the code generation will introduce unnecessary complications in error handling which deviates from the focus of implementing typesafe web services
-\item Essentially `decomposing' multiparty session into binary interactions with respect to the server
-\end{itemize}
+Returning to the \tprotocol{Two Buyer} example,
+\trole{A} sends the \tmsg{split} message through its existing
+WebSocket connection (with \trole{S}eller on the other side),
+noting that \trole{B} is the intended recipient;
+\trole{S}eller receives this through the WebSocket bound to
+\trole{A}, and routes the message to \trole{B}, who receives it through
+its existing connection with \trole{S}eller.
+It is trivial that the three properties listed previously are still
+satisfied: considering the relaxed version of point 3,
+the semantics of routing a message corresponds to that of
+overseeing the communication, in the sense that \trole{S}eller 
+does not tamper with the payload or drop the message, so it is simply
+overseeing the message being passed through.
 
 \section{Challenges}
+\label{section:routerchallenges}
+
+% routing needs to be treated very carefully in the theory,
+% we want to preserve communication, so the routed constructs must not % overserialise
+% example: A->B: M1; S->B: M2.
+% a valid trace is SB!M2, AB!M1;
+% 
+% if we treat routing messages with the same constructs,
+% we get A->S: M1; S->B:M1; S->B:M2;
+% then S
+%}
+
 \begin{itemize}
 \item Routed communication is different from `normal' communication
 - server cannot overserialise interactions
