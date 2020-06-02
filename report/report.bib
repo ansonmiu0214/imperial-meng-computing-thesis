@@ -8,6 +8,25 @@
 
 @article{PureScript2019, title={{Multiparty Session Type-safe Web Development with Static Linearity}}, volume={291}, ISSN={2075-2180}, DOI={10.4204/EPTCS.291.4}, journal={Electronic Proceedings in Theoretical Computer Science}, author={King, Jonathan and Ng, Nicholas and Yoshida, Nobuko}, year={2019}, month={Apr}, pages={35–46} }
 
+@article{TSOP, title={{Concurrent Typestate-Oriented Programming in Java}}, volume={291}, ISSN={2075-2180}, DOI={10.4204/EPTCS.291.3}, abstractNote={We describe a generative approach that enables concurrent typestate-oriented programming in Java and other mainstream languages. The approach allows programmers to implement objects exposing a state-sensitive interface using a high-level synchronization abstraction that synchronizes methods with the states of the receiver object in which those methods have an effect. An external tool takes care of generating all the boilerplate code that implements the synchronization logic. Behavioral types are used to specify object protocols. The tool integrates protocol conformance verification with the synchronization logic so that protocol violations are promptly detected at runtime.}, note={arXiv: 1904.01286}, journal={Electronic Proceedings in Theoretical Computer Science}, author={Gerbo, Rosita and Padovani, Luca}, year={2019}, month={Apr}, pages={24–34} }
+
+@inproceedings{Hybrid2016,
+  author = {Raymond Hu and Nobuko Yoshida},
+  title = {{Hybrid Session Verification through Endpoint API Generation}},
+  booktitle = {19th International Conference on Fundamental Approaches to Software Engineering},
+  series = {LNCS},
+  volume = {9633},
+  pages = {401--418},
+  publisher = {Springer},
+  doi = "10.1007/978-3-662-49665-7_24",
+  year = 2016
+}
+
+@article{Python2017, title={{Session Types Go Dynamic or How to Verify Your Python Conversations}}, volume={137}, ISSN={2075-2180}, DOI={10.4204/EPTCS.137.8}, abstractNote={This paper presents the first implementation of session types in a dynamically-typed language - Python. Communication safety of the whole system is guaranteed at runtime by monitors that check the execution traces comply with an associated protocol. Protocols are written in Scribble, a choreography description language based on multiparty session types, with addition of logic formulas for more precise behaviour properties. The presented framework overcomes the limitations of previous works on the session types where all endpoints should be statically typed so that they do not permit interoperability with untyped participants. The advantages, expressiveness and performance of dynamic protocol checking are demonstrated through use case and benchmarks.}, note={arXiv: 1312.2704}, journal={Electronic Proceedings in Theoretical Computer Science}, author={Neykova, Rumyana}, year={2013}, month={Dec}, pages={95–102} }
+
+@article{HuJava, title={{Distributed Programming Using Java APIs Generated from Session Types}}, abstractNote={This is a tutorial on using Scribble [9], a toolchain based on multiparty session types [1, 4], for distributed programming in Java. The methodology is based on the generation of protocol-speciﬁc Endpoint APIs from Scribble speciﬁcations [6]. We start with a brief recap of TCP network programming using standard Java APIs, and their limitations with regards to safety assurances. The main tutorial content is an overview of the key stages of the Scribble toolchain, from global protocol speciﬁcation, through Endpoint API generation, to Java endpoint implementation, with examples. We discuss the hybrid form of session safety promoted by the Endpoint API generation approach. We then consider Scribble speciﬁcations and implementations of HTTP as a real-world use case. Finally, we demonstrate some further Scribble features that leverage Endpoint API generation to safely support more advanced communication patterns.}, author={Hu, Raymond}, pages={22} }
+
+
 @article{ATS2016, title={Applied Type System: An Approach to Practical Programming with Theorem-Proving}, abstractNote={The framework Pure Type System (PTS) offers a simple and general approach to designing and formalizing type systems. However, in the presence of dependent types, there often exist certain acute problems that make it difﬁcult for PTS to directly accommodate many common realistic programming features such as general recursion, recursive types, effects (e.g., exceptions, references, input/output), etc. In this paper, Applied Type System (ATS) is presented as a framework for designing and formalizing type systems in support of practical programming with advanced types (including dependent types). In particular, it is demonstrated that ATS can readily accommodate a paradigm referred to as programming with theorem-proving (PwTP) in which programs and proofs are constructed in a syntactically intertwined manner, yielding a practical approach to internalizing constraint-solving needed during type-checking. The key salient feature of ATS lies in a complete separation between statics, where types are formed and reasoned about, and dynamics, where programs are constructed and evaluated. With this separation, it is no longer possible for a program to occur in a type as is otherwise allowed in PTS. The paper contains not only a formal development of ATS but also some examples taken from ATS, a programming language with a type system rooted in ATS, in support of using ATS as a framework to form type systems for practical programming.}, journal={Journal of Functional Programming}, author={Xi, Hongwei}, year={2016}, pages={30} }
 
  @inproceedings{AsyncHonda, place={Berlin, Heidelberg}, title={An object calculus for asynchronous communication}, ISBN={978-3-540-47537-8}, abstractNote={This paper presents a formal system based on the notion of objects and asynchronous communication. Built on Milner’s work on π-calculus, the communication primitive of the formal system is purely based on asynchronous communication, which makes it unique among various concurrency formalisms. Computationally this results in a consistent reduction of Milner’s calculus, while retaining the same expressive power. Seen semantically asynchronous communication induces a surprisingly different framework where bisimulation is strictly more general than its synchronous counterpart. This paper shows basic construction of the formal system along with several illustrative examples.}, booktitle={ECOOP’91 European Conference on Object-Oriented Programming}, publisher={Springer Berlin Heidelberg}, author={Honda, Kohei and Tokoro, Mario}, editor={America, PierreEditor}, year={1991}, pages={133–147} }
@@ -45,28 +64,8 @@
    URL={https://www.rfc-editor.org/rfc/rfc1654.txt}
    }
 
-@inproceedings{Hybrid2016,
-  author = {Raymond Hu and Nobuko Yoshida},
-  title = {{Hybrid Session Verification through Endpoint API Generation}},
-  booktitle = {19th International Conference on Fundamental Approaches to Software Engineering},
-  series = {LNCS},
-  volume = {9633},
-  pages = {401--418},
-  publisher = {Springer},
-  doi = "10.1007/978-3-662-49665-7_24",
-  year = 2016
-}
 
 
-@article{Python2017,
-  author = {Rumyana Neykova and Nobuko Yoshida},
-  title = {{How to Verify Your Python Conversations}},
-  journal = {Behavioural Types: from Theory to Tools},
-  pages = {77--98},
-  publisher = {River Publishers},
-  doi = "10.13052/rp-9788793519817",
-  year = 2017
-}
 
 @article{MPST, title={{A Very Gentle Introduction to Multiparty Session Types}}, abstractNote={Multiparty session types (MPST) are a formal specification and verification framework for message-passing protocols without cen- tral control: the desired interactions at the scale of the network itself are specified into a session (called global type). Global types are then projected onto local types (one for each participant), which describe the protocol from a local point of view. These local types are used to validate an application through type-checking, monitoring, and code generation. Theory of session types guarantees that local conformance of all partic- ipants induces global conformance of the network to the initial global type. This paper provides a very gentle introduction of the simplest ver- sion of multiparty session types for readers who are not familiar with session types nor process calculi.}, author={Yoshida, Nobuko and Lorenzo, Gheri} }
 

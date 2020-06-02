@@ -3,31 +3,70 @@
 
 In this chapter we present \fancyname{NodeMPST},
 our session type API generation strategy for 
-server-side endpoints. As implied by the name, we assume
-that the APIs will be used for implementations running on the
-Node.js runtime \cite{Node.js}.
+server-side endpoints implemented on the Node.js runtime \cite{node}.
+We continue to use the running example of the \tprotocol{Adder}
+protocol, and refer to the FSM of the \trole{Svr} endpoint
+(\cref{fig:addersvrfsm}) throughout this chapter.
 
-\section{Motivation}
+\begin{figure}[!b]
+\centering
+%\includegraphics[width=0.5\textwidth]{•}
+\captionof{figure}{\dots}
+\label{fig:addersvrfsm}
+\end{figure}
+
+\section{Challenges}
+\label{section:nodechallenges}
 \begin{itemize}
 \item session type implementation on the node runtime
 \item need to provide consistency under the single-threaded event loop model
 \item provide idiomatic event-driven APIs
 \item provide static guarantees where possible -- communication mismatch and channel linearity
+\item typescript's type system is gradual, structural and non-linear -- session type api generation examples that provide static guarantees on channel usage build upon target language type system's support for linear resources
 \end{itemize}
 
+As outlined in \cref{section:typescript}, TypeScript's type system
+is neither affine nor linear, so we need to work around the 
+limitations of the language to enforce linear usage of channel resources.
+Similarly, we need to 
+the language does not provide
+built-in constructs for enforcing linear channel usage.
+
 \section{Approach}
+\label{section:nodeapproach}
+
+We motivate our approach from \cite{PureScript2019, HuJava}
+to generate \textbf{handler-style APIs} to be implemented
+by developers.
+This aligns with idiomatic TypeScript practices of defining
+\textit{callbacks} in the application logic.
+By strictly specifying handlers for send and receive actions,
+we do not expose send and receive APIs to the developer,
+making it impossible for the developer to reuse channels.
+
+
 \begin{itemize}
-\item typescript's type system is gradual, structural and non-linear -- session type api generation examples that provide static guarantees on channel usage build upon target language type system's support for linear resources
+
 \item inspired by purescript approach -- hide the channel resource so they are linear by construction, simply expose callbacks and handlers
 \item the runtime executes the EFSM, performs the send and receive actions through the websocket, and invokes the correct handler as required
 \item provide overview of the files we generate (and forward reference in the correct subsections) -- EFSM, Runtime, `others' (exclude cancellation)
 \end{itemize}
 
+When executing \fancyname{SessionTS} to generate code for the
+\trole{Svr} endpoint specifying the \texttt{node} target,
+we obtain the following files:
+
+\begin{itemize}
+\item \textbf{EFSM.ts:} \dots
+\item \textbf{Svr.ts:} \dots
+\end{itemize}
+
 \section{State Encodings}
+\label{section:nodeefsm}
 
 \begin{itemize}
 \item callbacks -- type aliases for each state (handler)
-\item need a way for the runtime to distinguish between states
+\item need a way for the runtime to distinguish between states (implementation)
 \item attempt at using conditional types, but because they handle conditional union types in a distributed way (give example), cannot be statically typed
 \item alternative -- use discriminated union by wrapping in an Implementation class
 \item all non-terminal states will `return' the successor implementation -- very difficult to resolve in the type-checker in the runtime (give example of what it may look like) -- solve by giving each state implementation the `advance' function to respect the event-driven nature of everything, so they can call it on completion
@@ -40,11 +79,18 @@ Node.js runtime \cite{Node.js}.
 \item show how it extends for polyadic payloads
 \end{itemize}
 
+We generalise deterministic send actions as a trivial \textit{selection}, 
+as motivated from the theory (\dots).
+
 \subsection{Receive}
 \begin{itemize}
 \item very short -- go over the structure and give examples
 \item show how it extends for polyadic payloads
 \end{itemize}
+
+As with send states,
+we generalise deterministic receive actions as a trivial \textit{branch}, 
+as motivated from the theory (\dots).
 
 \subsection{Terminal}
 \begin{itemize}
@@ -52,6 +98,8 @@ Node.js runtime \cite{Node.js}.
 \end{itemize}
 
 \section{Runtime}
+\label{section:noderuntime}
+
 \begin{itemize}
 \item public API -- provide seam for websocket server and implementation
 \item private API -- carry out the session
@@ -74,7 +122,7 @@ Node.js runtime \cite{Node.js}.
 \begin{figure}[!ht]
 \centering
 \includegraphics[width=0.5\textwidth]{NodeRuntimeEFSM}
-\captionof{figure}{Informal Abstraction of EFSM Execution for
+\captionof{figure}{``Message Passing'' Abstraction of EFSM Execution for
 Server Endpoints}
 \label{fig:noderuntimeefsm}
 \end{figure}
@@ -117,12 +165,66 @@ Receive State}
 \item forward reference that this gives opportunity to extend support for general protocols, as in those protocols, the server's terminal state doesn't imply it's terminal for everyone else
 \end{itemize}
 
-\section{Alternative Designs and Limitations}
+\section{Alternative Designs}
+\label{section:nodealt}
+
+The main alternative EFSM encoding would be similar to those
+presented in \cite{Hybrid2016}, which encodes
+each EFSM state as a separate class and expose communication APIs
+(e.g. send and/or receive) that respect the permitted transitions at
+that state. 
+
+\begin{lstlisting}[language=scribble]
+global protocol OneAdder(role Client, role Svr) {
+	NUM1(number) from Client to Svr;
+	NUM2(number) from Client to Svr;
+	SUM(number)  from Svr to Client;
+}
+\end{lstlisting}
+
+\begin{figure}[!h]
+\centering
+\begin{subfigure}{\textwidth}
+\begin{lstlisting}[language=javascript, tabsize=2]
+const logic = async (init) => {
+	const [x, num2] = await init.receive();
+ 	const [y, sum] = await num2.receive();
+	return sum.send(x + y);
+}
+\end{lstlisting}
+\caption{\dots}
+%\label{...}
+\end{subfigure}
+\hfill
+\begin{subfigure}{\textwidth}
+\begin{lstlisting}[language=javascript]
+const logic = new S4({
+	NUM1: (x) => new S6({
+		NUM2: (y) => ([Labels.S7.SUM, [x + y], new S5()]),
+	}),
+});
+\end{lstlisting}
+\caption{\dots}
+%\label{...}
+\end{subfigure}
+\captionof{figure}{\dots}
+%\label{...}
+\end{figure}
 
 \begin{itemize}
 \item exposing channel resources like the java example -- less idiomatic (not-event-driven), need runtime linearity checks like the java example
 \item `hardcoded' switch case runtime like the TSOP papers -- doesn't best leverage the type system
 \end{itemize}
+
+\section{Limitations}
+\label{section:nodelimitations}
+
+\begin{itemize}
+\item verbose
+\item state identifiers are in the API
+\item performance aspect with class-based handlers
+\end{itemize}
+
 
 \section{Summary}
 \begin{itemize}
