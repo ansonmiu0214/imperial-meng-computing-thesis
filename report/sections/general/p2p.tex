@@ -161,13 +161,13 @@ This must be done \textit{very carefully}, as
 naive definitions risk over-serialising the original communication,
 thereby not preserving all communication traces.
 
-For example, consider the global type
+\begin{example}[Naive definition of routing in global types]
+Consider the global type
 \[
 A \to B: \tmsg{M1}. S \to B: \tmsg{M2}. \texttt{end}
 \]
 By existing LTS semantics over
-global types (\cref{subsubsection:lts}), the sequence 
-$[SB!\tmsg{M2}, AB!\tmsg{M1}]$
+global types (\cref{subsubsection:lts}), then $SB!\tmsg{M2}$
 is a prefix of a valid execution trace.
 If we define our routing construct simply by replacing every single
 $A \to B: \tmsg{M}$ interaction with $A \to S: \tmsg{M}.
@@ -176,9 +176,12 @@ S \to B: \tmsg{M}$, we transform the global type into
 A \to S: \tmsg{M1}. S \to B: \tmsg{M1}. S \to B: \tmsg{M2}. \texttt{end}
 \]
 our naive definition of routing has over-serialised the protocol
-since $SB!\tmsg{M2}$ can no longer occur before $AB!\tmsg{M1}$.
+since $SB!\tmsg{M2}$ can no longer occur first because \trole{S}
+is forced to send \tmsg{M1} first, which it cannot do so until receiving
+from \trole{A}.
 This implies that we need to handle routing interactions differently
 from ``normal'' send/receive actions.
+\end{example}
 
 Existing work in decomposing multiparty sessions into a collection
 of binary sessions do resemble our routing proposal, but their approach
