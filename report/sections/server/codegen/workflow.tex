@@ -15,7 +15,7 @@ and provide a brief overview:
 Scribble (\cref{subsection:scribble}), 
 stating the role (hereafter \textit{endpoint})
 to generate APIs for,
-and the code generation \textit{target} 
+and the code generation \textit{target}
 (i.e. whether the role runs on the server or the web browser).
 
 \item \fancyname{SessionTS} delegates to the 
@@ -142,7 +142,9 @@ Formally, API generation is a function of the constructed
 \texttt{Endpoint} instance
 \textit{and} the target specified in the command line. We use a 
 different code generation strategy for implementations running on
-the servre (\cref{chap:node}) versus the browser (\cref{chap:react}).
+the server (\cref{chap:node}) versus the browser (\cref{chap:react}),
+hereafter referred to as \textit{server-side endpoints} and 
+\textit{browser-side endpoints} respectively.
 In this subsection, we explain how we perform API generation
 at a higher level of abstraction.
 

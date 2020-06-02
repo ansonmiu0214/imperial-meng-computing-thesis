@@ -52,12 +52,12 @@ and expecting a zero exit code (\cref{line:testtscrc}).
 
 As the generated TypeScript code makes assumptions about the
 environment in which it is used (for example, having the \texttt{ws}
-WebSocket package installed on server-side targets), we require a
+WebSocket package installed on server-side endpoints), we require a
 sandbox environment to type-check the generated code. 
 The sandbox contains the minimal boilerplate required
 for testing -- this involves having the WebSocket package installed
-for server-side targets, the React.js framework (\cref{section:react})
-instantiated for browser-side targets,
+for server-side endpoints, the React.js framework (\cref{section:react})
+instantiated for browser-side endpoints,
 and corresponding \texttt{tsconfig.json} files for both targets to
 be picked up by the TypeScript Compiler.
 
