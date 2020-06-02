@@ -1,0 +1,48 @@
+\section{\tprotocol{Two Buyer} Protocol}
+\label{section:twobuyer}
+
+We present the \tprotocol{Two Buyer} protocol in \cref{lst:twobuyer},
+which describes a protocol between two buyers \trole{A}, \trole{B}
+and a \trole{S}eller. We assume that the \trole{S}eller runs on
+the server, and the buyers run on the browser.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=scribble]
+module ClientClient;
+
+global protocol TwoBuyer(role A, role B, role S) {
+	title(string)   from A to S;
+	quote(number)   from S to A;
+	quote(number)   from S to B;
+	split(number)   from A to B; (*@\label{line:twobuyersplit}@*)
+	choice at B {
+		accept()    from B to A; (*@\label{line:twobuyerok}@*)
+		buy()       from A to S;
+	} or {
+		reject()    from B to A; (*@\label{line:twobuyerno}@*)
+		cancel()    from A to S;
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{The \tprotocol{Two Buyer} Protocol}
+\label{lst:twobuyer}
+\end{figure}
+
+In the protocol, \trole{A} asks the \trole{S}eller for the quote
+of a book \tmsg{title}. \trole{S}eller sends the \tmsg{quote}
+to both buyers \trole{A} and \trole{B}. \trole{A} privately asks
+proposes a \tmsg{split} with \trole{B}. Now, \trole{B} must make
+a choice: 
+either \trole{B} can \tmsg{accept} the split, where \trole{A} confirms
+to \tmsg{buy} from the \trole{S}eller;
+otherwise, \trole{B} will \tmsg{reject} the split, which
+\tmsg{cancel}s the purchase.
+
+\cref{line:twobuyersplit,line:twobuyerok,line:twobuyerno}
+illustrate that the \tprotocol{Two Buyer} protocol 
+does not implement a server-centric communication topology,
+since these lines reference communication actions between
+the two client browsers. 
+As a result, \fancyname{SessionTS} cannot correctly generate
+APIs that support the specified interactions 
+for buyers \trole{A} and \trole{B}.

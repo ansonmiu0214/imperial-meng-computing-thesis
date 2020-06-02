@@ -1,0 +1,56 @@
+\section{Challenges}
+\label{section:routerchallenges}
+
+We need to formalise our concept of routing by extending session
+type theory, such that, given a communication protocol implementing 
+an arbitrary topology, we can encode it into our extended theory and
+prove that safety properties (e.g. well-formedness, deadlock freedom)
+are preserved, and that communication traces are preserved.
+This must be done \textit{very carefully}, as
+naive definitions risk over-serialising the original communication,
+thereby not preserving all communication traces.
+
+\begin{example}[Naive definition of routing in global types]
+Consider the global type
+\[
+A \to B: \tmsg{M1}. S \to B: \tmsg{M2}. \texttt{end}
+\]
+By existing LTS semantics over
+global types (\cref{subsubsection:lts}), then $SB!\tmsg{M2}$
+is a prefix of a valid execution trace.
+If we define our routing construct simply by replacing every single
+$A \to B: \tmsg{M}$ interaction with $A \to S: \tmsg{M}.
+S \to B: \tmsg{M}$, we transform the global type into
+\[
+A \to S: \tmsg{M1}. S \to B: \tmsg{M1}. S \to B: \tmsg{M2}. \texttt{end}
+\]
+our naive definition of routing has over-serialised the protocol
+since $SB!\tmsg{M2}$ can no longer occur first because \trole{S}
+is forced to send \tmsg{M1} first, which it cannot do so until receiving
+from \trole{A}.
+This implies that we need to handle routing interactions differently
+from ``normal'' send/receive actions.
+\end{example}
+
+Existing work in decomposing multiparty sessions into a collection
+of binary sessions do resemble our routing proposal, but their approach
+involves having an endpoint to exclusively carry out
+routing responsibilities and act as a centralised orchestrator 
+for the multiparty session.
+Our proposal recognises that, in the context of web applications,
+there is a need for server-side endpoints to implement business logic
+so enforcing the server to be an exclusive orchestrator makes our work
+incompatible with webservice protocols; 
+we also argue that the server can still participate in the 
+multiparty session and concurrently perform its routing duties
+in a way that is transparent to non-server endpoints, and crucially,
+does not overserialise the permitted interactions. 
+We introduce our extension as \textit{Routed Session Types},
+and proceed to prove these claims in \cref{chap:theory}.
+
+Likewise, the implementation of routed session types 
+in \fancyname{SessionTS} needs to accurately reflect the theory
+and be as transparent to the developer as possible to minimise
+the learning curve overhead demanded 
+by complicating the generated APIs -- we document our extensions
+to \fancyname{SessionTS} in \cref{chap:impl}.
