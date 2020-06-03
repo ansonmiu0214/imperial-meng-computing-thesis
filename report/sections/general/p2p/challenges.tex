@@ -32,9 +32,12 @@ This implies that we need to handle routing interactions differently
 from ``normal'' send/receive actions.
 \end{example}
 
-Existing work in decomposing multiparty sessions into a collection
-of binary sessions do resemble our routing proposal, but their approach
-involves having an endpoint to exclusively carry out
+There is existing work \cite{LinearDecomp, BinaryDecomp, BinaryDuality}
+that resembles our routing proposal through
+\textit{decomposing} multiparty sessions into a collection
+of binary sessions,
+but these approaches
+specify an endpoint to exclusively carry out
 routing responsibilities and act as a centralised orchestrator 
 for the multiparty session.
 Our proposal recognises that, in the context of web applications,
