@@ -1,6 +1,16 @@
 \section{EFSM Encoding}
 \label{section:nodeefsm}
 
+We show the structure of the generated EFSM.ts file in
+\cref{lst:nodeefsmfile}.
+Note that the formal definition of the EFSM in 
+\cref{section:scribbleefsm}
+contains more than just states and the state transition function,
+so we encode the additional information as well.
+Each type of information is grouped into their own
+\textit{namespace}, and are collectively exported in
+the EFSM \textit{module} for the developer to use.
+
 In addition to states and transitions, we generate 
 TypeScript constructs
 for relevant metadata in the state machine: this includes
@@ -36,30 +46,31 @@ for server endpoints}
 
 \begin{itemize}
 \item callbacks -- type aliases for each state (handler)
-\item need a way for the runtime to distinguish between states (implementation)
-\item attempt at using conditional types, but because they handle conditional union types in a distributed way (give example), cannot be statically typed
-\item alternative -- use discriminated union by wrapping in an Implementation class
-\item all non-terminal states will `return' the successor implementation -- very difficult to resolve in the type-checker in the runtime (give example of what it may look like) -- solve by giving each state implementation the `advance' function to respect the event-driven nature of everything, so they can call it on completion
-\item visualise the interaction between runtime and states as a sequence diagram for message passing
 \end{itemize}
 
 \begin{figure}[!ht]
 \begin{lstlisting}[language=javascript, tabsize=2]
 // Inside the Message namespace...
-export type S54THANKS = {
+export interface S54THANKS {
 	label: Labels.S54.THANKS,
 	payload: [string],
 };
-export type S54TERMINATE = {
+export interface S54TERMINATE {
 	label: Labels.S54.TERMINATE,
 	payload: [],
 };
 
 export type S54 = | S54THANKS | S54TERMINATE;
 \end{lstlisting}
-%\label{}
+\label{lst:addersvrmsg}
 \captionof{lstlisting}{Generated Message Type Definition for State 54}
 \end{figure}
+
+By expressing the payload type as a \textit{tuple}\footnote{
+In TypeScript, a tuple is an array with fixed size
+and known types for elements at each position.
+},
+we easily generalise our type definition to polyadic payloads.
 
 \subsection{Handler APIs}
 
@@ -68,12 +79,29 @@ under the \texttt{Handler} namespace.
 As a design choice, we \textit{do not} generate handlers for
 terminal states, because the semantics of inactivity mean
 there is nothing to handle.
+%Hence, all generated handler APIs are for non-terminal states,
+%and will hold some reference to the successor state encoding.
+%The reader will notice that, in the listings below, the successor
+%state is stated to be under the 
 We outline how the generated API differs between sending
 and receiving states.
 
-\paragraph{Send}
+\subparagraph{Send}
+We model selections using \textit{union types} to
+encapsulate the possible send actions. 
+Each send action is encoded as a tuple of
+the label, the payload, and the successor state.
+We see some benefits from defining Message Types as interfaces:
+with deterministic properties, we can index into the message type
+to access the property's type, 
+e.g. \texttt{Message.S54THANKS['payload']} would resolve to
+\texttt{[string]}, based on \cref{lst:addersvrmsg}.
+We provide an example in \cref{lst:addersvrsendhandler}.
+
 We generalise deterministic send actions as a trivial \textit{selection}, 
-as motivated from the theory (\dots).
+as motivated from the theory (\cref{fig:globaltypes}),
+so the encoding for State 53 in the \trole{Svr} FSM would be
+the union of a single tuple.
 
 \begin{figure}[!ht]
 \begin{lstlisting}[language=javascript, tabsize=2]
@@ -86,9 +114,10 @@ export type S54 =
 \end{lstlisting}
 \captionof{lstlisting}{Generated Type for \trole{Svr} Send State
 in \tprotocol{Adder} protocol}
+\label{lst:addersvrsendhandler}
 \end{figure}
 
-\paragraph{Receive}
+\subparagraph{Receive}
 \begin{itemize}
 \item very short -- go over the structure and give examples
 \item show how it extends for polyadic payloads
@@ -109,10 +138,14 @@ in \tprotocol{Adder} protocol}
 \end{figure}
 
 As with send states,
-we generalise deterministic receive actions as a trivial \textit{branch}, 
-as motivated from the theory (\dots).
+we generalise deterministic receive actions as a trivial \textit{branch},
+which would be an interface with one property. 
 
-\subsection{Terminal}
+\subsection{Wrapping Handlers in ``Implementations''}
 \begin{itemize}
-\item basically nothing here -- can highlight the provided type alias to provide a better developer experience
+\item need a way for the runtime to distinguish between states (implementation)
+\item attempt at using conditional types, but because they handle conditional union types in a distributed way (give example), cannot be statically typed
+\item alternative -- use discriminated union by wrapping in an Implementation class
+\item all non-terminal states will `return' the successor implementation -- very difficult to resolve in the type-checker in the runtime (give example of what it may look like) -- solve by giving each state implementation the `advance' function to respect the event-driven nature of everything, so they can call it on completion
+\item visualise the interaction between runtime and states as a sequence diagram for message passing
 \end{itemize}
