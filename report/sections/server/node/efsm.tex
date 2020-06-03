@@ -79,6 +79,20 @@ export enum S54 { THANKS = "THANKS", TERMINATE = "TERMINATE", };
 \end{figure}
 
 \subparagraph{Messages}
+The handler APIs that we generate for developers
+need to refer to the label identifier and payload type: 
+we refer to this as the message structure, and encode this as a
+Message Type. 
+Each message is expressed as an interface with
+properties for the label and payload.
+These interfaces are grouped based on the EFSM state
+they belong using \textit{union types}.
+We illustrate this in \cref{lst:addersvrmsg}.
+By expressing the payload type as a \textit{tuple}\footnote{
+In TypeScript, a tuple is an array with fixed size
+and known types for elements at each position.
+},
+we easily generalise our type definition to polyadic payloads.
 
 \begin{figure}[!ht]
 \begin{lstlisting}[language=javascript, tabsize=2]
@@ -98,12 +112,6 @@ export type S54 = | S54THANKS | S54TERMINATE;
 \label{lst:addersvrmsg}
 \end{figure}
 
-By expressing the payload type as a \textit{tuple}\footnote{
-In TypeScript, a tuple is an array with fixed size
-and known types for elements at each position.
-},
-we easily generalise our type definition to polyadic payloads.
-
 \subsection{Handler APIs}
 \label{subsection:nodeefsmhandlers}
 
@@ -112,15 +120,17 @@ under the \texttt{Handler} namespace.
 As a design choice, we \textit{do not} generate handlers for
 terminal states, because the semantics of inactivity mean
 there is nothing to handle.
-%Hence, all generated handler APIs are for non-terminal states,
-%and will hold some reference to the successor state encoding.
-%The reader will notice that, in the listings below, the successor
-%state is stated to be under the 
-We outline how the generated API differs between sending
-and receiving states.
+We introduce the generated handlers for sending and receiving states.
+These are non-terminal states that will involve the encoding of its
+successor state. The reader will notice that, in the listings below,
+the successor state is stated to be under the
+\texttt{Implementation} namespace: we explain in 
+\cref{subsection:nodeefsmimplementation}, but for now,
+it is sufficient to acknowledge that those refer to the encoding
+of the successor state.
 
 \subparagraph{Send}
-We model selections using a \textit{union type} to
+We model selections using a union type to
 encapsulate the possible send actions, as shown in 
 \cref{lst:addersvrsendhandler}.
 Each send action is encoded as a tuple of
@@ -187,8 +197,8 @@ the message payload, and must return the successor state encoding.
 We see another benefit of defining the payload in Message Types
 as a tuple: we can define the receive handler parameter
 using the \textit{spread syntax}, which allows the tuple
-expression to be expanded into a list of arguments. 
-More concretely, as shown in \cref{lst:nodeefsmspread}
+expression to be expanded into a list of function arguments. 
+More concretely, as shown in \cref{lst:nodeefsmspread},
 it allows the developer to pattern match on the
 individual payload values (\cref{line:yesspread}) 
 rather than defining their function to expect a tuple 
@@ -210,6 +220,37 @@ Compatible with Spread Syntax}
 
 \subsection{Wrapping Handlers in ``Implementations''}
 \label{subsection:nodeefsmimplementation}
+
+The behaviour of the runtime is dependent on the current state,
+so it needs a way to distinguish between
+all the different states -- one can think of this as implementing
+the state transition function from the theory, which is analogue to 
+overloading a \texttt{next()} method for each state.
+Due to limitations in the TypeScript language, this would have to
+be some sort of switch statement, with the \texttt{next()}
+method parameterised by some base type assignable to all states.
+Currently, the state is only determined by the handler
+to be implemented by the developer, so the switch statement
+and base type would have to be defined on the handler APIs.
+
+Unfortunately, this is not practical. 
+Handlers for send states are union types and
+handlers for receive states are interfaces,
+both of which are not supported 
+by the \lstonelinejs{instanceof}
+operator.
+
+We attempt to address this by defining an enum of state identifiers
+for each type of state (i.e. an enum for send states, 
+an enum for receive states)
+upon which to execute the EFSM, which solves the switch statement
+problem.
+Now, we are left with defining a mapping between the 
+state identifier enum to the handler type. This construct would be
+analogue to \textit{dependent types}, which again, is not a feature
+of the TypeScript type system.
+
+
 \begin{itemize}
 \item need a way for the runtime to distinguish between states (implementation)
 \item attempt at using conditional types, but because they handle conditional union types in a distributed way (give example), cannot be statically typed

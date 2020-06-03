@@ -3,10 +3,13 @@
 
 The main alternative EFSM encoding would be similar to those
 presented in \cite{Hybrid2016}, which encodes
-each EFSM state as a separate class and expose communication APIs
-(e.g. send and/or receive) that respect the permitted transitions at
-that state. 
+each EFSM state in its own class 
+and expose communication APIs (e.g. send and/or receive) 
+that respect the permitted state transitions as instance methods.
 
+\begin{figure}[!h]
+\centering
+\begin{subfigure}{\textwidth}
 \begin{lstlisting}[language=scribble]
 global protocol OneAdder(role Client, role Svr) {
 	NUM1(number) from Client to Svr;
@@ -14,9 +17,8 @@ global protocol OneAdder(role Client, role Svr) {
 	SUM(number)  from Svr to Client;
 }
 \end{lstlisting}
-
-\begin{figure}[!h]
-\centering
+\caption{The \tprotocol{OneAdder} Protocol}
+\end{subfigure}
 \begin{subfigure}{0.49\textwidth}
 \begin{lstlisting}[language=javascript,tabsize=2]
 const logic = async (init) => {
@@ -29,7 +31,7 @@ const logic = async (init) => {
 	return sum.send(x + y);
 }
 \end{lstlisting}
-\caption{Alternative Version}
+\caption{Alternative API Design}
 %\label{...}
 \end{subfigure}
 \hfill
@@ -46,7 +48,7 @@ const logic = new S4({
 });
 
 \end{lstlisting}
-\caption{Current Version}
+\caption{Current API Design}
 %\label{...}
 \end{subfigure}
 \captionof{figure}{\dots}
