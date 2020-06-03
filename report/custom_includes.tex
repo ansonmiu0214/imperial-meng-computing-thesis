@@ -16,6 +16,10 @@
 % Nicer references
 \usepackage[noabbrev, capitalise]{cleveref}
 
+% Font?
+%\usepackage{ascii}
+%\usepackage[T1]{fontenc}
+%\renewcommand\ttfamily{\asciifamily}
 
 
 % Includes
@@ -45,12 +49,12 @@
   morestring=[b]"
 }
 \lstdefinelanguage{JavaScript}{
-  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break, class, export, boolean, throw, implements, import, this, const, let, extends, async, await},
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break, class, export, boolean, throw, implements, import, this, const, let, extends, async, await, namespace, type, abstract, any, number, string},
   keywordstyle=\color{blue}\bfseries,
 %  ndkeywords={class, export, boolean, throw, implements, import, this},
 %  ndkeywordstyle=\color{darkgray}\bfseries,
   identifierstyle=\color{black},
-  sensitive=false,
+  sensitive=true,
   comment=[l]{//},
   morecomment=[s]{/*}{*/},
   commentstyle=\color{darkgray}\ttfamily,
@@ -74,8 +78,8 @@
 	numbers=left,
 	frame=single,
 	tabsize=4,
-    xleftmargin=2em,
-    framexrightmargin=-0.5em,
+    xleftmargin=1.25em,
+    framexrightmargin=-0.25em,
     escapeinside={(*@}{@*)}
 }
 
