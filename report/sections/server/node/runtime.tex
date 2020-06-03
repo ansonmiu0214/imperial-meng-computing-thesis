@@ -2,17 +2,22 @@
 \label{section:noderuntime}
 
 We define the session runtime in Svr.ts,
-named after the endpoint.
-It exposes (through the module export) a public API 
+named after the \trole{Svr} endpoint.
+It exposes a \textbf{public API}
 (\cref{lst:noderuntimepublicapi})
-for the developer to pass in the WebSocket server and application logic
+with seams for the developer to pass in the WebSocket server 
+and application logic
 (i.e. their handler implementations).
-
-
-\begin{itemize}
-\item public API -- provide seam for websocket server and implementation
-\item private API -- carry out the session
-\end{itemize}
+It is the responsibility of the developer to construct the
+WebSocket server and set it up to listen for incoming connections.
+Internally, it keeps a \textit{private API}
+for executing the EFSM, when all participants have 
+joined the session.
+The role of the public API is to manage incoming connections and
+wait for all participants to join the session 
+(\cref{subsection:noderuntimepublic}), before
+handing off to the private API to execute the EFSM
+(\cref{subsection:noderuntimeprivate}).
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2,title=Svr.ts]
@@ -27,6 +32,8 @@ export class Svr {
 \end{figure}
 
 \subsection{Managing Connections}
+\label{subsection:noderuntimepublic}
+
 \begin{itemize}
 \item use set and partial object to keep track of pending connections
 \item ws event listeners
@@ -34,6 +41,19 @@ export class Svr {
 \end{itemize}
 
 \subsection{Executing the EFSM}
+\label{subsection:noderuntimeprivate}
+
+We revisit the concept of using discriminated unions to distinguish
+the type of EFSM state. The discriminated union is implemented by the
+\texttt{Implementation} API which wraps the developer's
+implementation of the  \texttt{Handler} API.
+
+It is sufficient for the runtime to only discriminate the type of state
+rather than the specific state. 
+we can define \textit{state-specific}
+details within the discriminated union
+
+
 \begin{itemize}
 \item implementation details delegated to the actual implementation states
 \item all non-terminal states will `return' the successor implementation -- very difficult to resolve in the type-checker in the runtime (give example of what it may look like) -- solve by giving each state implementation the `advance' function to respect the event-driven nature of everything, so they can call it on completion
@@ -50,10 +70,20 @@ Server Endpoints}
 \label{fig:noderuntimeefsm}
 \end{figure}
 
-\subsection{Handling Message Sends}
-\begin{itemize}
-\item very short (just for completeness in the report) -- messages are serialised JS objects (in JSON notation) sent and decoded on the other end, type-correct by construction
-\end{itemize}
+\subsection{Sending Messages}
+Message Types are defined as interfaces, which
+are represented by objects. By convention,
+we serialise messages into \textit{JavaScript Object Notation}
+(or JSON) \cite{json} using the built-in \texttt{JSON.stringify()}
+method.
+
+They are decoded using the same interface schema on the receiving end
+using \texttt{JSON.parse()}: whilst the method return type is the
+dynamic \lstonelinejs{any} type, 
+we guarantee type safety by construction
+as we performed the serialisation in the first place, so
+we can safely interpret the deserialised content 
+using a concrete type.
 
 \subsection{Handling Message Receives}
 \begin{itemize}
@@ -83,7 +113,8 @@ Receive State}
 \end{figure}
 
 \subsection{Handling Termination}
-\begin{itemize}
-\item design choice that the client is the one that closes the connection because of the centralised role of the server
-\item forward reference that this gives opportunity to extend support for general protocols, as in those protocols, the server's terminal state doesn't imply it's terminal for everyone else
-\end{itemize}
+WebSocket connections should be closed when the session terminates,
+and both the browser endpoint and the server endpoint are capable
+of closing connection. As we generate code for both, we define
+a convention that the browser endpoint will initiate the WebSocket
+close event.
