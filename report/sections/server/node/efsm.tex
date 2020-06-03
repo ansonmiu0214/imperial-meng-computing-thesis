@@ -1,0 +1,118 @@
+\section{EFSM Encoding}
+\label{section:nodeefsm}
+
+In addition to states and transitions, we generate 
+TypeScript constructs
+for relevant metadata in the state machine: this includes
+\textit{roles}, \textit{labels} and \textit{message structures}.
+
+
+The EFSM contains more than just states and transitions
+
+The generated \textbf{EFSM.ts} file encodes all information
+available 
+
+\begin{figure}
+\begin{lstlisting}[language=javascript,tabsize=2]
+export namespace Roles {...};
+export namespace Labels {...};
+export namespace Message {...};
+
+export namespace Handler {...};
+
+abstract class ISend {...};
+abstract class IReceive {...};
+abstract class ITerminal {...};
+export namespace Implementation {...};
+
+export type EfsmTransitionHandler =
+	(implementation: Implementation.Type) => void;
+export type MessageHandler = (message: any) => void;
+\end{lstlisting}
+\captionof{lstlisting}{Structure of generated EFSM.ts file 
+for server endpoints}
+\label{lst:nodeefsmfile}
+\end{figure}
+
+\begin{itemize}
+\item callbacks -- type aliases for each state (handler)
+\item need a way for the runtime to distinguish between states (implementation)
+\item attempt at using conditional types, but because they handle conditional union types in a distributed way (give example), cannot be statically typed
+\item alternative -- use discriminated union by wrapping in an Implementation class
+\item all non-terminal states will `return' the successor implementation -- very difficult to resolve in the type-checker in the runtime (give example of what it may look like) -- solve by giving each state implementation the `advance' function to respect the event-driven nature of everything, so they can call it on completion
+\item visualise the interaction between runtime and states as a sequence diagram for message passing
+\end{itemize}
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=javascript, tabsize=2]
+// Inside the Message namespace...
+export type S54THANKS = {
+	label: Labels.S54.THANKS,
+	payload: [string],
+};
+export type S54TERMINATE = {
+	label: Labels.S54.TERMINATE,
+	payload: [],
+};
+
+export type S54 = | S54THANKS | S54TERMINATE;
+\end{lstlisting}
+%\label{}
+\captionof{lstlisting}{Generated Message Type Definition for State 54}
+\end{figure}
+
+\subsection{Handler APIs}
+
+We collect the APIs that the developer needs to implement
+under the \texttt{Handler} namespace. 
+As a design choice, we \textit{do not} generate handlers for
+terminal states, because the semantics of inactivity mean
+there is nothing to handle.
+We outline how the generated API differs between sending
+and receiving states.
+
+\paragraph{Send}
+We generalise deterministic send actions as a trivial \textit{selection}, 
+as motivated from the theory (\dots).
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=javascript, tabsize=2]
+// Inside the Handler namespace...
+export type S54 = 
+	| [Labels.S54.THANKS, Message.S54THANKS['payload'],
+		Implementation.S52] 
+	| [Labels.S54.TERMINATE, Message.S54TERMINATE['payload'], 
+		Implementation.S52];
+\end{lstlisting}
+\captionof{lstlisting}{Generated Type for \trole{Svr} Send State
+in \tprotocol{Adder} protocol}
+\end{figure}
+
+\paragraph{Receive}
+\begin{itemize}
+\item very short -- go over the structure and give examples
+\item show how it extends for polyadic payloads
+\end{itemize}
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=javascript,tabsize=2]
+// Inside the Handler namespace...
+export type S51 = {
+	[Labels.S51.ADD]: (...payload: Message.S51ADD['payload']) =>
+		Implementation.S53,
+	[Labels.S51.QUIT]: (...payload: Message.S51QUIT['payload']) => 
+		Implementation.S54,
+}
+\end{lstlisting}
+\captionof{lstlisting}{Generated Type for \trole{Svr} Receive State
+in \tprotocol{Adder} protocol}
+\end{figure}
+
+As with send states,
+we generalise deterministic receive actions as a trivial \textit{branch}, 
+as motivated from the theory (\dots).
+
+\subsection{Terminal}
+\begin{itemize}
+\item basically nothing here -- can highlight the provided type alias to provide a better developer experience
+\end{itemize}

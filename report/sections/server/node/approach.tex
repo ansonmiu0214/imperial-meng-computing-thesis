@@ -1,0 +1,30 @@
+\section{Approach}
+\label{section:nodeapproach}
+
+We motivate our approach from \cite{PureScript2019, HuJava}
+to generate \textbf{handler-style APIs} to be implemented
+by developers.
+This aligns with idiomatic TypeScript practices of defining
+\textit{callbacks} in the application logic.
+We type the parameters and return values of the handlers to
+reflect the message types specified in the protocol.
+By strictly specifying handlers for send and receive actions,
+we do not expose send and receive APIs to the developer,
+making it impossible for the developer to reuse channels.
+
+The responsibility of guaranteeing linear channel usage now falls
+under the runtime that executes the EFSM.
+As we generate this for the developer,
+we can provide \textbf{static}
+linearity guarantees by construction.
+
+When executing \fancyname{SessionTS} to generate code for the
+\trole{Svr} endpoint specifying the \texttt{node} target,
+the developer obtains the following files:
+
+\begin{itemize}
+\item \textbf{EFSM.ts:} TypeScript types constructed for 
+the EFSM encoding (\cref{section:nodeefsm});
+\item \textbf{Svr.ts:} Session runtime for executing the EFSM 
+(\cref{section:noderuntime}).
+\end{itemize}

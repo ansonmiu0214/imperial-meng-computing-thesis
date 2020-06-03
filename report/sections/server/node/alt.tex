@@ -1,0 +1,51 @@
+\section{Alternative Designs}
+\label{section:nodealt}
+
+The main alternative EFSM encoding would be similar to those
+presented in \cite{Hybrid2016}, which encodes
+each EFSM state as a separate class and expose communication APIs
+(e.g. send and/or receive) that respect the permitted transitions at
+that state. 
+
+\begin{lstlisting}[language=scribble]
+global protocol OneAdder(role Client, role Svr) {
+	NUM1(number) from Client to Svr;
+	NUM2(number) from Client to Svr;
+	SUM(number)  from Svr to Client;
+}
+\end{lstlisting}
+
+\begin{figure}[!h]
+\centering
+\begin{subfigure}{\textwidth}
+\begin{lstlisting}[language=javascript, tabsize=2]
+const logic = async (init) => {
+	const [x, num2] = await init.receive();
+ 	const [y, sum] = await num2.receive();
+ 	// init.receive();	// this would type-check but violate linearity
+	return sum.send(x + y);
+}
+\end{lstlisting}
+\caption{\dots}
+%\label{...}
+\end{subfigure}
+\hfill
+\begin{subfigure}{\textwidth}
+\begin{lstlisting}[language=javascript]
+const logic = new S4({
+	NUM1: (x) => new S6({
+		NUM2: (y) => ([Labels.S7.SUM, [x + y], new S5()]),
+	}),
+});
+\end{lstlisting}
+\caption{\dots}
+%\label{...}
+\end{subfigure}
+\captionof{figure}{\dots}
+%\label{...}
+\end{figure}
+
+\begin{itemize}
+\item exposing channel resources like the java example -- less idiomatic (not-event-driven), need runtime linearity checks like the java example
+\item `hardcoded' switch case runtime like the TSOP papers -- doesn't best leverage the type system
+\end{itemize}

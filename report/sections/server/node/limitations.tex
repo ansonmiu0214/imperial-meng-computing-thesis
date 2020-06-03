@@ -1,0 +1,15 @@
+\section{Limitations}
+\label{section:nodelimitations}
+
+\begin{itemize}
+\item verbose
+\item state identifiers are in the API
+\item scoping achieved through nested objects
+\item performance aspect with class-based handlers
+\end{itemize}
+
+\begin{lstlisting}[language=javascript]
+const first = new S4({ NUM1: (x) => secondOperand, });
+const second = new S6({ NUM2: (y) => sum, });
+const sum = [Labels.S7.SUM, ???, new S5()];
+\end{lstlisting}
