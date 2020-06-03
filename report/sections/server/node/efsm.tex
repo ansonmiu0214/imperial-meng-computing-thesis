@@ -136,12 +136,11 @@ encapsulate the possible send actions, as shown in
 Each send action is encoded as a tuple of
 the label, the payload, and the successor state encoding.
 We see some benefits from defining Message Types as interfaces:
-with deterministic properties, we can index into the message type
-to access the property's type, 
-e.g. \lstonelinejs{Message.S54THANKS['payload']} 
-would resolve to
-\lstonelinejs{[string]},
-based on \cref{lst:addersvrmsg}.
+TypeScript supports \textit{index type queries} to extract
+named property types, so
+\lstonelinejs{Message.S54THANKS['payload']} 
+would resolve to \lstonelinejs{[string]},
+based on the interface definition \cref{lst:addersvrmsg}.
 
 \begin{figure}[!ht]
 \begin{lstlisting}[language=javascript, tabsize=2]
@@ -240,6 +239,8 @@ both of which are not supported
 by the \lstonelinejs{instanceof}
 operator.
 
+\subsubsection{Distinguishing Handlers using Conditional Types}
+
 We attempt to address this by defining an enum of state identifiers
 for each type of state (i.e. an enum for send states, 
 an enum for receive states)
@@ -250,11 +251,127 @@ state identifier enum to the handler type. This construct would be
 analogue to \textit{dependent types}, which again, is not a feature
 of the TypeScript type system.
 
+We try to define type dependencies using
+\textit{conditional types} in TypeScript.
+A conditional types is a type-level expression
+\begin{lstlisting}[language=javascript,numbers=none]
+T extends U ? X : Y;
+\end{lstlisting}
+which reads, \textit{if \texttt{T} is assignable to \texttt{U},
+then the type is \texttt{X}; otherwise, the type is \texttt{Y}}.
 
-\begin{itemize}
-\item need a way for the runtime to distinguish between states (implementation)
-\item attempt at using conditional types, but because they handle conditional union types in a distributed way (give example), cannot be statically typed
-\item alternative -- use discriminated union by wrapping in an Implementation class
-\item all non-terminal states will `return' the successor implementation -- very difficult to resolve in the type-checker in the runtime (give example of what it may look like) -- solve by giving each state implementation the `advance' function to respect the event-driven nature of everything, so they can call it on completion
-\item visualise the interaction between runtime and states as a sequence diagram for message passing
-\end{itemize}
+Combined with \textit{generic constraints}\footnote{
+\lstonelinejs{<T extends U>} defines a generic type \texttt{T}
+and enforces that it must be a type assignable to \texttt{U}.
+},
+we can approximate the dependency between the state identifier
+enum and the generated handler API using something
+similar to \cref{lst:conditionaltypes}.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+enum SendState { S1, S3, ... };
+enum ReceiveState { S2, S4, ... };
+type State = SendState | ReceiveState;
+
+type SendHandler<S extends SendState> = 
+	S extends SendState.S1 ? Handler.S1 :
+	S extends SendState.S3 ? Handler.S3 : ... ;
+
+type ReceiveHandler<S extends ReceiveState> = 
+	S extends ReceiveState.S2 ? Handler.S2 :
+	S extends ReceiveState.S4 ? Handler.S4 : ... ;
+\end{lstlisting}
+\captionof{lstlisting}{Approximating Type Dependency
+using \textit{Conditional Types}}
+\label{lst:conditionaltypes}
+\end{figure}
+
+We intend to use this construct when defining the EFSM transition
+function for the runtime, for each type of state,
+so the method signature for transitioning to send states
+would resemble \cref{lst:conditionaltransitionfunction}
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,numbers=none]
+declare function transitionToSend<S extends SendState>(
+	stateId: S, handler: SendHandler<S>
+);
+\end{lstlisting}
+\captionof{lstlisting}{EFSM Transition Function 
+using Conditional Types}
+\label{lst:conditionaltransitionfunction}
+\end{figure}
+
+Unfortunately, this approach does not work for the simple fact that
+conditional types were not designed to be exploited in this manner.
+The main limitation of conditional types is its 
+\textit{distributivity} when the type ``parameter'' is an
+union type (which is the case for enums, as
+\texttt{S = SendState.S1 | SendState.S3 | ...}), where
+
+\begin{lstlisting}[language=javascript,numbers=none]
+(T1 | T2) extends U ? X : Y
+\end{lstlisting}
+
+results in the conditional type being \textit{distributed}
+among each constituent,
+
+\begin{lstlisting}[language=javascript,numbers=none]
+(T1 extends U ? X : Y) | (T2 extends U ? X : Y)
+\end{lstlisting}
+
+so the type expression returns to an union type,
+
+\begin{lstlisting}[language=javascript,numbers=none]
+X | Y
+\end{lstlisting}
+
+Returning to \cref{lst:conditionaltransitionfunction}, 
+the type of \texttt{handler} will end up being a union type, 
+rather than the ``dependent type''
+construct we were hoping for.
+
+\subsubsection{Distinguishing Handlers using Discriminated Unions}
+
+Instead, we leverage \textit{discriminated unions}: all members
+of the union type share a common property (the \textit{discriminant})
+of which they each define an
+unique value for, so that the TypeScript Compiler can refine the union
+to the specific constituent upon checking the value of the discriminant
+(e.g. applying a switch statement).
+
+For the time being,
+it is sufficient to understand that for each EFSM state,
+in addition to the API defined under the
+\texttt{Handler} namespace, it also has a wrapper API defined under
+the \texttt{Implementation} namespace (\cref{lst:nodeefsmimplementation}),
+which defines the \texttt{type}
+discriminant property internally. This explains why the successor
+state encodings in 
+\cref{lst:addersvrsendhandler,lst:addersvrreceivehandler}
+were defined as such.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+abstract class ISend { type: 'Send' = 'Send'; ... }
+abstract class IReceive { type: 'Receive' = 'Receive'; ... }
+
+export namespace Implementation {
+
+	export class S51 extends IReceive {
+		constructor(private handler: Handler.S51) { super(); }
+		...
+	}
+	...
+};
+\end{lstlisting}
+\captionof{lstlisting}{Discriminated Unions in EFSM 
+for Server-Side Endpoints}
+\label{lst:nodeefsmimplementation}
+\end{figure}
+
+We discuss our runtime implementation shortly 
+(\cref{section:noderuntime}), where we disclose more details regarding
+the role of the \texttt{Implemenation} wrapper API in
+the runtime.

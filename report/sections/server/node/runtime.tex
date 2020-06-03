@@ -1,11 +1,30 @@
-
 \section{Runtime}
 \label{section:noderuntime}
+
+We define the session runtime in Svr.ts,
+named after the endpoint.
+It exposes (through the module export) a public API 
+(\cref{lst:noderuntimepublicapi})
+for the developer to pass in the WebSocket server and application logic
+(i.e. their handler implementations).
+
 
 \begin{itemize}
 \item public API -- provide seam for websocket server and implementation
 \item private API -- carry out the session
 \end{itemize}
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2,title=Svr.ts]
+export class Svr {
+	constructor(wss: WebSocket.Server,
+							initialState: Implementation.S51) { ... }
+	...
+}
+\end{lstlisting}
+\captionof{lstlisting}{Public API of Session Runtime for Server Endpoint}
+\label{lst:noderuntimepublicapi}
+\end{figure}
 
 \subsection{Managing Connections}
 \begin{itemize}
@@ -17,6 +36,8 @@
 \subsection{Executing the EFSM}
 \begin{itemize}
 \item implementation details delegated to the actual implementation states
+\item all non-terminal states will `return' the successor implementation -- very difficult to resolve in the type-checker in the runtime (give example of what it may look like) -- solve by giving each state implementation the `advance' function to respect the event-driven nature of everything, so they can call it on completion
+\item visualise the interaction between runtime and states as a sequence diagram for message passing
 \item constructor binds all methods (that will be passed to other components0 to `this' because of how javascript works with respect to the scoping of `this' (give short example -- or ignore, if this is in the background for typescript)
 \item advance -- use discriminated union to figure out what to pass to the state (send -- sendMessage, receive -- register)
 \end{itemize}
