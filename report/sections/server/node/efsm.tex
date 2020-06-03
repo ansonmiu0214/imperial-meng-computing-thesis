@@ -11,25 +11,17 @@ Each type of information is grouped into their own
 \textit{namespace}, and are collectively exported in
 the EFSM \textit{module} for the developer to use.
 
-In addition to states and transitions, we generate 
-TypeScript constructs
-for relevant metadata in the state machine: this includes
-\textit{roles}, \textit{labels} and \textit{message structures}.
-
-
-The EFSM contains more than just states and transitions
-
-The generated \textbf{EFSM.ts} file encodes all information
-available 
-
 \begin{figure}
-\begin{lstlisting}[language=javascript,tabsize=2]
+\begin{lstlisting}[language=javascript,tabsize=2,title=EFSM.ts]
+// (*@\cref{subsection:nodeefsmroleslabelsmsg}@*)
 export namespace Roles {...};
 export namespace Labels {...};
 export namespace Message {...};
 
+// (*@\cref{subsection:nodeefsmhandlers}@*)
 export namespace Handler {...};
 
+// (*@\cref{subsection:nodeefsmimplementation}@*)
 abstract class ISend {...};
 abstract class IReceive {...};
 abstract class ITerminal {...};
@@ -39,14 +31,54 @@ export type EfsmTransitionHandler =
 	(implementation: Implementation.Type) => void;
 export type MessageHandler = (message: any) => void;
 \end{lstlisting}
-\captionof{lstlisting}{Structure of generated EFSM.ts file 
-for server endpoints}
+\captionof{lstlisting}{Structure of Generated EFSM Encoding 
+for Server Endpoint}
 \label{lst:nodeefsmfile}
 \end{figure}
 
-\begin{itemize}
-\item callbacks -- type aliases for each state (handler)
-\end{itemize}
+\subsection{Roles, Labels, Messages}
+\label{subsection:nodeefsmroleslabelsmsg}
+
+We generate TypeScript constructs for these pieces of information
+so they can be reused throughout the generated code, 
+and in particular, the runtime.
+
+\subparagraph{Roles}
+The runtime needs to know the identifiers of participants involved
+in the session, and who to send/receive from 
+depending on the EFSM state.
+We generate string enumerations, or \textit{enums}, for each 
+participant in the protocol, \textit{excluding} the 
+first person endpoint. 
+The enum appropriately groups the collection
+of participants involved and scales for multiparty sessions,
+whilst making it simple to derive other types, e.g. a mapping from
+participants (indexed by the enum) to WebSockets.
+
+\subparagraph{Labels}
+The runtime needs to decide which handler to invoke, based
+on the label of the received message. Similarly, the developer needs
+to provide handlers specifying their internal choice (e.g. which
+message label to send) and how to handle external choice (e.g. 
+how to handle received message with particular label).
+For the same reason, we also generate string enums for message labels,
+one enum per state. Enums are compatible with switch statements,
+which can be used to dispatch messages to the correct handlers
+in the runtime based on the message label. 
+We give an example in \cref{lst:nodeefsmlabels}.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=javascript,tabsize=2]
+// Inside the Labels namespace...
+export enum S51 { ADD = "ADD", QUIT = "QUIT", };
+export enum S53 { RES = "RES", };
+export enum S54 { THANKS = "THANKS", TERMINATE = "TERMINATE", };
+\end{lstlisting}
+\captionof{lstlisting}{Generated Label Enums for \trole{Svr} endpoint}
+\label{lst:nodeefsmlabels}
+\end{figure}
+
+\subparagraph{Messages}
 
 \begin{figure}[!ht]
 \begin{lstlisting}[language=javascript, tabsize=2]
@@ -62,8 +94,8 @@ export interface S54TERMINATE {
 
 export type S54 = | S54THANKS | S54TERMINATE;
 \end{lstlisting}
-\label{lst:addersvrmsg}
 \captionof{lstlisting}{Generated Message Type Definition for State 54}
+\label{lst:addersvrmsg}
 \end{figure}
 
 By expressing the payload type as a \textit{tuple}\footnote{
@@ -73,6 +105,7 @@ and known types for elements at each position.
 we easily generalise our type definition to polyadic payloads.
 
 \subsection{Handler APIs}
+\label{subsection:nodeefsmhandlers}
 
 We collect the APIs that the developer needs to implement
 under the \texttt{Handler} namespace. 
@@ -87,41 +120,45 @@ We outline how the generated API differs between sending
 and receiving states.
 
 \subparagraph{Send}
-We model selections using \textit{union types} to
-encapsulate the possible send actions. 
+We model selections using a \textit{union type} to
+encapsulate the possible send actions, as shown in 
+\cref{lst:addersvrsendhandler}.
 Each send action is encoded as a tuple of
-the label, the payload, and the successor state.
+the label, the payload, and the successor state encoding.
 We see some benefits from defining Message Types as interfaces:
 with deterministic properties, we can index into the message type
 to access the property's type, 
-e.g. \texttt{Message.S54THANKS['payload']} would resolve to
-\texttt{[string]}, based on \cref{lst:addersvrmsg}.
-We provide an example in \cref{lst:addersvrsendhandler}.
-
-We generalise deterministic send actions as a trivial \textit{selection}, 
-as motivated from the theory (\cref{fig:globaltypes}),
-so the encoding for State 53 in the \trole{Svr} FSM would be
-the union of a single tuple.
+e.g. \lstonelinejs{Message.S54THANKS['payload']} 
+would resolve to
+\lstonelinejs{[string]},
+based on \cref{lst:addersvrmsg}.
 
 \begin{figure}[!ht]
 \begin{lstlisting}[language=javascript, tabsize=2]
 // Inside the Handler namespace...
 export type S54 = 
 	| [Labels.S54.THANKS, Message.S54THANKS['payload'],
-		Implementation.S52] 
+			Implementation.S52] 
 	| [Labels.S54.TERMINATE, Message.S54TERMINATE['payload'], 
-		Implementation.S52];
+			Implementation.S52];
 \end{lstlisting}
 \captionof{lstlisting}{Generated Type for \trole{Svr} Send State
 in \tprotocol{Adder} protocol}
 \label{lst:addersvrsendhandler}
 \end{figure}
 
+We generalise deterministic send actions as a trivial \textit{selection}, 
+as motivated from the theory (\cref{fig:globaltypes}),
+so the encoding for State 53 in the \trole{Svr} FSM would be
+the union of a single tuple.
+
 \subparagraph{Receive}
-\begin{itemize}
-\item very short -- go over the structure and give examples
-\item show how it extends for polyadic payloads
-\end{itemize}
+We model branching using an interface to 
+enumerate the possible branches, as shown in
+\cref{lst:addersvrreceivehandler}.
+As with send states,
+we generalise deterministic receive actions as a trivial \textit{branch},
+which would be an interface with one property. 
 
 \begin{figure}[!ht]
 \begin{lstlisting}[language=javascript,tabsize=2]
@@ -135,13 +172,44 @@ export type S51 = {
 \end{lstlisting}
 \captionof{lstlisting}{Generated Type for \trole{Svr} Receive State
 in \tprotocol{Adder} protocol}
+\label{lst:addersvrreceivehandler}
 \end{figure}
 
-As with send states,
-we generalise deterministic receive actions as a trivial \textit{branch},
-which would be an interface with one property. 
+The interface properties are defined by the 
+labels of the permitted receive actions:
+the square-bracket notation means that the property name
+is derived from the value of the enclosing variable,
+so \lstonelinejs{[Labels.S51.ADD]} resolves to the
+\lstonelinejs{'ADD'} string. 
+
+The interface values are functions parameterised by
+the message payload, and must return the successor state encoding.
+We see another benefit of defining the payload in Message Types
+as a tuple: we can define the receive handler parameter
+using the \textit{spread syntax}, which allows the tuple
+expression to be expanded into a list of arguments. 
+More concretely, as shown in \cref{lst:nodeefsmspread}
+it allows the developer to pattern match on the
+individual payload values (\cref{line:yesspread}) 
+rather than defining their function to expect a tuple 
+and manually destructing it (\cref{line:nospread}),
+so the former is more intuitive.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=javascript,tabsize=2]
+const withSpread = (x: number, y: number) => {...} (*@\label{line:yesspread}@*)
+const withoutSpread = (payload: [number, number]) => {...} (*@\label{line:nospread}@*)
+
+const handler1: Handler.S51 = { ADD: withSpread		, ... };	// OK
+const handler2: Handler.S51 = { ADD: withoutSpread, ... };	// OK
+\end{lstlisting}
+\captionof{lstlisting}{Example Handler Signature 
+Compatible with Spread Syntax}
+\label{lst:nodeefsmspread}
+\end{figure}
 
 \subsection{Wrapping Handlers in ``Implementations''}
+\label{subsection:nodeefsmimplementation}
 \begin{itemize}
 \item need a way for the runtime to distinguish between states (implementation)
 \item attempt at using conditional types, but because they handle conditional union types in a distributed way (give example), cannot be statically typed
