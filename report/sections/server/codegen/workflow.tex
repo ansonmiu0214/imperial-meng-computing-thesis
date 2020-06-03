@@ -70,15 +70,18 @@ calling Scribble.
 
 \begin{figure}[!ht]
 \begin{lstlisting}[language=Scribble]
-module Adder;
-
 global protocol Adder(role Client, role Svr) {
 	choice at Client {
 		ADD(number, number) from Client to Svr;
-		RES(number)         from Svr to Client;	
+		RES(number)         from Svr to Client;
+		do Adder(Client, Svr);
 	} or {
-		QUIT(string) from Client to Svr;	
-		TERMINATE()  from Svr to Client;
+		QUIT(string) from Client to Svr;
+		choice at Svr {
+			THANKS()    from Svr to Client;
+		} or {
+			TERMINATE() from Svr to Client;
+		}
 	}
 }
 \end{lstlisting}
@@ -88,6 +91,12 @@ global protocol Adder(role Client, role Svr) {
 
 We will use the \tprotocol{Adder} protocol as a running example
 to demonstrate how our work performs TypeScript API generation.
+This describes a binary session between \trole{Client} and \trole{Svr}:
+if \trole{Client} asks \trole{Svr} to \tmsg{ADD} two numbers,
+\trole{Svr} responds with the \tmsg{RES}ult; this loop continues
+until \trole{Client} kindly asks to \tmsg{QUIT} with a message,
+where \trole{Svr} either responds kindly with \tmsg{THANKS},
+or just says \tmsg{TERMINATE}, but both choices will close the session.
 
 \subsection{From Scribble to EFSM}
 \label{subsection:efsm}
@@ -126,7 +135,7 @@ class Endpoint:
 
 As the code generation process requires additional information,
 we define an \texttt{Endpoint} dataclass\footnote{
-A Python dataclass uses the decorator to generate
+A Python dataclass uses the \texttt{@dataclass} decorator to generate
 ``boilerplate'' methods, such as the constructor, based on the
 properties listed in the annotations.} (\cref{lst:endpointapi})
 to contain the \texttt{EFSM}
