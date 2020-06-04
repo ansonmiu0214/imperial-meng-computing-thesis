@@ -195,7 +195,10 @@ ask the runtime to perform specialised channel actions using
 the parameterised methods, and finally delegate back to
 the runtime to transition to the specific successor state.
 
-We illustrate 
+We elaborate on how this mechanism
+handles the sending and receiving of messages in
+\cref{subsection:noderuntimesend,subsection:noderuntimereceive}
+respectively.
 
 \begin{itemize}
 \item implementation details delegated to the actual implementation states
@@ -214,11 +217,43 @@ Server Endpoints}
 \end{figure}
 
 \subsection{Sending Messages}
+\label{subsection:noderuntimesend}
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+export class S54 extends ISend {
+	constructor(private handler: Handler.S54) { super(); }
+
+	performSend(
+		next: EfsmTransitionHandler,
+		sendMessage: (role: Roles.Peers, label: string, payload: any[])
+			=> void
+	) {
+		const [label, payload, successor] = this.handler;
+		
+		sendMessage(Roles.Peers.Client, label, payload);
+		return next(successor);
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{\dots}
+\label{lst:nodesend}
+\end{figure}
+
+\subparagraph{Sending through WebSockets}
 Message Types are defined as interfaces, which
 are represented by objects. By convention,
 we serialise messages into \textit{JavaScript Object Notation}
 (or JSON) \cite{json} using the built-in \texttt{JSON.stringify()}
 method.
+
+\begin{lstlisting}[language=javascript]
+sendMessage(role: Roles.Peers, label: string, payload: any[]) {
+	this.roleToSocket[role].send(JSON.stringify({
+		label, payload
+	});
+}
+\end{lstlisting}
 
 They are decoded using the same interface schema on the receiving end
 using \texttt{JSON.parse()}: whilst the method return type is the
@@ -228,7 +263,8 @@ as we performed the serialisation in the first place, so
 we can safely interpret the deserialised content 
 using a concrete type.
 
-\subsection{Handling Message Receives}
+\subsection{Receiving Messages}
+\label{subsection:noderuntimereceive}
 \begin{itemize}
 \item motivate the edge case that message can arrive in the websocket (in succession) before the handler is registered
 \item motivate the edge case that message can arrive `out of protocol order' 
@@ -261,3 +297,4 @@ and both the browser endpoint and the server endpoint are capable
 of closing connection. As we generate code for both, we define
 a convention that the browser endpoint will initiate the WebSocket
 close event.
+As a result, we do nothing for this state at \cref{lst:noderuntme}.
