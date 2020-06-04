@@ -1,16 +1,16 @@
 \section{Challenges}
 \label{section:nodechallenges}
-\begin{itemize}
-\item session type implementation on the node runtime
-\item need to provide consistency under the single-threaded event loop model
-\item provide idiomatic event-driven APIs
-\item provide static guarantees where possible -- communication mismatch and channel linearity
-\item typescript's type system is gradual, structural and non-linear -- session type api generation examples that provide static guarantees on channel usage build upon target language type system's support for linear resources
-\end{itemize}
 
+Our goal with \fancyname{NodeMPST} is to
+generate session type implementations that
+provide as much \textbf{static} communication safety guarantees
+as possible,
+in a manner suitable for both the TypeScript language 
+and the single-threaded event loop model in Node.js
 As outlined in \cref{section:typescript}, TypeScript's type system
 is neither affine nor linear, so we need to work around the 
-limitations of the language to enforce linear usage of channel resources.
-Similarly, we need to 
-the language does not provide
-built-in constructs for enforcing linear channel usage.
+language's limitations to enforce linear channel usage.
+
+We also aim to provide the developer with
+idiomatic event-driven APIs commonly found in
+server-side TypeScript development.

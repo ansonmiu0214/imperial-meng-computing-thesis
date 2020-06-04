@@ -391,7 +391,9 @@ export class S51 extends IReceive {
 					return next(successor);
 				}
 				case Labels.S51.QUIT: {
-					// Same as above...		
+					const successor = 
+						this.handler[decoded.label](...decoded.payload);
+					return next(successor);	
 				}
 			}            
 		}

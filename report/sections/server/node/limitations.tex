@@ -1,15 +1,39 @@
 \section{Limitations}
 \label{section:nodelimitations}
 
-\begin{itemize}
-\item verbose
-\item state identifiers are in the API
-\item scoping achieved through nested objects
-\item performance aspect with class-based handlers
-\end{itemize}
+Providing \textbf{static} communication safety guarantees have
+come at a cost of providing relatively verbose APIs to the developer,
+which introduces a learning curve. In particular,
+the distinction between the \texttt{Implementation} and
+\texttt{Handler} API should be an internal detail, but
+the developer still needs to use the \texttt{Implementation} API
+in their logic. 
+
+Our APIs also rely on state identifiers, which also
+does not help code readability, as it is neither apparent nor
+self-documenting what \texttt{S51} refers to -- some existing work
+\cite{Hybrid2016} augment the state identifiers with the channel
+action and labels involved (e.g. 
+\texttt{S51_Receive__Add_Number__Quit_String}).
+
+Using handler-style APIs also mean that we require
+nested scoping to propagate values between states,
+which does not scale elegantly as the levels of nesting
+increase. For example, the following implementation of
+the \tprotocol{One Adder} protocol would be invalid if
+we define the handlers for the continuations separately,
+because the received payload are no longer in scope
+(\cref{line:notinscope}).
 
 \begin{lstlisting}[language=javascript]
 const first = new S4({ NUM1: (x) => secondOperand, });
 const second = new S6({ NUM2: (y) => sum, });
-const sum = [Labels.S7.SUM, ???, new S5()];
+const sum = [Labels.S7.SUM, (*@\label{line:notinscope}\hl{???}@*), new S5()];
 \end{lstlisting}
+
+However, the developer may choose to propagate values
+between states through persistent storage APIs (such as
+storing values in a database and retrieving them for
+handlers of continuation states), so our generated APIs
+do not strictly enforce scoping to be the only way to
+propagate values in the application logic.
