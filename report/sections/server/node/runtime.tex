@@ -406,24 +406,77 @@ export class S51 extends IReceive {
 \end{figure}
 
 Ideally, a more succinct (and direct) representation would be
-\begin{lstlisting}[language=javascript]
-const successor = this.handler[decoded.label](...decoded.payload);
-return next(successor);
+\begin{lstlisting}[language=javascript,tabsize=2]
+(message: any) => {
+	const decoded = JSON.parse(message) as Message.S51;
+	const successor =  this.handler[decoded.label](...decoded.payload);
+	return next(successor);
+}
 \end{lstlisting}
 
 But this expresses a type dependency between \texttt{label}
-and \texttt{payload}, which as discussed, cannot be implemented.
-But message structures \textit{precisely} define a discriminated
-union, so we handle this with a switch statement,
-at the cost of having the same code in each case -- but
-TypeScript does infer different types in each case statement,
-so the duplicated code does serve a functional purpose.
+and \texttt{payload}, which as discussed 
+(\cref{subsubsection:dependenttypes}), cannot be implemented.
+However message structures \textit{precisely} 
+define a discriminated union 
+(the label acts as the discriminant 
+to distinguish between payload types),
+so we handle this with a switch statement,
+at the cost of having the same code in each case --
+TypeScript does infer the correct specific type in each case statement,
+so code duplication here does serve a functional purpose.
 
 Returning to \cref{lst:noderuntimewsmsg},
 note that the type of the \texttt{handler} property is \textit{optional}
--- this hints at a consistency problem: 
+-- this hints at a problem: 
 \textit{how do we know that \texttt{this.handler} is set when
-a message is received?}
+a message is received?} The types imply that we \textit{do not},
+and this is indeed the case.
+In fact, when we consider a \textit{multiparty} context,
+our approach with receive handler registration 
+using an optional value actually \textit{fails} to guarantee correctness.
+We motivate the problem with a worked
+example.
+
+\begin{example}[``Out-of-order'' message receives]
+Recall that Node.js is a single-threaded event loop runtime, so
+when a message arrives, 
+the \texttt{onmessage} event is \textit{queued},
+and current execution is \textit{not pre-empted}.
+
+Now consider a multiparty session specified by the global type
+
+\[ A \to S: \tmsg{M1(string)}. B \to S: \tmsg{M2(number)}. \texttt{end} \]
+
+Given that \trole{S} is the server endpoint,
+we describe a possible execution flow for the protocol
+that breaks our implementation:
+
+\begin{enumerate}
+\item 
+\trole{S} transitions to its initial state, ``receive from \trole{A}''.
+The receive handler for \tmsg{M1} is registered.
+
+\item
+\tmsg{M2} arrives at \trole{S}, so the \texttt{onmessage} handler
+is queued. This is \textit{perfectly plausible}: there
+is no causal relation between \tmsg{M1} and \tmsg{M2}.
+
+\item
+\tmsg{M1} arrives at \trole{S}, so the \texttt{onmessage} handler
+is queued.
+
+\item
+The \texttt{onmessage} handler for \tmsg{M2} is executed.
+The registered handler expects \tmsg{M1(string)},
+but it is callled with \tmsg{M2(number)}, which raises
+a runtime type error.
+\end{enumerate}
+
+This exposes two problems: 
+\textbf{(1)} the 
+\end{example}
+
 
 
 \begin{itemize}
