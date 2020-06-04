@@ -152,7 +152,7 @@ abstract class IReceive {
 	): void;
 };
 \end{lstlisting}
-\captionof{lstlisting}{\dots}
+\captionof{lstlisting}{Class Definitions for \texttt{Implementation} API}
 \label{lst:nodeabstractclass}
 \end{figure}
 
@@ -204,7 +204,7 @@ In short, we have to \textit{explicitly}
 to the instance methods that we pass as function arguments:
 
 \begin{lstlisting}[language=javascript,tabsize=2]
-// Inside Session class constructor...
+// Inside the Session class constructor...
 this.next = this.next.bind(this);
 this.send = this.send.bind(this);
 this.register = this.register.bind(this);
@@ -250,7 +250,8 @@ export class S54 extends ISend {
 	}
 }
 \end{lstlisting}
-\captionof{lstlisting}{\dots}
+\captionof{lstlisting}{Generated Code for \texttt{Implementation} API for
+Send State}
 \label{lst:nodesend}
 \end{figure}
 
@@ -332,9 +333,6 @@ with the runtime.
 When a message is received from the channel,
 we dynamically process it with 
 the current registered handler (\cref{line:callhandler}).
-By MPST-safety, the incoming message must correspond
-to the structure expected by the current receive state,
-so correctness is preserved.
 We encapsulate this dynamic behaviour in an instance method
 and bind it as an event listener (\cref{line:wsbind})
 for the WebSocket connection
@@ -358,8 +356,8 @@ class Session {
 	register(handler: MessageHandler) { this.handler = handler; } (*@\label{line:register}@*)
 
 	receive({ data }: WebSocketMessage) {
-		const handler = this.handler;
-		this.handler = undefined;
+		const handler = this.handler; (*@\label{line:callhandlerstart}@*)
+		this.handler = undefined; (*@\label{line:callhandler2}@*)
 		handler?.(data); (*@\label{line:callhandler}@*)
 	}
 }
@@ -401,21 +399,23 @@ export class S51 extends IReceive {
 	}
 }
 \end{lstlisting}
-\captionof{lstlisting}{\dots}
+\captionof{lstlisting}{Generated Code for \texttt{Implementation} API for
+Receive State}
 \label{lst:nodereceive}
 \end{figure}
 
 Ideally, a more succinct (and direct) representation would be
-\begin{lstlisting}[language=javascript,tabsize=2]
+\begin{lstlisting}[language=javascript]
 (message: any) => {
 	const decoded = JSON.parse(message) as Message.S51;
-	const successor =  this.handler[decoded.label](...decoded.payload);
+	const successor = 
+		this.handler[decoded.label](...decoded.payload);
 	return next(successor);
 }
 \end{lstlisting}
 
 But this expresses a type dependency between \texttt{label}
-and \texttt{payload}, which as discussed 
+and \texttt{payload} which, as discussed 
 (\cref{subsubsection:dependenttypes}), cannot be implemented.
 However message structures \textit{precisely} 
 define a discriminated union 
@@ -446,15 +446,19 @@ and current execution is \textit{not pre-empted}.
 
 Now consider a multiparty session specified by the global type
 
-\[ A \to S: \tmsg{M1(string)}. B \to S: \tmsg{M2(number)}. \texttt{end} \]
+\[
+A \to S: \text{\lstonelinejs{M1(string)}}. 
+B \to S: \text{\lstonelinejs{M2(number)}}. \texttt{end} 
+\]
 
-Given that \trole{S} is the server endpoint,
-we describe a possible execution flow for the protocol
+Suppose \trole{S} is the server endpoint.
+We describe a possible execution flow for the protocol
 that breaks our implementation:
 
 \begin{enumerate}
 \item 
-\trole{S} transitions to its initial state, ``receive from \trole{A}''.
+\trole{S} transitions to its initial state, 
+``receive \lstonelinejs{M1(string)} from \trole{A}''.
 The receive handler for \tmsg{M1} is registered.
 
 \item
@@ -468,24 +472,33 @@ is queued.
 
 \item
 The \texttt{onmessage} handler for \tmsg{M2} is executed.
-The registered handler expects \tmsg{M1(string)},
-but it is callled with \tmsg{M2(number)}, which raises
+The registered handler expects \lstonelinejs{M1(string)},
+but it is called with \lstonelinejs{M2(number)}, which raises
 a runtime type error.
 \end{enumerate}
 
-This exposes two problems: 
-\textbf{(1)} the 
+This exposes a problem: 
+the order of message \textit{arrivals} may not
+correspond with the order of \textit{receiving} messages as
+specified in the protocol,
+\textit{so} the message may arrive before its
+corresponding handler is registered.
 \end{example}
 
+We observe that message arrivals do not have to be causally related.
+However, if we consider a similar \textit{binary} example
+\[
+A \to S: \text{\lstonelinejs{M1(string)}}. 
+A \to S: \text{\lstonelinejs{M2(number)}}. \texttt{end}
+\]
+then \tmsg{M1} \textit{must} arrive before \textit{M2},
+since this is sent through the WebSocket connection between 
+\trole{A} and \trole{S}, and FIFO guarantees are respected 
+for each individual WebSocket connection. 
+We visualise the possible orders of message receive events
+in \cref{fig:nodereceivecompare}.
 
-
-\begin{itemize}
-\item motivate the edge case that message can arrive in the websocket (in succession) before the handler is registered
-\item motivate the edge case that message can arrive `out of protocol order' 
-\item explain the double queue system and how that provides consistency -- emphasising that this works because of the single-threaded typescript runtime
-\end{itemize}
-
-\begin{figure}[!ht]
+\begin{figure}[!h]
 \centering
 \begin{subfigure}[b]{0.8\textwidth}
 \centering
@@ -505,10 +518,180 @@ Receive State}
 \label{fig:nodereceivecompare}
 \end{figure}
 
+We observe that defining the handler using an optional type
+is insufficient. We need a similar mechanism for handling messages
+waiting for handlers, and we cannot assume an ordering on the arrival
+of messages that are not causally related.
+
+We proceed to generalise our approach from one optional-type
+handler to two mappings:
+\textbf{(1)} a mapping from endpoint to message queues\footnote{
+TypeScript arrays have built-in $O(1)$ time complexity
+\texttt{shift()} and \texttt{push()} operations, which
+can be used as a queue.}, and
+\textbf{(2)} a mapping from endpoint to handler queues.
+To simply put, if an incoming message is waiting for its handler,
+it gets enqueued in the message queue labelled by the sender of the message;
+when the handler is created, it pops the message off the queue 
+and directly processes it; the same logic applies for a handler waiting
+for its message.
+We could have used a mapping from endpoint to optional type,
+but queue operations elegantly hides the mechanics of
+\cref{line:callhandlerstart,line:callhandler2,line:callhandler}
+in \cref{lst:noderuntimewsmsg}.
+
+We outline the changes made to the \texttt{Session} class,
+as shown in \cref{lst:nodesession}:
+
+\begin{enumerate}
+\item We construct types for these two mappings 
+(\cref{line:mapped1,,line:mapped2}), 
+using a generic mapped typed defined in
+\cref{lst:noderolesmappedtypes}.
+
+\item Empty queues are initialised for both mappings
+in the constructor (\cref{line:queue1,,line:queue2}).
+
+\item Each endpoint has a different \texttt{onmessage}
+event listener, which will interact with the message queue
+and handler queue corresponding to that endpoint. 
+We achieve this by changing the \texttt{receive()} method
+to be parameterised on the role instead 
+(\cref{line:receivefunc}),
+so it \textit{generates} an event listener 
+(\cref{line:receivefuncret})
+tailored for receiving messages
+from that particular role.
+
+\item
+The \texttt{register()} method now also takes the role
+as a parameter (\cref{line:newregister}) in order to check the 
+corresponding pair of queues.
+\end{enumerate}
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+type RoleToMessageQueue = Roles.PeersToMapped<any[]>; (*@\label{line:mapped1}@*)
+type RoleToHandlerQueue = Roles.PeersToMapped<MessageHandler[]>; (*@\label{line:mapped2}@*)
+type RoleToSocket = Roles.PeersToMapped<WebSocket>;
+
+class Session {
+	...
+	private roleToSocket: RoleToSocket;
+	private messageQueue: RoleToMessageQueue;
+	private handlerQueue: RoleToHandlerQueue;
+	
+	constructor(...) {
+		...
+		Object.values(Roles.Peers).forEach(role => {
+			const socket = this.roleToSocket[role];
+			socket.onmessage = this.receive(role).bind(this);
+		});
+		
+		this.messageQueue = { [Roles.Peers.Client]: [], }; (*@\label{line:queue1}@*)
+		this.handlerQueue = { [Roles.Peers.Client]: [], }; (*@\label{line:queue2}@*)
+		
+		this.next(initialState);	
+	}
+	
+	receive(from: Roles) { (*@\label{line:receivefunc}@*)
+		return ({ data }) => { (*@\label{line:receivefuncret}@*)
+			// Array.shift() can return undefined if empty
+			const handler = this.handlerQueue[from].shift();
+			if (handler !== undefined) {
+				handler(data);
+			} else {
+				this.messageQueue[from].push(data);			
+			}
+		}
+	}
+	
+	register(from: Roles.Peers, handler: MessageHandler) { (*@\label{line:newregister}@*)
+		const message = this.messageQueue[from].shift();
+		if (message !== undefined) {
+			handler(message);		
+		} else {
+			this.handlerQueue[from].push(data);		
+		}
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{Modified \texttt{Session} class to correctly
+handle message receive events}
+\label{lst:nodesession}
+\end{figure}
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript]
+// Inside the Roles namespace...
+export type PeersToMapped<Value> = { [Role in Peers]: Value };
+\end{lstlisting}
+\captionof{lstlisting}{Generic Mapped Type for Roles}
+\label{lst:noderolesmappedtypes}
+\end{figure}
+
+Each endpoint must have consistency between
+its message queue and handler queue.
+We get the consistency from the simple fact that Node.js 
+is a single-threaded runtime and execution is never pre-empted,
+so there is no need to worry about atomic queue operations or
+locking data structures.
+
+We walk through how this design addresses the problems
+in the previous example.
+
+\begin{example}[Revisiting ``out-of-order'' message receives]
+Consider the same multiparty session specified by the global type
+
+\[
+A \to S: \text{\lstonelinejs{M1(string)}}. 
+B \to S: \text{\lstonelinejs{M2(number)}}. \texttt{end} 
+\]
+
+We show that our modified implementation addresses the problem:
+
+\begin{enumerate}
+\item 
+\trole{S} transitions to its initial state,
+``receive \lstonelinejs{M1(string)} from \trole{A}''.
+\textit{The message queue for \trole{A} is empty,}
+so the receive handler for \tmsg{M1} is registered 
+\textit{under the handler queue for \trole{A}.}
+
+\item
+\tmsg{M2} arrives at \trole{S}, so the \texttt{onmessage}
+handler is queued.
+
+\item
+\tmsg{M1} arrives at \trole{S}, so the \texttt{onmessage} handler
+is queued.
+
+\item
+The \texttt{onmessage} handler for \tmsg{M2} is executed.
+\textit{The handler queue for \trole{B} is empty, 
+so \tmsg{M2} is added to the message queue for \trole{B}}.
+
+\item
+The \texttt{onmessage} handler for \tmsg{M1} is executed.
+\textit{The handler queue for \trole{A} is non-empty,
+so the handler is popped off the front of the queue 
+and processes \tmsg{M1}.}
+
+\item
+\trole{S} transitions to the successor state, 
+``receive \lstonelinejs{M2(number)} from \trole{B}''.
+\textit{The message for \trole{B} is non-empty,
+so \tmsg{M2} is popped off the queue and 
+processed by the handler.}
+\end{enumerate}
+
+This execution is free of communication mismatches.
+\end{example}
+
 \subsection{Handling Termination}
 WebSocket connections should be closed when the session terminates,
 and both the browser endpoint and the server endpoint are capable
 of closing connection. As we generate code for both, we define
-a convention that the browser endpoint will initiate the WebSocket
-close event.
-As a result, we do nothing for this state at \cref{lst:noderuntime}.
+a convention that the browser endpoint will close 
+the WebSocket connection,
+so we do nothing for this state at \cref{lst:noderuntime}.

@@ -26,10 +26,6 @@ abstract class ISend {...};
 abstract class IReceive {...};
 abstract class ITerminal {...};
 export namespace Implementation {...};
-
-export type EfsmTransitionHandler =
-	(implementation: Implementation.Type) => void;
-export type MessageHandler = (message: any) => void;
 \end{lstlisting}
 \captionof{lstlisting}{Structure of Generated EFSM Encoding 
 for Server Endpoint}
