@@ -138,7 +138,7 @@ abstract class ISend {
 	type: 'Send' = 'Send';
 	abstract performSend(
 		next: EfsmTransitionHandler,
-		sendMessage: (role: Roles.Peers, label: string, payload: any[])
+		send: (role: Roles.Peers, label: string, payload: any[]) 
 			=> void,
 	): void;
 };
@@ -195,18 +195,30 @@ ask the runtime to perform specialised channel actions using
 the parameterised methods, and finally delegate back to
 the runtime to transition to the specific successor state.
 
+\begin{remark}
+We need to be careful when passing \textit{instance} methods
+as \textit{function} arguments 
+-- namely, the semantics of \lstonelinejs{this} is different.
+In short, we have to \textit{explicitly}
+\texttt{bind()} the \texttt{Session} object
+to the instance methods that we pass as function arguments:
+
+\begin{lstlisting}[language=javascript,tabsize=2]
+// Inside Session class constructor...
+this.next = this.next.bind(this);
+this.send = this.send.bind(this);
+this.register = this.register.bind(this);
+\end{lstlisting}
+
+Not doing so will result in \lstonelinejs{this} taking
+a different value 
+(either the global object or \lstonelinejs{undefined}).
+\end{remark}
+
 We elaborate on how this mechanism
 handles the sending and receiving of messages in
 \cref{subsection:noderuntimesend,subsection:noderuntimereceive}
 respectively.
-
-\begin{itemize}
-\item implementation details delegated to the actual implementation states
-\item all non-terminal states will `return' the successor implementation -- very difficult to resolve in the type-checker in the runtime (give example of what it may look like) -- solve by giving each state implementation the `advance' function to respect the event-driven nature of everything, so they can call it on completion
-\item visualise the interaction between runtime and states as a sequence diagram for message passing
-\item constructor binds all methods (that will be passed to other components0 to `this' because of how javascript works with respect to the scoping of `this' (give short example -- or ignore, if this is in the background for typescript)
-\item advance -- use discriminated union to figure out what to pass to the state (send -- sendMessage, receive -- register)
-\end{itemize}
 
 \begin{figure}[!ht]
 \centering
@@ -219,6 +231,9 @@ Server Endpoints}
 \subsection{Sending Messages}
 \label{subsection:noderuntimesend}
 
+This is rather straightforward: 
+we show the generated code in \cref{lst:nodesend}.
+
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2]
 export class S54 extends ISend {
@@ -226,12 +241,11 @@ export class S54 extends ISend {
 
 	performSend(
 		next: EfsmTransitionHandler,
-		sendMessage: (role: Roles.Peers, label: string, payload: any[])
+		send: (role: Roles.Peers, label: string, payload: any[]) 
 			=> void
 	) {
 		const [label, payload, successor] = this.handler;
-		
-		sendMessage(Roles.Peers.Client, label, payload);
+		send(Roles.Peers.Client, label, payload); (*@\label{line:nodesendrole}@*)
 		return next(successor);
 	}
 }
@@ -240,15 +254,34 @@ export class S54 extends ISend {
 \label{lst:nodesend}
 \end{figure}
 
+We get the label, payload and successor implementation
+directly from the handler implemented by the developer, 
+accurately typed by how we define the handler API in EFSM.ts.
+The developer does not need to specify which role
+to send to: this is a sensible design choice, as we know this
+from the Scribble protocol, so we do not need the developer 
+to specify separately.
+As a result, we generate the code to send the message
+to the correct role (\cref{line:nodesendrole}).
+We use the \texttt{send()} method passed down
+by the runtime to commit our communication action:
+the runtime will handle how to serialise the message and perform
+the send. We guarantee that \texttt{send()} is called
+\textbf{exactly once} by construction, thus channel linearity
+is never violated.
+Finally, we use the parameterised EFSM transition handler
+to notify the rutime which specific state to transition to.
+
 \subparagraph{Sending through WebSockets}
-Message Types are defined as interfaces, which
-are represented by objects. By convention,
+We define message structures as interfaces, which
+are represented by objects. 
+By convention in \fancyname{SessionTS},
 we serialise messages into \textit{JavaScript Object Notation}
 (or JSON) \cite{json} using the built-in \texttt{JSON.stringify()}
 method.
 
 \begin{lstlisting}[language=javascript]
-sendMessage(role: Roles.Peers, label: string, payload: any[]) {
+send(role: Roles.Peers, label: string, payload: any[]) {
 	this.roleToSocket[role].send(JSON.stringify({
 		label, payload
 	});
@@ -265,6 +298,134 @@ using a concrete type.
 
 \subsection{Receiving Messages}
 \label{subsection:noderuntimereceive}
+
+We need to update the message event listener on the WebSocket
+to use the developer's handler -- 
+specific to the \textit{current state} -- 
+to process the message.
+Our approach is to keep the WebSocket message event listener
+untouched, but define it in a way that allows \textit{dynamic} behaviour.
+We walk through the concept implemented in (\cref{lst:noderuntimewsmsg}):
+
+\begin{enumerate}
+\item 
+\texttt{Session} keeps track of the \textit{current}
+message receive handler (\cref{line:noderuntimehandler}).
+The \texttt{?} syntax denotes it is an \textit{optional}
+type: not every state is a receive state, so there does not \textit{have} to
+be an active message handler.
+
+\item
+The receive handler does \textit{not} need a specialised type
+(\cref{line:msghandler}). The receive handler is defined in
+the \texttt{Implementation} class of the concrete receive state,
+so it will deserialise the message to the correct form.
+
+\item
+The \texttt{register()} method (\cref{line:register})
+is passed to the \texttt{Implementation} class of the concrete
+receive state, which will construct the message handler
+around the developer's handler implementation and register it
+with the runtime.
+
+\item
+When a message is received from the channel,
+we dynamically process it with 
+the current registered handler (\cref{line:callhandler}).
+By MPST-safety, the incoming message must correspond
+to the structure expected by the current receive state,
+so correctness is preserved.
+We encapsulate this dynamic behaviour in an instance method
+and bind it as an event listener (\cref{line:wsbind})
+for the WebSocket connection
+of each non-server endpoint.
+\end{enumerate}
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+type MessageHandler = (message: any) => void; (*@\label{line:msghandler}@*)
+
+class Session {
+	private handler?: MessageHandler; (*@\label{line:noderuntimehandler}@*)
+
+	constructor(...) {
+		...
+		Object.values(this.roleToSocket).
+			.forEach(ws => ws.onmessage = this.receive.bind(this)); (*@\label{line:wsbind}@*)
+		this.handler = undefined;
+	}
+	
+	register(handler: MessageHandler) { this.handler = handler; } (*@\label{line:register}@*)
+
+	receive({ data }: WebSocketMessage) {
+		const handler = this.handler;
+		this.handler = undefined;
+		handler?.(data); (*@\label{line:callhandler}@*)
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{Approach to Dynamic WebSocket Message Event Listener}
+\label{lst:noderuntimewsmsg}
+\end{figure}
+
+We also show the generated code for the \texttt{Implementation}
+class of the receive state in \cref{lst:nodereceive}
+-- this should appear consistent
+with the explanation above.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+export class S51 extends IReceive {
+	
+	constructor(private handler: Handler.S51) { super(); }
+
+	prepareReceive(
+		next: EfsmTransitionHandler,
+		register: (from: Roles.Peers, messageHandler: MessageHandler)
+			=> void
+	) {
+		const messageHandler = (message: any) => {
+			const decoded = JSON.parse(message) as Message.S51;
+			switch (decoded.label) {
+				case Labels.S51.ADD: {
+					const successor = 
+						this.handler[decoded.label](...decoded.payload);
+					return next(successor);
+				}
+				case Labels.S51.QUIT: {
+					// Same as above...		
+				}
+			}            
+		}
+		register(Roles.Peers.Client, messageHandler);
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{\dots}
+\label{lst:nodereceive}
+\end{figure}
+
+Ideally, a more succinct (and direct) representation would be
+\begin{lstlisting}[language=javascript]
+const successor = this.handler[decoded.label](...decoded.payload);
+return next(successor);
+\end{lstlisting}
+
+But this expresses a type dependency between \texttt{label}
+and \texttt{payload}, which as discussed, cannot be implemented.
+But message structures \textit{precisely} define a discriminated
+union, so we handle this with a switch statement,
+at the cost of having the same code in each case -- but
+TypeScript does infer different types in each case statement,
+so the duplicated code does serve a functional purpose.
+
+Returning to \cref{lst:noderuntimewsmsg},
+note that the type of the \texttt{handler} property is \textit{optional}
+-- this hints at a consistency problem: 
+\textit{how do we know that \texttt{this.handler} is set when
+a message is received?}
+
+
 \begin{itemize}
 \item motivate the edge case that message can arrive in the websocket (in succession) before the handler is registered
 \item motivate the edge case that message can arrive `out of protocol order' 
@@ -297,4 +458,4 @@ and both the browser endpoint and the server endpoint are capable
 of closing connection. As we generate code for both, we define
 a convention that the browser endpoint will initiate the WebSocket
 close event.
-As a result, we do nothing for this state at \cref{lst:noderuntme}.
+As a result, we do nothing for this state at \cref{lst:noderuntime}.
