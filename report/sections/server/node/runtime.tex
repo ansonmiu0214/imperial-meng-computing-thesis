@@ -1,8 +1,9 @@
 \section{Runtime}
 \label{section:noderuntime}
 
-We define the session runtime in Svr.ts,
-named after the \trole{Svr} endpoint.
+We define the session runtime for the \trole{Svr} endpoint
+of the \tprotocol{Adder} protocol in Svr.ts,
+named after the endpoint.
 It exposes a \textbf{public API}
 (\cref{lst:noderuntimepublicapi})
 with seams for the developer to pass in the WebSocket server 
@@ -13,6 +14,7 @@ WebSocket server and set it up to listen for incoming connections.
 Internally, it keeps a \textit{private API}
 for executing the EFSM, when all participants have 
 joined the session.
+
 The role of the public API is to manage incoming connections and
 wait for all participants to join the session 
 (\cref{subsection:noderuntimepublic}), before
@@ -20,14 +22,22 @@ handing off to the private API to execute the EFSM
 (\cref{subsection:noderuntimeprivate}).
 
 \begin{figure}[!h]
-\begin{lstlisting}[language=javascript,tabsize=2,title=Svr.ts]
+\begin{lstlisting}[language=javascript,title=Svr.ts]
 export class Svr {
 	constructor(wss: WebSocket.Server,
-							initialState: Implementation.S51) { ... }
+				initialState: Implementation.S51) { ... }
+	...
+}
+
+// Not exported to developer
+class Session {
+	private wss: WebSocket.Server;
+	private initialState: Implementation.S51;
+	private roleToSocket: RoleToSocket;
 	...
 }
 \end{lstlisting}
-\captionof{lstlisting}{Public API of Session Runtime for Server Endpoint}
+\captionof{lstlisting}{Public and Private API of Session Runtime for Server Endpoint}
 \label{lst:noderuntimepublicapi}
 \end{figure}
 
@@ -43,16 +53,149 @@ export class Svr {
 \subsection{Executing the EFSM}
 \label{subsection:noderuntimeprivate}
 
-We revisit the concept of using discriminated unions to distinguish
-the type of EFSM state. The discriminated union is implemented by the
-\texttt{Implementation} API which wraps the developer's
-implementation of the  \texttt{Handler} API.
+The \texttt{Session} class executes the EFSM.
+We define a transition function, \texttt{next()}, 
+parameterised by the current state,
+which invokes the handler defined by the develoepr
+and performs the required channel actions for non-terminal states:
 
-It is sufficient for the runtime to only discriminate the type of state
-rather than the specific state. 
-we can define \textit{state-specific}
-details within the discriminated union
+\begin{itemize}
+\item 
+For \textbf{send} states, the handler will
+return the label and payload to be sent, along with the
+successor state implementation. The transition function
+should construct and send the message, 
+and transition to the successor state.
 
+\item
+For \textbf{receive} states, we change the
+message event listener on the WebSocket to
+pass the incoming message to the handler.
+The handler will return the successor state,
+which the runtime can transition to.
+
+\end{itemize}
+
+We conceptualise this in \cref{lst:noderuntimesimple}.
+The discriminated union lets the runtime figure out
+the type of the current state.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+next(state: Implementation.Type) {
+	switch (state.type) {
+		case 'Send': {
+			const [label, payload, succ]: (*@\hl{???}@*) = state.handler;	 (*@\label{line:noderuntimebadtype1}@*)
+			this.send((*@\hl{???}@*), label, payload); (*@\label{line:noderuntimeunknownrole}@*)		
+			return this.next(succ);
+		}
+		case 'Receive': {
+			this.wss.onmessage = ({ data }) => {
+				const { label, payload } = JSON.parse(data) as (*@\hl{???}@*); (*@\label{line:noderuntimebadtype2}@*)
+				const succ: (*@\hl{???}@*) = state.handler[label](...payload); (*@\label{line:noderuntimebadtype3}@*)
+				return this.next(succ);
+			}
+		}
+		case 'Terminate': { return; }
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{Conceptual EFSM Transition Function 
+for Server-Side Endpoint}
+\label{lst:noderuntimesimple}
+\end{figure}
+
+However, we still face problems with resolving types, as highlighted.
+Just because we know that the current state is a send state,
+we do not know \textit{which} particular state it is,
+so we cannot accurately type the handler (\cref{line:noderuntimebadtype1}).
+The same problem is amplified for the receive state:
+we need to know the specific receive state in order
+to correctly serialise the message (\cref{line:noderuntimebadtype2})
+and interpret the successor state (\cref{line:noderuntimebadtype3}).
+We see another problem with handling send states:
+because we do not know the specific send state, we do not know which
+participant to send the message to (\cref{line:noderuntimeunknownrole}).
+
+These all reduce to the same core problem: the runtime
+needs to know the specific state at compile-time\footnote{
+Whether TypeScript ``compiles'' or ``transpiles''
+(or even \textit{``transcompiles''} \cite{transcompiles}) to JavaScript
+is not relevant to our work; we stick with compilation
+and keep our terminology consistent.}.
+We solve this through \textit{runtime polymorphism} instead, since
+the specific type of \texttt{state} is known at runtime.
+For each type of state, we define a common API that can be invoked
+by the EFSM transition function. To achieve runtime polymorphism,
+each concrete state must provide a specific implementation: 
+this motivates our design for defining the discriminated union
+using abstract classes with abstract methods 
+(\cref{lst:nodeabstractclass}).
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+abstract class ISend {
+	type: 'Send' = 'Send';
+	abstract performSend(
+		next: EfsmTransitionHandler,
+		sendMessage: (role: Roles.Peers, label: string, payload: any[])
+			=> void,
+	): void;
+};
+
+abstract class IReceive {
+	type: 'Receive' = 'Receive';
+	abstract prepareReceive(
+		next: EfsmTransitionHandler,
+		register: (from: Roles.Peers, messageHandler: MessageHandler)
+			=> void,
+	): void;
+};
+\end{lstlisting}
+\captionof{lstlisting}{\dots}
+\label{lst:nodeabstractclass}
+\end{figure}
+
+Using this approach,
+we can pass the transition function and channel actions 
+from the \texttt{Session} runtime class
+to the individual state \texttt{Implementation} classes:
+these are also generated by \fancyname{NodeTS}, so we
+guarantee linear usage of channel resources by construction as well.
+This \textit{significantly} simplifies the design of the runtime
+(\cref{lst:noderuntime}),
+because the transition function no longer needs to know the type 
+of the specific state at compile-time.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+next(state: Implementation.Type) {
+	switch (state.type) {
+		case 'Send':
+			return state.performSend(this.next, this.send);
+		case 'Receive':
+			return state.prepareReceive(this.next, this.register);
+		case 'Terminal':
+			return;
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{Final EFSM Transition Function for Server-Side
+Endpoint}
+\label{lst:noderuntime}
+\end{figure}
+
+By passing the specific functions defined in the runtime
+to the individual EFSM states, we can visualise our runtime
+as a \textit{message passing} abstraction 
+(\cref{fig:noderuntimeefsm}): the runtime uses the common
+\texttt{performSend()} or \texttt{prepareReceive()} API
+to delegate to the specialised implementation, which will in turn
+ask the runtime to perform specialised channel actions using
+the parameterised methods, and finally delegate back to
+the runtime to transition to the specific successor state.
+
+We illustrate 
 
 \begin{itemize}
 \item implementation details delegated to the actual implementation states

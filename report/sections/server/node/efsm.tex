@@ -347,23 +347,29 @@ in addition to the API defined under the
 \texttt{Handler} namespace, it also has a wrapper API defined under
 the \texttt{Implementation} namespace (\cref{lst:nodeefsmimplementation}),
 which defines the \texttt{type}
-discriminant property internally. This explains why the successor
+discriminant property internally (via inheritance).
+This explains why the successor
 state encodings in 
 \cref{lst:addersvrsendhandler,lst:addersvrreceivehandler}
 were defined as such.
+The type \texttt{Implementation.Type} is the discriminated union,
+which is used by the runtime.
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2]
 abstract class ISend { type: 'Send' = 'Send'; ... }
 abstract class IReceive { type: 'Receive' = 'Receive'; ... }
+abstract class ITerminal { type: 'Terminal' = 'Terminal'; ... }
 
 export namespace Implementation {
+	export type Type = ISend | IReceive | ITerminal;
 
 	export class S51 extends IReceive {
 		constructor(private handler: Handler.S51) { super(); }
 		...
 	}
 	...
+	
 };
 \end{lstlisting}
 \captionof{lstlisting}{Discriminated Unions in EFSM 
