@@ -5,7 +5,24 @@ The main alternative EFSM encoding would be similar to those
 presented in \cite{Hybrid2016}, which encodes
 each EFSM state in its own class 
 and expose communication APIs (e.g. send and/or receive) 
-that respect the permitted state transitions as instance methods.
+for permitted state transitions.
+We would still a session runtime to provide
+abstractions over the WebSocket APIs and handle the 
+``out-of-order'' arrival of non-causally-related messages.
+
+We conceptualise this alternative design (\cref{fig:nodealt})
+using the \tprotocol{One Adder} protocol (\cref{subfig:oneadder}), 
+a simplified version of the \tprotocol{Adder} protocol 
+but with \textit{curried} addition and without recursion.
+An implementation using the alternative API design
+(\cref{subfig:oneadderalt}) could have the state transition 
+API return a tuple of payload and continuation,
+and we could express the event-driven nature of a receive action
+using built-in async/await concurrency primitives.
+But ultimately, exposing channel resources without a linear type system
+means that the developer could violate channel linearity
+(i.e. by un-commenting \cref{line:nodebreaklinear}), 
+so we would need runtime checks as part of the session runtime.
 
 \begin{figure}[!h]
 \centering
@@ -18,6 +35,7 @@ global protocol OneAdder(role Client, role Svr) {
 }
 \end{lstlisting}
 \caption{The \tprotocol{OneAdder} Protocol}
+\label{subfig:oneadder}
 \end{subfigure}
 \begin{subfigure}{0.49\textwidth}
 \begin{lstlisting}[language=javascript,tabsize=2]
@@ -32,7 +50,7 @@ const logic = async (init) => {
 }
 \end{lstlisting}
 \caption{Alternative API Design}
-%\label{...}
+\label{subfig:oneadderalt}
 \end{subfigure}
 \hfill
 \begin{subfigure}{0.49\textwidth}
@@ -46,16 +64,20 @@ const logic = new S4({
 		]),
 	}),
 });
-
 \end{lstlisting}
 \caption{Current API Design}
-%\label{...}
 \end{subfigure}
-\captionof{figure}{\dots}
-%\label{...}
+\captionof{figure}{Comparing Alternative \fancyname{NodeMPST} 
+API Design using \tprotocol{One Adder} Protocol}
+\label{fig:nodealt}
 \end{figure}
 
-\begin{itemize}
-\item exposing channel resources like the java example -- less idiomatic (not-event-driven), need runtime linearity checks like the java example
-\item `hardcoded' switch case runtime like the TSOP papers -- doesn't best leverage the type system
-\end{itemize}
+Looking at alternative designs for the runtime,
+we could adopt the approach presented in \cite{TSOP},
+which eliminates the need for our \texttt{Implementation} wrapper API
+by pushing the workload back to the runtime in the form of a
+dense switch statement enumerating all EFSM states.
+This may simply the developer API (by removing the need for
+the \texttt{Implementation} wrapper), but results in a
+session runtime that increases in complexity as the size of the EFSM
+increases.
