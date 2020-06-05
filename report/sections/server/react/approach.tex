@@ -6,18 +6,75 @@
 \end{itemize}
 
 \subsection{The React Framework}
-\begin{itemize}
-\item use a class-based Counter example to explain the terms: props, state, uni-directional data flow, virtual DOM, reconciliation
-\end{itemize}
-
-\paragraph{Note: from PLACES}
-Our browser-side session type encodings for browser-side targets build upon the
-\emph{React.js} framework, developed by Facebook \cite{React} for the
+Our browser-side API generation strategy builds upon the 
+\emph{React.js} framework developed by Facebook \cite{React} for the
 \textit{Model-View-Controller} (MVC) architecture.
-React is widely used in industry to create scalable single-page TypeScript
-applications, and we intend for our proposed workflow to be beneficial in an
+React is widely used in industry to create scalable single-page
+TypeScript applications, so this makes our workflow beneficial in an
 industrial context.
-We introduce the key features of the framework.
+
+We introduce the key features of the framework
+through illustrating a web-based counter in \cref{lst:counter}.
+The browser shows a counter (initialised to zero) 
+and an ``Increment'' button:
+when the user clicks on the ``Increment'' button,
+the count is incremented and the UI shows the updated count.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+type Props = { count: number };
+class Count extends React.Component<Props>{
+	render() { (*@\label{line:childrender}@*)
+		return <strong>{this.props.count}</strong>; (*@\label{line:childprops}@*)
+	}
+}
+
+type State = { count: number };
+class App extends React.Component<{}, State>{
+	constructor(props: {}) {
+		super(props);
+		this.state = { count: 0 }; (*@\label{line:parentstate}@*)
+	}
+	
+	increment() { this.setState({ count: this.state.count + 1 }); (*@\label{line:parentsetstate}@*)
+	
+	render() { (*@\label{line:parentrender}@*)
+		return (<div>
+			<button onClick={this.increment.bind(this)}>
+				Increment
+			</button>
+			<Count count={this.state.count} /> (*@\label{line:childcomponent}@*)
+		</div>);	
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{Simple Counter in React}
+\label{lst:counter}
+\end{figure}
+
+\subparagraph{Components}
+A \textit{component} is a reusable UI element which
+contains its own mark-up and logic.
+Components implement a \texttt{render()} method which returns
+a ReactNode, the smallest building blocks of a React application.
+This is analogue to the \textit{view} function in the MVU architecture.
+React uses \textit{JSX} syntax to interpolate TypeScript logic 
+(enclosed in curly braces)
+within HTML mark-up: 
+in \cref{line:childrender}, the \texttt{Count} component
+evaluates the TypeScript expression 
+\lstonelinejs{this.props.count} and renders it in bold on the web page.
+Components can render other components, which give rise to
+a tree of UI elements. \cref{line:parentrender} shows that our
+\texttt{Count} component is rendered by 
+another component, \texttt{App}.
+
+\subparagraph{Uni-directional Data Flow}
+User-defined components are derived from the abstract
+\texttt{React.Component} generic base class
+
+\subparagraph{Virtual DOM (VDOM) and Reconciliation}
+\dots
 
 \paragraph{Components}
 A component is a reusable UI element which
@@ -47,6 +104,23 @@ to the child.
 This enables reusability, and for our use case, gives control to the parent
 on what data to pass to its children (e.g. pass the payload of a received
 message to a child to render).
+
+
+
+\begin{itemize}
+\item use a class-based Counter example to explain the terms: props, state, uni-directional data flow, virtual DOM, reconciliation
+\end{itemize}
+
+\paragraph{Note: from PLACES}
+Our browser-side session type encodings for browser-side targets build upon the
+\emph{React.js} framework, developed by Facebook \cite{React} for the
+\textit{Model-View-Controller} (MVC) architecture.
+React is widely used in industry to create scalable single-page TypeScript
+applications, and we intend for our proposed workflow to be beneficial in an
+industrial context.
+We introduce the key features of the framework.
+
+
 
 \subsection{Model Types Revisited}
 \paragraph{Note: from PLACES paper}
