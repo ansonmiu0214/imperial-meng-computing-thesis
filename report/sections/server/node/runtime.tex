@@ -73,7 +73,7 @@ wss.addEventListener('connection', ws => {
 	ws.onmessage = onSubscribe; (*@\label{line:wslisteneroverride}@*)
 });
 \end{lstlisting}
-\captionof{lstlisting}{\dots}
+\captionof{lstlisting}{Handling Connections in Server Endpoint}
 \label{lst:nodeconnect}
 \end{figure}
 
@@ -85,7 +85,7 @@ the main parts:
 The server keeps track of the participants that 
 have yet to join the session -- this is initialised to the
 complete set of
-non-server endpoints at the start (\cref{line:initrolesocket}).
+non-server endpoints at the start (\cref{line:initwaiting}).
 
 \item
 Browser endpoints request to join the session
@@ -106,7 +106,7 @@ responds by closing the connection (\cref{line:occupied}).
 Otherwise, the role is not occupied, so the server binds
 the WebSocket (which the message was received from) to the role
 (\cref{line:connectwsbind}).
-This is accumulated in an interface type mapping each
+This is accumulated in an interface type, mapping each
 role to an \textit{optional}\footnote{
 TypeScript provides utility types for common type transformations:
 \texttt{Partial<T>} constructs a type with all properties
@@ -115,7 +115,8 @@ of \texttt{T} set to optional.
 WebSocket property
 -- for roles who have
 not yet connected, we do not know the WebSocket binding, so the
-WebSocket for these roles are \lstonelinejs{undefined}.
+WebSocket for these roles are \lstonelinejs{undefined},
+as initialised at the start (\cref{line:initroletosocket}).
 
 \item
 When the server is no longer waiting for any participants,
