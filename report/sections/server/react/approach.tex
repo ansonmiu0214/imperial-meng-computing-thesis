@@ -1,17 +1,38 @@
 \section{Approach}
-\begin{itemize}
-\item leverage existing front-end frameworks that support reactive programming -- identify the parallel ideas that the UI element rendered on the screen needs to be reactive with respect to -- not only user interaction, but also channel actions.
-\item for example, UI should react to a receive state in the EFSM, and once the message is received on the channel, transition to a different UI with the supported actions
-\item main goal -- statically ensure that whatever IO actions are `present' on the window at any given time must respect the protocol
-\end{itemize}
+We motivate our approach from \cite{MVU2020} by extending
+their work on \textit{multiple model types} motivated by the
+\textit{Model-View-Update} architecture (MVU).
+An MVU application features a \textit{model} encapsulating application
+state, a \textit{view function} rendering the state on the 
+Document Object Model (DOM), and an
+\textit{update function} handling \textit{messages} produced by the
+rendered model to produce a new model.
+The concept of model types express type dependencies between these
+components: a \emph{model type} uniquely defines a \textit{view function},
+set of \textit{messages} and \textit{update function} -- rather than
+producing a new model, the update function defines valid transitions to
+other model types.
+
+We leverage the correspondence between model types and states in the EFSM:
+each state in the EFSM is a model type, the set of messages represent
+the possible (IO) actions available at that state,
+and the update function defines which successor state to transition to,
+given the supported IO actions at this state.
 
 \subsection{The React Framework}
-Our browser-side API generation strategy builds upon the 
-\emph{React.js} framework developed by Facebook \cite{React} for the
-\textit{Model-View-Controller} (MVC) architecture.
+We implement model types for the EFSM on top of the 
+\emph{React.js} framework developed by Facebook \cite{React}.
 React is widely used in industry to create scalable single-page
 TypeScript applications, so this makes our workflow beneficial in an
-industrial context.
+industrial context. 
+The framework defines a way for data to flow
+between UI elements, and empowers the UI to subscribe and
+``react'' to data changes.
+We aim to implement similar behaviour with respect to the EFSM:
+the UI should react to EFSM state transitions,
+so we can ensure -- preferably statically -- that the
+channel actions ``present'' on the browser at any given time
+are those permitted by the current EFSM state.
 
 We introduce the key features of the framework
 through illustrating a web-based counter in \cref{lst:counter}.
@@ -52,13 +73,14 @@ class App extends React.Component<{}, State>{
 \label{lst:counter}
 \end{figure}
 
-\subparagraph{Components}
+\paragraph{Components}
 A \textit{component} is a reusable UI element which
 contains its own mark-up and logic.
 Components implement a \texttt{render()} method which returns
-a ReactNode, the smallest building blocks of a React application.
+a React element, the smallest building blocks of a React application.
 This is analogue to the \textit{view} function in the MVU architecture.
-React uses \textit{JSX} syntax to interpolate TypeScript logic 
+React uses the \textit{JSX} syntax extension \cite{JSX}
+to interpolate TypeScript logic 
 (enclosed in curly braces)
 within HTML mark-up: 
 in \cref{line:childrender}, the \texttt{Count} component
@@ -69,76 +91,36 @@ a tree of UI elements. \cref{line:parentrender} shows that our
 \texttt{Count} component is rendered by 
 another component, \texttt{App}.
 
-\subparagraph{Uni-directional Data Flow}
-User-defined components are derived from the abstract
-\texttt{React.Component} generic base class
+\paragraph{Uni-directional Data Flow}
+User-defined components derive from the abstract base class
+\texttt{React.Component<P, S>},
+which is an abstract base class with generic type parameters
+\texttt{<P, S>} for \textit{props} (short for properties) and 
+\textit{state} respectively.
 
-\subparagraph{Virtual DOM (VDOM) and Reconciliation}
-\dots
+The \texttt{App} component maintains \texttt{count} in its
+state (\cref{line:parentstate}). Clicking on the increment button
+updates the state (\cref{line:parentsetstate}), which invokes
+a re-render, so the UI ``reacts'' to state change.
 
-\paragraph{Components}
-A component is a reusable UI element which
-contains its own markup and logic.
-Components implement a \texttt{render()} function which returns a React
-element, the smallest building blocks of a React application, analogous to the
-view function in the MVU architecture.
-Components can keep \textit{state}s and the \texttt{render()} function is
-invoked upon a change of state.
+Data flows from parent components down to their children,
+in the form of props. 
+The \texttt{App} component passes the \texttt{count}
+from its state to the \texttt{Count} component 
+(\cref{line:childcomponent}), which accesses it via
+\lstonelinejs{this.props}. 
+Because \texttt{App} is re-rendered when the count is incremented,
+the \texttt{Count} child component will also be re-rendered
+with updated props.
 
-For example, a simple counter can be implemented as a component,
-with its \texttt{count} stored as state.
-When rendered, it displays a button which increments \texttt{count}
-when clicked and a \texttt{div} that renders the current
-\texttt{count}.
-If the button is clicked, the \texttt{count} is incremented, which triggers a
-re-rendering (since the state has changed), and the updated \texttt{count} is
-displayed.
+\paragraph{Virtual DOM (VDOM) and Reconciliation}
+The \texttt{render()} methods give the developer a declarative API
+to specify what should be rendered. React uses a 
+\textit{virtual DOM} abstraction, where the tree of React elements
+are rendered on the virtual DOM, and React internally
+runs a \textit{reconciliation} algorithm to update the browser DOM
+accordingly using minimal operations.
 
-Components can also render other components, which gives rise
-to a parent/child relationship between components.
-Parents can pass data to children as \textit{props} (short for properties).
-Going back to the aforementioned example, the counter component could
-render a child component \texttt{<StyledDiv count=\{this.state.count\} />} in
-its \texttt{render()} function, propagating the \texttt{count} from its state
-to the child.
-This enables reusability, and for our use case, gives control to the parent
-on what data to pass to its children (e.g. pass the payload of a received
-message to a child to render).
-
-
-
-\begin{itemize}
-\item use a class-based Counter example to explain the terms: props, state, uni-directional data flow, virtual DOM, reconciliation
-\end{itemize}
-
-\paragraph{Note: from PLACES}
-Our browser-side session type encodings for browser-side targets build upon the
-\emph{React.js} framework, developed by Facebook \cite{React} for the
-\textit{Model-View-Controller} (MVC) architecture.
-React is widely used in industry to create scalable single-page TypeScript
-applications, and we intend for our proposed workflow to be beneficial in an
-industrial context.
-We introduce the key features of the framework.
-
-
-
-\subsection{Model Types Revisited}
-\paragraph{Note: from PLACES paper}
-For browser-side targets, we extend the approach presented in \cite{MVU2019} on
-\textit{multiple model types} motivated by the \textit{Model-View-Update} (MVU)
-architecture.
-% FEEDBACK: introduce MVU and model type
-An MVU application features a \textit{model} encapsulating application
-state, a \textit{view function} rendering the state on the Document Object Model (DOM), and an
-\textit{update function} handling \textit{messages} produced by the
-rendered model to produce a new model.
-The concept of model types express type dependencies between these
-components: a \emph{model type} uniquely defines a \textit{view function},
-set of \textit{messages} and \textit{update function} -- rather than
-producing a new model, the update function defines valid transitions to
-other model types.
-We leverage the correspondence between model types and states in the EFSM:
-each state in the EFSM is a model type, the set of messages represent
-the possible (IO) actions available at that state,
-and the update function defines which successor state to transition to,
-given the supported IO actions at this state.
+For example, the \texttt{<button>} will not be re-rendered
+on the browser DOM on every counter increment as it does not
+depend on the updated state.
