@@ -15,11 +15,10 @@ other model types.
 
 We leverage the correspondence between model types and states in the EFSM:
 each state in the EFSM is a model type, the set of messages represent
-the possible (IO) actions available at that state,
+the possible channel actions available at that state,
 and the update function defines which successor state to transition to,
-given the supported IO actions at this state.
+given the supported channel actions at this state.
 
-\subsection{The React Framework}
 We implement model types for the EFSM on top of the 
 \emph{React.js} framework developed by Facebook \cite{React}.
 React is widely used in industry to create scalable single-page
@@ -30,9 +29,44 @@ between UI elements, and empowers the UI to subscribe and
 ``react'' to data changes.
 We aim to implement similar behaviour with respect to the EFSM:
 the UI should react to EFSM state transitions,
-so we can ensure -- preferably statically -- that the
+so we can \textbf{statically} ensure that the
 channel actions ``present'' on the browser at any given time
 are those permitted by the current EFSM state.
+We introduce the framework in \cref{subsection:react}.
+
+When executing \fancyname{SessionTS} to generate code
+for the \trole{Client} endpoint specifying the
+\texttt{browser} target, the developer obtains the following 
+groups of files:
+
+\begin{itemize}
+
+\item 
+\textbf{S[40-43].tsx:}
+Developer APIs for implementing EFSM states 
+(\cref{section:reactefsm});
+
+\begin{itemize}
+\item
+\textbf{EFSM.ts}, \textbf{Message.ts}, \textbf{Roles.ts:}
+Utility types for EFSM encoding;
+\end{itemize}
+
+\item 
+\textbf{Client.tsx:} 
+Session runtime for executing the EFSM 
+(\cref{section:reactruntime});
+
+\begin{itemize}
+\item
+\textbf{Session.ts}, \textbf{Types.ts:}
+Utility types for session runtime.
+\end{itemize}
+
+\end{itemize}
+
+\subsection{The React Framework}
+\label{subsection:react}
 
 We introduce the key features of the framework
 through illustrating a web-based counter in \cref{lst:counter}.
@@ -86,10 +120,11 @@ within HTML mark-up:
 in \cref{line:childrender}, the \texttt{Count} component
 evaluates the TypeScript expression 
 \lstonelinejs{this.props.count} and renders it in bold on the web page.
+
 Components can render other components, which give rise to
 a tree of UI elements. \cref{line:parentrender} shows that our
 \texttt{Count} component is rendered by 
-another component, \texttt{App}.
+the \texttt{App} component.
 
 \paragraph{Uni-directional Data Flow}
 User-defined components derive from the abstract base class
