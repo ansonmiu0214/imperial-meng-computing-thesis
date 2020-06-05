@@ -1,8 +1,21 @@
 \chapter{\fancyname{ReactMPST}: Front-End Session Type Web Development}
 \label{chap:react}
 
-In this chapter, we
-\dots
+In this chapter, we present \fancyname{ReactMPST},
+our session type API generation strategy for browser-side endpoints
+implemented using React \cite{React}.
+We will refer to the FSM of the \trole{Client}
+endpoint (\cref{fig:adderclientfsm})
+from the \tprotocol{Adder} protocol 
+throughout this chapter.
+
+\begin{figure}[!b]
+\centering
+\includegraphics[width=0.55\textwidth]{AdderClientFSM}
+\captionof{figure}{\trole{Client} Endpoint FSM
+in \tprotocol{Adder} protocol}
+\label{fig:adderclientfsm}
+\end{figure}
 
 \input{sections/server/react/challenges}
 \input{sections/server/react/approach}
