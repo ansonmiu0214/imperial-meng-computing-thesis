@@ -1,6 +1,29 @@
 \section{Alternative Designs}
-\begin{itemize}
-\item not sure whether to put this in the subsection above so it flows better?
-\item naive implementation is to pass the send() function as a prop for the developer to incorporate in their event listener -- this is most flexible, but we cannot provide static guarantees
-\item factory approach -- the runtime could pass a factory function which, takes an UI element and performs the binding; this is better, as channel resources are not exposed, but the adversarial-minded developer can later override the event listener in the DOM etc
-\end{itemize}
+
+For send states, a simpler approach would be
+to provide the developer with a \texttt{send()} function 
+for each permitted selection.
+The factory approach would still apply -- the runtime could pass something
+of the form
+
+\begin{lstlisting}[language=javascript, numbers=none]
+declare function buildSend<T>(label: string): (payload: T) => void
+\end{lstlisting}
+
+as a prop to the send state component.
+By passing the payload type and label, the send state component
+can build a handler (bound to the payload type) that performs a
+send over the WebSocket when called.
+This provides more flexibility for the developer's implementation,
+but this clearly exposes channel resources and 
+comes at the cost of not being able to provide guarantees
+on affine channel usage.
+
+For receive states, \dots
+
+%
+%\begin{itemize}
+%\item not sure whether to put this in the subsection above so it flows better?
+%\item naive implementation is to pass the send() function as a prop for the developer to incorporate in their event listener -- this is most flexible, but we cannot provide static guarantees
+%\item factory approach -- the runtime could pass a factory function which, takes an UI element and performs the binding; this is better, as channel resources are not exposed, but the adversarial-minded developer can later override the event listener in the DOM etc
+%\end{itemize}
