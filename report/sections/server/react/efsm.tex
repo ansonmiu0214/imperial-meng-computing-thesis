@@ -16,13 +16,6 @@
 \item the abstract base class will set up the factory methods to be used by the developer
 \end{itemize}
 
-\subsubsection{Alternative Designs}
-\begin{itemize}
-\item not sure whether to put this in the subsection above so it flows better?
-\item naive implementation is to pass the send() function as a prop for the developer to incorporate in their event listener -- this is most flexible, but we cannot provide static guarantees
-\item factory approach -- the runtime could pass a factory function which, takes an UI element and performs the binding; this is better, as channel resources are not exposed, but the adversarial-minded developer can later override the event listener in the DOM etc
-\end{itemize}
-
 \subsection{Receive}
 \begin{itemize}
 \item receive state is `shown' when waiting for a receive event

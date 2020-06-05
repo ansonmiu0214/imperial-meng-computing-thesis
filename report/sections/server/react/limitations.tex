@@ -1,6 +1,30 @@
 \section{Limitations}
-\begin{itemize}
-\item affine channel usage guarantees -- cannot statically guarantee that the factory is attached to an event visible on the DOM
-\item decoupling communication state management from business logic state management -- runtime design does not permit passing non-communication-related data as props; need to use other methods for propagating applicaton data (such as React Context API or Redux)
-\item the point above might not be a `limitation', but more of an encouragement to change practices because it makes sense, architecturally, to separate concerns
-\end{itemize}
+As discussed, our EFSM encoding provides \textbf{affine} channel
+usage guarantees for send states as supposed to \textit{linear} usage
+guarantees. Suppose we bind a send action to a
+button click event -- strictly speaking,
+even if we guarantee that the button can be clicked exactly once,
+we cannot guarantee that the button will ever be clicked by the user.
+However, existing work \cite{PureScript2019,MVU2020} 
+share the same limitation, and we view this as an
+inherent limitation in front-end development, since there is
+a limit to the types of assumptions we can make about how the
+user interacts with the browser.
+Redefining the definition of channel linearity 
+for GUI programming use cases
+would be an interesting discussion.
+
+Our runtime implementation also limits the developer from
+passing data into their EFSM state component through props.
+This is because the runtime takes full control of which
+state component to render, and by definition, what props 
+are passed to the EFSM state components.
+However, we equally view this as a way to encourage developers
+to decouple communication state management from
+business logic state management, in the spirit
+of separating concerns.
+In \cref{chap:eval},
+we present examples of developer implementations
+that use separate abstractions (such as the React Context API or
+the third-party Redux library) for propagating 
+stateful application data in \cref{chap:eval}.
