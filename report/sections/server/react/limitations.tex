@@ -1,0 +1,6 @@
+\section{Limitations}
+\begin{itemize}
+\item affine channel usage guarantees -- cannot statically guarantee that the factory is attached to an event visible on the DOM
+\item decoupling communication state management from business logic state management -- runtime design does not permit passing non-communication-related data as props; need to use other methods for propagating applicaton data (such as React Context API or Redux)
+\item the point above might not be a `limitation', but more of an encouragement to change practices because it makes sense, architecturally, to separate concerns
+\end{itemize}

@@ -1,0 +1,39 @@
+\section{Runtime}
+\begin{itemize}
+\item public API - accept websocket endpoint URL, a mapping of state to user implementation, and UI elements to render when waiting for connection to occur, and connection failure
+\item private API - carry out the session (just like Node)
+\end{itemize}
+
+\subsection{Session Joining}
+\begin{itemize}
+\item separate into two react components, since the websocket connection cannot be opened in the constructor by React StrictMode
+\item `outer' class sets websocket to undefined, but upon componentDidMount, creates the actual connection
+\item renders the `inner' class component upon websocket not being undefined, so it can be typed appropriately (otherwise, need to always use bang operator)
+\item on connection, send join request message to the server, wait for serber response before executing the EFSM at the initial state
+\end{itemize}
+
+\subsection{Executing the EFSM}
+\begin{itemize}
+\item same concept as node -- implementation details delegated to the actual classes
+\item constructor binds methods
+\item advance takes the enum instead of the class (since unlike the node example, it is not instantiated) -- uses custom type guards to distinguish between the type of state
+\end{itemize}
+
+\subsection{Handling Message Sends}
+\begin{itemize}
+\item passes in the factory prop, which is a factoryfactory to be precise;
+\item sendMessage is bound in the closure and sends the message in the same way as how Node codegen does, by convention
+\item (if not already mentioned in the node section) send is asynchronous
+\end{itemize}
+
+\subsection{Handling Message Receives}
+\begin{itemize}
+\item same edge case as the back-end code generation, as message can arrive before handlers are registered
+\item use the same two-queue mechanism to keep track of `what comes first' -- i.e. if message comes first, then put in message queue, so handler can pop off when registered; vice-versa, if handler is registered first, put in handler queue so message can be processed when that is received
+\item importantly -- only one queue is required, as server-centric topologies only have the client talk to the server
+\end{itemize}
+
+\subsection{Handling Termination}
+\begin{itemize}
+\item close the websocket with a clean exit code
+\end{itemize}

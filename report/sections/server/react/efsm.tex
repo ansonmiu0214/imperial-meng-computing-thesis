@@ -1,0 +1,37 @@
+\section{State Encodings}
+
+\begin{itemize}
+\item motivated by the idea of model types, each state is encoded as a react component, where the user provides a view function (i.e. render())
+\item channel actions are abstracted by the runtime and passed to state implementations as props
+\item the developer provides an implementation of the state, i.e. ``uses the APIs'', by extending the abstract base classes and providing their own implementations
+\end{itemize}
+
+\subsection{Send}
+\begin{itemize}
+\item make the assumption that channel send actions are triggered by UI elements -- for example, clicking a button or typing enter in a textbox
+\item pre-session-types -- the developer will attach an event listener
+\item enhanced factory approach -- given an event and a event handler, return a react component that binds the handler to that event, and injects the channel action; the developer can use this API by putting the UI elements that represent the event action as children.
+\item the event handler is conditionally parameterised by the event type (achievable by typescript conditional types -- eg, if event is click, then the event handler parameter is a React.MouseEvent), and the return type is the payload type
+\item the abstract base class will set up the factory methods to be used by the developer
+\end{itemize}
+
+\subsubsection{Alternative Designs}
+\begin{itemize}
+\item not sure whether to put this in the subsection above so it flows better?
+\item naive implementation is to pass the send() function as a prop for the developer to incorporate in their event listener -- this is most flexible, but we cannot provide static guarantees
+\item factory approach -- the runtime could pass a factory function which, takes an UI element and performs the binding; this is better, as channel resources are not exposed, but the adversarial-minded developer can later override the event listener in the DOM etc
+\end{itemize}
+
+\subsection{Receive}
+\begin{itemize}
+\item receive state is `shown' when waiting for a receive event
+\item base class has abstract methods -- one for each possible receive -- so the user must implement these when they extend the abstract base class
+\item each abstract method is named after the message label expected to be received, and parameterised by the payload
+\item no channel actions are passed to the state -- instead, once the receive state is mounted on the DOM (i.e. rendered), the abstract base class will register the event handlers to the runtime (using the register method passed as props)
+\item when the message arrives, the runtime will invoke the registered function (+ forward reference the next section with the edge case that the message arrives before handler registration occurs)
+\end{itemize}
+
+\subsection{Terminal}
+\begin{itemize}
+\item by convention and design choice, the client gracefully closes the connection with the server role
+\end{itemize}
