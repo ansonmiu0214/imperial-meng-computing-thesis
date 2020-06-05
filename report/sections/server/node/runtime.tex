@@ -5,24 +5,16 @@ We define the session runtime for the \trole{Svr} endpoint
 of the \tprotocol{Adder} protocol in Svr.ts,
 named after the endpoint.
 It exposes a \textbf{public API}
-(\cref{lst:noderuntimepublicapi})
 with seams for the developer to pass in the WebSocket server 
 and application logic
 (i.e. their handler implementations).
-It is the responsibility of the developer to construct the
+It is developer's responsibility to construct the
 WebSocket server and set it up to listen for incoming connections.
 Internally, it keeps a \textit{private API}
 for executing the EFSM, when all participants have 
 joined the session.
 
-The role of the public API is to manage incoming connections and
-wait for all participants to join the session 
-(\cref{subsection:noderuntimepublic}), before
-handing off to the private API to execute the EFSM
-(\cref{subsection:noderuntimeprivate}).
-
-\begin{figure}[!h]
-\begin{lstlisting}[language=javascript,title=Svr.ts]
+\begin{lstlisting}[language=javascript]
 export class Svr {
 	constructor(wss: WebSocket.Server,
 				initialState: Implementation.S51) { ... }
@@ -37,18 +29,119 @@ class Session {
 	...
 }
 \end{lstlisting}
-\captionof{lstlisting}{Public and Private API of Session Runtime for Server Endpoint}
-\label{lst:noderuntimepublicapi}
-\end{figure}
+
+The role of the public API is to manage incoming connections and
+wait for all participants to join the session 
+(\cref{subsection:noderuntimepublic}), before
+handing off to the private API to execute the EFSM
+(\cref{subsection:noderuntimeprivate}).
 
 \subsection{Managing Connections}
 \label{subsection:noderuntimepublic}
 
-\begin{itemize}
-\item use set and partial object to keep track of pending connections
-\item ws event listeners
-\item forward reference that we need to manage cancellations here too
-\end{itemize}
+The constructor of the public API class sets up
+the framework for mapping incoming WebSocket connections to
+participants. 
+The main challenge is to wait for all participants to 
+connect to the server endpoint before EFSM execution begins.
+We address this by defining an internal protocol for managing
+session joining -- since we generate the runtime for both server 
+and browser endpoints, we can implement this in a way that is 
+transparent to the developer.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+const waiting: Set<Roles.Peers> = new Set([Roles.Peers.Client]); (*@\label{line:initwaiting}@*)
+
+const roleToSocket: Partial<RoleToSocket> = { (*@\label{line:initroletosocket}@*)
+	[Roles.Peers.Client]: undefined,
+};
+
+const onSubscribe = ({ data, target: socket }) => {
+	const { connect: role } = JSON.parse(data) 
+		as Message.ConnectRequest; (*@\label{line:connectionrequest}@*)
+	if (!waiting.has(role)) { return socket.close(); } (*@\label{line:occupied}@*)
+	
+	roleToSocket[role] = socket; (*@\label{line:connectwsbind}@*)
+	waiting.delete(role);
+	
+	if (waiting.size === 0)
+		new Session(wss, roleToSocket as RoleToSocket, initialState); (*@\label{line:newsession}@*)
+};
+
+wss.addEventListener('connection', ws => {
+	ws.onmessage = onSubscribe; (*@\label{line:wslisteneroverride}@*)
+});
+\end{lstlisting}
+\captionof{lstlisting}{\dots}
+\label{lst:nodeconnect}
+\end{figure}
+
+We show this in \cref{lst:nodeconnect} and walk through
+the main parts:
+
+\begin{enumerate}
+\item
+The server keeps track of the participants that 
+have yet to join the session -- this is initialised to the
+complete set of
+non-server endpoints at the start (\cref{line:initrolesocket}).
+
+\item
+Browser endpoints request to join the session
+by sending a \textit{connection request} with the role
+identifier as payload (\cref{line:connectionrequest}). 
+We generate role enums for browser targets
+in the same way, so the server can correctly
+interpret the message.
+We listen to connection requests by overriding the
+\texttt{onmessage} event listener for every new connection
+(\cref{line:wslisteneroverride}).
+
+\item
+If the role is already occupied, then the server
+responds by closing the connection (\cref{line:occupied}).
+
+\item
+Otherwise, the role is not occupied, so the server binds
+the WebSocket (which the message was received from) to the role
+(\cref{line:connectwsbind}).
+This is accumulated in an interface type mapping each
+role to an \textit{optional}\footnote{
+TypeScript provides utility types for common type transformations:
+\texttt{Partial<T>} constructs a type with all properties
+of \texttt{T} set to optional.
+} 
+WebSocket property
+-- for roles who have
+not yet connected, we do not know the WebSocket binding, so the
+WebSocket for these roles are \lstonelinejs{undefined}.
+
+\item
+When the server is no longer waiting for any participants,
+it notifies all other roles through the bounded WebSocket
+connections that the session will start, and delegates
+EFSM execution to the private API by constructing
+an instance of the \texttt{Session} class (\cref{line:newsession}).
+The notification process is managed by the \texttt{Session} class.
+
+\begin{lstlisting}[language=javascript,tabsize=2,numbers=none]
+Object.values(roleToSocket).forEach(socket => {
+	socket.send(JSON.stringify(Message.ConnectConfirm));
+});
+\end{lstlisting}
+
+\item
+We define the interfaces and factories for connection messages 
+in the generated EFSM.ts file under
+the \texttt{Message} namespace.
+
+\begin{lstlisting}[language=javascript,tabsize=2,numbers=none]
+// Inside the Message namespace...
+export interface ConnectRequest { connect: Role.Peers };
+export const ConnectConfirm = { connected: true };
+\end{lstlisting}
+\end{enumerate}
 
 \subsection{Executing the EFSM}
 \label{subsection:noderuntimeprivate}
@@ -56,8 +149,12 @@ class Session {
 The \texttt{Session} class executes the EFSM.
 We define a transition function, \texttt{next()}, 
 parameterised by the current state,
-which invokes the handler defined by the develoepr
-and performs the required channel actions for non-terminal states:
+The constructor of the \texttt{Session} class
+explicitly calls \texttt{next()} with the 
+initial state implementation provided by the developer
+to start EFSM execution.
+\texttt{next()} invokes the handler defined by the developer
+and performs the required channel actions for non-terminal states.
 
 \begin{itemize}
 \item 
@@ -117,21 +214,6 @@ We see another problem with handling send states:
 because we do not know the specific send state, we do not know which
 participant to send the message to (\cref{line:noderuntimeunknownrole}).
 
-These all reduce to the same core problem: the runtime
-needs to know the specific state at compile-time\footnote{
-Whether TypeScript ``compiles'' or ``transpiles''
-(or even \textit{``transcompiles''} \cite{transcompiles}) to JavaScript
-is not relevant to our work; we stick with compilation
-and keep our terminology consistent.}.
-We solve this through \textit{runtime polymorphism} instead, since
-the specific type of \texttt{state} is known at runtime.
-For each type of state, we define a common API that can be invoked
-by the EFSM transition function. To achieve runtime polymorphism,
-each concrete state must provide a specific implementation: 
-this motivates our design for defining the discriminated union
-using abstract classes with abstract methods 
-(\cref{lst:nodeabstractclass}).
-
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2]
 abstract class ISend {
@@ -156,16 +238,20 @@ abstract class IReceive {
 \label{lst:nodeabstractclass}
 \end{figure}
 
-Using this approach,
-we can pass the transition function and channel actions 
-from the \texttt{Session} runtime class
-to the individual state \texttt{Implementation} classes:
-these are also generated by \fancyname{NodeTS}, so we
-guarantee linear usage of channel resources by construction as well.
-This \textit{significantly} simplifies the design of the runtime
-(\cref{lst:noderuntime}),
-because the transition function no longer needs to know the type 
-of the specific state at compile-time.
+These all reduce to the same core problem: the runtime
+needs to know the specific state at compile-time\footnote{
+Whether TypeScript ``compiles'' or ``transpiles''
+(or even \textit{``transcompiles''} \cite{transcompiles}) to JavaScript
+is not relevant to our work; we stick with compilation
+and keep our terminology consistent.}.
+We solve this through \textit{runtime polymorphism} instead, since
+the specific type of \texttt{state} is known at runtime.
+For each type of state, we define a common API that can be invoked
+by the EFSM transition function. To achieve runtime polymorphism,
+each concrete state must provide a specific implementation: 
+this motivates our design for defining the discriminated union
+using abstract classes with abstract methods 
+(\cref{lst:nodeabstractclass}).
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2]
@@ -184,6 +270,17 @@ next(state: Implementation.Type) {
 Endpoint}
 \label{lst:noderuntime}
 \end{figure}
+
+Using this approach,
+we can pass the transition function and channel actions 
+from the \texttt{Session} runtime class
+to the individual state \texttt{Implementation} classes:
+these are also generated by \fancyname{NodeTS}, so we
+guarantee linear usage of channel resources by construction as well.
+This \textit{significantly} simplifies the design of the runtime
+(\cref{lst:noderuntime}),
+because the transition function no longer needs to know the type 
+of the specific state at compile-time.
 
 By passing the specific functions defined in the runtime
 to the individual EFSM states, we can visualise our runtime
@@ -552,7 +649,7 @@ using a generic mapped typed defined in
 \cref{lst:noderolesmappedtypes}.
 
 \item Empty queues are initialised for both mappings
-in the constructor (\cref{line:queue1,,line:queue2}).
+(\cref{line:queue1,,line:queue2}).
 
 \item Each endpoint has a different \texttt{onmessage}
 event listener, which will interact with the message queue
