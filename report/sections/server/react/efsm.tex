@@ -133,11 +133,9 @@ class InputWindow extends S40<State> {
 	render() {
 		const { num1, num2, message } = this.state;
 		const (*@\hl{Add}@*) = this.ADD('onClick', (*@\label{line:clientsendfactory1}@*)
-			(ev: React.MouseEvent) => [num1, num2] (*@\label{line:clientsendpayload1}@*)
-		);
+			(ev: React.MouseEvent) => [num1, num2]); (*@\label{line:clientsendpayload1}@*)
 		const (*@\hl{Quit}@*) = this.QUIT('onMouseOver', (*@\label{line:clientsendfactory2}@*)
-			(ev: React.MouseEvent) => [message] (*@\label{line:clientsendpayload2}@*)
-		);		
+			(ev: React.MouseEvent) => [message]); (*@\label{line:clientsendpayload2}@*)
 		return (<div>
 			// Omitting <input>s for entering numbers, message
 			(*@\hl{<Add>}@*)<button>Sum</button>(*@\hl{</Add>}@*)
@@ -146,7 +144,8 @@ class InputWindow extends S40<State> {
 	}
 }
 \end{lstlisting}
-\captionof{lstlisting}{\dots}
+\captionof{lstlisting}{Developer Implementation for \trole{Client}
+Send State in \tprotocol{Adder} protocol}
 \label{lst:adderclientsenddev}
 \end{figure}
 
@@ -247,7 +246,8 @@ type FunctionPropertyNames<T> = {
 type FunctionProperties<T> = Pick<T, FunctionPropertyNames<T>>; (*@\label{line:extractfuncprops3}@*)
 type DOMEvents = FunctionProperties<React.DOMAttributes<any>>;
 \end{lstlisting}
-\captionof{lstlisting}{\dots}
+\captionof{lstlisting}{Extracting Function Properties from 
+TypeScript Interface}
 \label{lst:extractfuncprops}
 \end{figure}
 
@@ -314,6 +314,77 @@ in \tprotocol{Adder} protocol}
 \end{figure}
 
 \subsection{Receive States}
+
+We also encode receive states as abstract React components,
+and leverage props to ensure channel resources are not exposed
+to the developer.
+
+According to the EFSM, a receive state means
+the endpoint is ``waiting for the message'',
+and the actual receive event represents a transition
+to a successor state.
+This means that the developer's implementation will define
+what to render on the DOM when the endpoint is waiting
+for the message, rather than updating the DOM with the
+received message.
+Referring to \cref{fig:adderclientfsm} again,
+S42 will be rendered when the endpoint is waiting for
+\tmsg{RES}, but once received, S40 will be immediately
+rendered. The developer will need to manage the flow
+of stateful application data between UI components separately
+-- \fancyname{ReactMPST} only generates code for managing
+the communication automaton.
+
+We generate an abstract method for each permitted receive
+transition, which is used as the receive handler.
+This allows the developer to intercept the
+message and perform operations -- such as updating
+application state -- before the successor state is rendered.
+Specifying receive handlers as abstract methods mandate
+the developer to provide a concrete implementation.
+
+\begin{lstlisting}[language=javascript,tabsize=2]
+enum Labels {
+	THANKS = 'THANKS', TERMINATE = 'TERMINATE',
+};
+
+type THANKSMessage = {
+    label: Labels.THANKS,
+    payload: [string],
+};
+type TERMINATEMessage = {
+    label: Labels.TERMINATE,
+    payload: [],
+};
+
+type Message = | THANKSMessage | TERMINATEMessage;
+\end{lstlisting}
+
+\begin{lstlisting}[language=javascript,tabsize=2]
+type Props = {
+	register: (role: Roles.Peers, handle: ReceiveHandler) => void
+};
+abstract class S42<S> extends React.Component<Props, S> {
+	abstract THANKS(payload1: string): void;
+	abstract TERMINATE(): void;
+	
+	componentDidMount() {
+		this.props.register(this.handle.bind(this));	
+	}
+	
+	handle(message: any): State {
+		const parsedMessage = JSON.parse(message) as Message;
+		switch (parsedMessage.label) {
+			case Labels.THANKS:
+				return this.THANKS(...parsedMessage.payload);			
+			case Labels.TERMINATE:
+				return this.TERMINATE(...parsedMessage.payload);
+		}
+	}
+}
+\end{lstlisting}
+
+
 \begin{itemize}
 \item receive state is `shown' when waiting for a receive event
 \item base class has abstract methods -- one for each possible receive -- so the user must implement these when they extend the abstract base class
@@ -326,3 +397,10 @@ in \tprotocol{Adder} protocol}
 \begin{itemize}
 \item by convention and design choice, the client gracefully closes the connection with the server role
 \end{itemize}
+
+\begin{lstlisting}[language=javascript,tabsize=2]
+type Props = { terminate: () => void };
+abstract class S41<S> extends React.Component<Props, S> {
+	componentDidMount() { this.props.terminate(); }	
+}
+\end{lstlisting}
