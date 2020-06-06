@@ -11,19 +11,28 @@ declare function buildSend<T>(label: string): (payload: T) => void
 \end{lstlisting}
 
 as a prop to the send state component.
-By passing the payload type and label, the send state component
-can build a handler (bound to the payload type) that performs a
-send over the WebSocket when called.
+This allows the send state component to build a handler,
+bound to the payload type and label identifier, that performs a 
+send action when called with the payload value.
 This provides more flexibility for the developer's implementation,
 but this clearly exposes channel resources and 
 comes at the cost of not being able to provide guarantees
 on affine channel usage.
 
-For receive states, \dots
-
-%
-%\begin{itemize}
-%\item not sure whether to put this in the subsection above so it flows better?
-%\item naive implementation is to pass the send() function as a prop for the developer to incorporate in their event listener -- this is most flexible, but we cannot provide static guarantees
-%\item factory approach -- the runtime could pass a factory function which, takes an UI element and performs the binding; this is better, as channel resources are not exposed, but the adversarial-minded developer can later override the event listener in the DOM etc
-%\end{itemize}
+An alternative design for receive states
+would be to define message receive handlers on the
+\textit{successor} state.
+Using \cref{fig:adderclientfsm} as an example,
+the receive handler for \lstonelinejs{RES(number)}
+would be defined on state S51 instead -- in fact, it wouldn't
+be defined as a callback, but the runtime would simply pass
+the received payload to S51 via props.
+This allows the developer to render UI changes
+based on received messages more easily, but comes at the
+cost of less robust typing:
+the \tmsg{RES} prop would have to be an optional value,
+as an EFSM state can be preceded by more than one receive state,
+so the developer has to implement logic (i.e. checking
+for \lstonelinejs{undefined} props) to determine whether
+the predecessor state was a receive state (and if so,
+\textit{which} receive state) and render accordingly.
