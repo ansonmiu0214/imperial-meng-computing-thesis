@@ -224,7 +224,7 @@ class CodeGenerationStrategy(ABC):
 
     @classmethod
     def __init_subclass__(cls, *, target):
-        CodeGenerationStrategy.target_to_strategy[target] = cls (*@\label{line:register}@*)
+        CodeGenerationStrategy.target_to_strategy[target] = cls (*@\label{line:registerstrategy}@*)
         return super().__init_subclass__()
     
     @abstractmethod
@@ -249,7 +249,7 @@ to the file system.
 We implement a subclass hook in \texttt{CodeGenerationStrategy}
 (\cref{lst:codegenerationstrategy}),
 such that each derived class must provide the target name to
-``register'' with the base class (\cref{line:register}),
+``register'' with the base class (\cref{line:registerstrategy}),
 and the base class keeps an internal
 mapping of the concrete strategies (\cref{line:mapping}); 
 \texttt{CodeGenerator} accesses

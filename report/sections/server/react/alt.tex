@@ -26,7 +26,7 @@ Using \cref{fig:adderclientfsm} as an example,
 the receive handler for \lstonelinejs{RES(number)}
 would be defined on state S51 instead -- in fact, it wouldn't
 be defined as a callback, but the runtime would simply pass
-the received payload to S51 via props.
+the received payload to S40 via props.
 This allows the developer to render UI changes
 based on received messages more easily, but comes at the
 cost of less robust typing:

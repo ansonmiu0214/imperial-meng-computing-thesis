@@ -1,22 +1,319 @@
 \section{EFSM Encoding}
 \label{section:reactefsm}
 
-\begin{itemize}
-\item motivated by the idea of model types, each state is encoded as a react component, where the user provides a view function (i.e. render())
-\item channel actions are abstracted by the runtime and passed to state implementations as props
-\item the developer provides an implementation of the state, i.e. ``uses the APIs'', by extending the abstract base classes and providing their own implementations
-\end{itemize}
+We encode each EFSM state as a React component.
+This encoding is consistent with the semantics of model types,
+as outlined in \cref{table:efsmmodeltypes}.
+\fancyname{ReactMPST} generates an abstract React component class
+for each EFSM state. The developer implements the generated API
+by extending the abstract class to define their own
+view function and implement any abstract methods
+required by the EFSM state.
 
-\subsection{Send}
-\begin{itemize}
-\item make the assumption that channel send actions are triggered by UI elements -- for example, clicking a button or typing enter in a textbox
-\item pre-session-types -- the developer will attach an event listener
-\item enhanced factory approach -- given an event and a event handler, return a react component that binds the handler to that event, and injects the channel action; the developer can use this API by putting the UI elements that represent the event action as children.
-\item the event handler is conditionally parameterised by the event type (achievable by typescript conditional types -- eg, if event is click, then the event handler parameter is a React.MouseEvent), and the return type is the payload type
-\item the abstract base class will set up the factory methods to be used by the developer
-\end{itemize}
+\renewcommand{\arraystretch}{1.5}
+\begin{table}[!ht]
+\centering
+\begin{tabularx}{\linewidth}{||c|X||}
+\hline
+Model Type Property & \multicolumn{1}{c||}{Equivalent Abstraction for EFSM} \\
+\hline\hline
+View Function & 
+Each EFSM state is a React component 
+with its own \texttt{render()} method. \\ 
+\hline
+Set of Messages & The permitted channel actions are defined either as 
+component props (for send states) 
+or abstract instance methods (for receive states). \\
+\hline
+Update Function & EFSM state components are rendered by a session runtime,
+so they notify the runtime to trigger a transition. \\
+\hline
+\end{tabularx}
+\captionof{table}{Implementing Model Types as React Components}
+\label{table:efsmmodeltypes}
+\end{table}
+\renewcommand{\arraystretch}{1}
 
-\subsection{Receive}
+Our EFSM encoding for browser-side endpoints remain
+consistent with those for server-side endpoints, in the sense that
+channel resources are abstracted away from the APIs generated
+for the developer, so it is impossible to trigger
+channel actions \textit{more than once} at any given EFSM state,
+by construction.
+
+\subsection{Send States}
+
+For React components implementing send states,
+we need to guarantee that the channel actions on the DOM
+precisely correspond to the permitted transitions.
+We require that send actions can only be invoked
+by user-triggered events on UI elements, such as clicking a button or
+typing in a textbox -- this generally aligns
+with idiomatic front-end web development practices.
+
+Without \fancyname{ReactMPST},
+an implementation of state S40 from \cref{fig:adderclientfsm}
+may resemble the following, where the developer attaches
+event listeners on UI elements to trigger channel actions:
+
+\begin{lstlisting}[language=javascript,numbers=none]
+<button onClick={ev => (*@\hl{Add}@*)(this.state.num1, this.state.num2)}>
+	Add
+</button>
+<button onMouseOver={ev => (*@\hl{Quit}@*)(this.state.message)}>
+	Quit
+</button>
+\end{lstlisting}
+
+If we directly provide the highlighted channel actions 
+(i.e. via props), we cannot guarantee linear usage in the code 
+without a linear type system.
+
+What we want to work towards is something similar to the following,
+where the highlighted component encapsulates the required information: 
+\textbf{(1)} what event to react to, 
+and \textbf{(2)} what payload to send when the event is triggered.
+\texttt{<AddOnClick>} should guarantee, by construction,
+that clicking on any child element will send the \tmsg{ADD}
+message with the specified payload.
+
+\begin{lstlisting}[language=javascript,numbers=none]
+(*@\hl{<AddOnClick payload=\{[this.state.num1, this.state.num2]\}>}@*)
+	<button>Add</button>
+(*@\hl{</AddOnClick>}@*);
+\end{lstlisting}
+
+This elegantly hides channel actions, but at the same time,
+we cannot make excessive assumptions about the 
+event (\texttt{onClick}) and UI element (\texttt{<button>})
+that the send action will be attached to --
+these should be left as implementation details that 
+the developer can customise for their application.
+
+Instead, we present a novel approach for binding
+channel actions to UI elements in a way that \textit{never
+exposes channel resources}:
+
+\begin{enumerate}
+\item
+The abstract send state React component defines
+\textbf{factory properties}
+that allow the developer to \textit{generate React components}
+for performing send actions, such that the API lets the developer
+specify which UI event should trigger the channel action,
+and the payload to send. It defines one factory property per
+permitted send action at that state.
+
+\item
+The runtime provides a \textit{factory method}
+which allows the abstract send state component to
+generate the aforementioned factory properties
+for the channel actions supported at that state.
+\end{enumerate}
+
+We walk through the implementation details by working backwards:
+showing how the developer would use the API first,
+before deriving the type signatures that we need to
+generate for the abstract send state component inherited by the developer.
+
+\subsubsection{Developer API}
+
+We show the developer's implementation 
+of a send state for the \trole{Client} endpoint
+from the \tprotocol{Adder} protocol in \cref{lst:adderclientsenddev}.
+Component state is an implementation detail 
+that is not related to EFSM execution, so we allow
+the developer to customise this through specifying an 
+interface (\cref{line:clientsendstatestate}).
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+type State = { num1: number, num2: number, message: string }; (*@\label{line:clientsendstatestate}@*)
+class InputWindow extends S40<State> {
+	render() {
+		const { num1, num2, message } = this.state;
+		const (*@\hl{Add}@*) = this.ADD('onClick', (*@\label{line:clientsendfactory1}@*)
+			(ev: React.MouseEvent) => [num1, num2] (*@\label{line:clientsendpayload1}@*)
+		);
+		const (*@\hl{Quit}@*) = this.QUIT('onMouseOver', (*@\label{line:clientsendfactory2}@*)
+			(ev: React.MouseEvent) => [message] (*@\label{line:clientsendpayload2}@*)
+		);		
+		return (<div>
+			// Omitting <input>s for entering numbers, message
+			(*@\hl{<Add>}@*)<button>Sum</button>(*@\hl{</Add>}@*)
+			(*@\hl{<Quit>}@*)<button>Quit</button>(*@\hl{</Quit>}@*)
+		</div>);
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{\dots}
+\label{lst:adderclientsenddev}
+\end{figure}
+
+The factory API for binding send actions to UI elements appear on
+\cref{line:clientsendfactory1,line:clientsendfactory2}.
+For example, \cref{line:clientsendfactory1} reads: 
+\textit{build a React component that sends the \tmsg{ADD}
+message with \texttt{[num1, num2]} as payload,
+when the user clicks on it}.
+\tmsg{ADD} is the factory API we generate: it takes an event identifier
+and an event handler which must return the payload 
+-- \textit{appropriately typed with respect to the Scribble protocol} -- 
+for sending the \tmsg{ADD} message.
+Swapping \cref{line:clientsendpayload1,line:clientsendpayload2}
+will result in a compile-time type error due to invalid 
+payload types, which is the intended behaviour.
+
+We will define the factory API implementation in a way that
+calls the event handler to obtain the payload,
+sends the payload message, and transitions to the successor state,
+such that the send action is never performed more than once.
+
+\subsubsection{Typing the Abstract Send Component}
+Referring back to \cref{lst:adderclientsenddev},
+a first attempt for typing \tmsg{ADD} could be
+
+\begin{lstlisting}[language=javascript,numbers=none]
+(ev: string, handler: (e: any) => [number, number]) 
+	=> Constructor<React.Component>
+\end{lstlisting}
+
+However, the type of \texttt{ev} depends on the value of
+\texttt{event} -- for example, an \texttt{onClick} event
+is handled by a \texttt{React.MouseEvent} handler.
+React defines the supported event handlers under the
+\texttt{React.DOMAttributes} interface (\cref{lst:reactdomattrs}).
+We can use an index type query to express the dependency,
+and type inference in conditional types\footnote{
+We can \lstonelinejs{infer} type variables inside the
+\lstonelinejs{extends} clause of a conditional type.
+Specifically, \lstonelinejs{FunctionArguments<T> = 
+T extends (...args: infer R) ? R : never}.
+}
+to extract the function argument types:
+
+\begin{lstlisting}[language=javascript,numbers=none]
+<K extends keyof React.DOMAttributes>
+(ev: K, handler: (e: FunctionArguments<React.DOMAttributes[K]>) 
+		=> [number, number])
+	=> Constructor<React.Component>)
+\end{lstlisting}
+
+Contrary to our discussions about modelling dependent types in
+\cref{subsection:nodeefsmimplementation}, we can do this here
+because: \textbf{(1)} we are using index type queries instead
+of conditional types, and \textbf{(2)} we know the type
+of \texttt{ev} at compile-time from the developer's implementation,
+so we are not resolving index type queries with union types.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,numbers=none]
+interface DOMAttributes<T> {
+	children?: ReactNode; (*@\label{line:reactdomattrsnonfunc}@*)
+	onChange?: FormEventHandler<T>;
+	onClick?: MouseEventHandler<T>;
+	...
+};
+\end{lstlisting}
+\captionof{lstlisting}{Snippet of the \texttt{React.DOMAttributes} Interface}
+\label{lst:reactdomattrs}
+\end{figure}
+
+However, \texttt{React.DOMAttributes} also contains
+non-function properties -- on \cref{lst:reactdomattrs}
+\cref{line:reactdomattrsnonfunc},  ``children'' is not a valid event.
+We define utility types under Types.ts 
+to extract function properties from an interface 
+(\cref{lst:extractfuncprops}): we first extract
+the \textit{names} of function properties into an union type 
+by mapping property names of non-function properties to 
+\lstonelinejs{never} (\cref{line:extractfuncprops1})
+and performing an index type query (\cref{line:extractfuncprops2})
+to obtain an union type of function property names\footnote{
+The union type technically contains \lstonelinejs{never}
+as the names for non-function properties, but 
+TypeScript removes \lstonelinejs{never} from union types
+in the same way that $A \vee \bot \equiv A$.
+}
+which removes all \lstonelinejs{never} constituents;
+then extract the properties from the interface that are
+indexed by the filtered names (\cref{line:extractfuncprops3})
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+type FunctionPropertyNames<T> = {
+	[K in keyof T]: T[K] extends Function | undefined ? K : never; (*@\label{line:extractfuncprops1}@*)
+}[keyof T]; (*@\label{line:extractfuncprops2}@*)
+type FunctionProperties<T> = Pick<T, FunctionPropertyNames<T>>; (*@\label{line:extractfuncprops3}@*)
+type DOMEvents = FunctionProperties<React.DOMAttributes<any>>;
+\end{lstlisting}
+\captionof{lstlisting}{\dots}
+\label{lst:extractfuncprops}
+\end{figure}
+
+We construct a generic type parameterised on the payload type, 
+which lets us define the \tmsg{ADD} and \tmsg{QUIT}
+factory property easily.
+
+\begin{lstlisting}[language=javascript,numbers=none]
+type EventHandler<Payload, K extends keyof DOMEvents> = 
+	(event: FunctionArguments<DOMEvents[K]>) => Payload;
+	
+type SendComponentFactory<Payload> = <K extends keyof DOMEvents>
+	(event: K, handler: EventHandler<Payload, K>) => 
+		Constructor<React.Component>;
+\end{lstlisting}
+
+The factories are instantiated by the abstract class
+as \lstonelinejs{protected} properties, in order to allow 
+access by the developer's subclass implementation.
+Channel resources are managed by the runtime, so
+we need the runtime to pass a ``higher-order factory''
+(a factory method that generates a factory)
+which lets the send state component generate the required
+component factories (i.e. \tmsg{ADD} and \tmsg{QUIT})
+with channel actions pre-injected into the component.
+We discuss the runtime in \cref{section:reactruntime},
+but for now, it is sufficient to understand that
+the generated send component abstract class receives
+the higher-order factory as a prop, and that this
+prop binds the channel action into the factory that it returns.
+
+Now we are in a position to accurately type the abstract
+send component \texttt{S40} in \cref{lst:reactsendcomponent}.
+We hint at the usage of the higher-order factory on
+\cref{line:factory1,line:factory2}:
+just using \cref{line:factory1} as an example,
+the send component asks the runtime to generate a 
+component factory for sending a message 
+labelled \lstonelinejs{'ADD'}
+with payload typed
+\lstonelinejs{[number, number]},
+then transition to the \texttt{ReceiveState.S42}
+successor state.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+type Props = { factory: SendComponentFactoryFactory };
+abstract class S40<State> extends React.Component<Props, State> {
+	protected ADD: SendComponentFactory<[number, number]>;
+	protected QUIT: SendComponentFactory<[string]>;
+	
+	constructor(props: Props) {
+		super(props);
+		this.ADD = props.factory<[number, number]>( (*@\label{line:factory1}@*)
+			'ADD', ReceiveState.S42);
+		this.QUIT = props.factory<[string]>( (*@\label{line:factory2}@*)
+			'QUIT', ReceiveState.S43);
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{Generated Type for \trole{Client} Send State
+in \tprotocol{Adder} protocol}
+\label{lst:reactsendcomponent}
+\end{figure}
+
+\subsection{Receive States}
 \begin{itemize}
 \item receive state is `shown' when waiting for a receive event
 \item base class has abstract methods -- one for each possible receive -- so the user must implement these when they extend the abstract base class
@@ -25,7 +322,7 @@
 \item when the message arrives, the runtime will invoke the registered function (+ forward reference the next section with the edge case that the message arrives before handler registration occurs)
 \end{itemize}
 
-\subsection{Terminal}
+\subsection{Terminal States}
 \begin{itemize}
 \item by convention and design choice, the client gracefully closes the connection with the server role
 \end{itemize}
