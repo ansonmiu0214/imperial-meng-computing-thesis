@@ -1,34 +1,214 @@
 \section{Runtime}
 \label{section:reactruntime}
 
-\begin{itemize}
-\item public API - accept websocket endpoint URL, a mapping of state to user implementation, and UI elements to render when waiting for connection to occur, and connection failure
-\item private API - carry out the session (just like Node)
-\end{itemize}
+There are many parallels between the runtime we generate
+for \fancyname{ReactMPST} compared to that of \fancyname{NodeMPST}.
+We focus on the details unique to browser-side endpoints.
 
-\subsection{Session Joining}
-\begin{itemize}
-\item separate into two react components, since the websocket connection cannot be opened in the constructor by React StrictMode
-\item `outer' class sets websocket to undefined, but upon componentDidMount, creates the actual connection
-\item renders the `inner' class component upon websocket not being undefined, so it can be typed appropriately (otherwise, need to always use bang operator)
-\item on connection, send join request message to the server, wait for serber response before executing the EFSM at the initial state
-\end{itemize}
+We define the public API for the session runtime
+as a React component. The developer provides implementation details via
+props.
+We show the public API for the \trole{Client} endpoint
+of the \tprotocol{Adder} protocol below.
+
+\begin{lstlisting}[language=javascript]
+type Props = {
+	endpoint: string,
+	states: {
+		S40: Constructor<S40>,
+		S42: Constructor<S42>,
+		S43: Constructor<S43>,
+		S41: Constructor<S41>,
+	},
+	waiting: React.ReactNode,
+	connectFailed: React.ReactNode,
+};
+\end{lstlisting}
+
+The developer provides the WebSocket URL for the runtime
+to instantiate the connection.
+As for the EFSM state implementations derived from the abstract
+classes, the developer constructs an object to map state identifiers
+to concrete implementations. 
+The developer only needs to pass the \textit{constructor} function,
+as the runtime will instantiate the React components separately
+and pass the required props based on the type of state.
+Additionally, the developer needs to define what to render
+whilst \texttt{waiting} for the session to begin, and possibly
+an error screen if the connection has failed.
+
+When the session starts, the private API takes over and executes
+the EFSM by rendering the React component corresponding to the
+current EFSM state, as well as performing channel actions
+that adhere to the protocol.
+
+\subsection{Connecting to the Session}
+We connect to the session by creating a new \texttt{WebSocket}.
+Traditionally, this would be done in the constructor,
+but for React components, the constructor may be invoked more
+than once depending on how reconciliation works.
+For this reason, we create the \texttt{WebSocket} in the
+\texttt{componentDidMount} method as it is guaranteed
+to be only called once.
+In fact, under React's \textit{Strict Mode},
+constructors are \textit{explicitly invoked twice} to 
+prevent impure constructors \cite{ReactStrictMode}. 
+
+This means the WebSocket must have optional type as it is 
+strictly undefined on construction.
+To avoid having to deal with an optional WebSocket value
+in the EFSM execution (even though we know for sure that it
+has been instantiated when we use it),
+we define the public API (the React component named 
+\texttt{Session}) to manage the (possibly \lstonelinejs{undefined})
+WebSocket in its state, and the private API (the React component
+named after the role -- in this case, \trole{Client})after
+as a separate non-exported class
+with the WebSocket available via props. Once the WebSocket
+is instantiated in the \trole{Session} component, it renders the
+\trole{Client} component, passing the non-optional WebSocket value via props.
+
+\begin{lstlisting}[language=javascript,tabsize=2]
+type Transport = { ws: WebSocket };
+class Session extends React.Component<Props, Partial<Transport>> {
+	componentDidMount() {
+		this.setState({ ws: new WebSocket(this.props.endpoint) });
+	}
+
+	render() {
+		const { ws } = 	this.state;
+		return ws === undefined ? this.props.waiting 
+			: <Client ws={ws} {...this.props} />;
+	}
+}	
+export default Session;
+\end{lstlisting}
+
+The connection phase is managed in the same way as \fancyname{NodeMPST}:
+when the \texttt{Client} component is mounted,
+it sends a connection request to the server and overrides the
+\texttt{onmessage} event handler to listen for the connection confirmation,
+before advancing the EFSM to the initial state to begin executing the protocol.
 
 \subsection{Executing the EFSM}
+Unlike \fancyname{NodeMPST}, our EFSM state encoding does not define
+continuation states using the actual implementation.
+This is because state encodings are React components
+that need to be instantiated by the runtime.
+Instead, as previewed in \cref{lst:reactsendcomponent,lst:reactreceivecomponent},
+we define an enum-based abstraction for specifying
+successor state, and this is also used for executing the EFSM.
+Our enum-based abstraction defines a string enum for each type of EFSM state,
+and collects all state identifiers in an union type.
+
+\begin{lstlisting}[language=javascript,numbers=none]
+enum SendState { S40 = 'S40' };
+enum ReceiveState { S42 = 'S42', S43 = 'S43' };
+enum TerminalState { S41 = 'S41' };
+type State = ReceiveState | SendState | TerminalState;
+\end{lstlisting}
+
+The React runtime component also defines a transition function
+parameterised by the current state's enum. The runtime renders
+the current EFSM state component with different props depending
+on the type of the current state.
+
 \begin{itemize}
-\item same concept as node -- implementation details delegated to the actual classes
-\item constructor binds methods
-\item advance takes the enum instead of the class (since unlike the node example, it is not instantiated) -- uses custom type guards to distinguish between the type of state
+\item
+For \textbf{send} states, the runtime provides the higher-order factory
+method to allow the send state to construct its own send component
+factory properties for each permitted send transition.
+
+\item
+For \textbf{receive} states, the runtime provides the \texttt{register}
+function to let the developer pass back the receive handlers
+for each permitted receive transition, which is used
+to process incoming messages received via the WebSocket.
+
+\item
+For the \textbf{terminal} state, the runtime provides the
+\texttt{terminate} function to close the WebSocket connection.
 \end{itemize}
 
-\subsection{Handling Message Sends}
+Enum unions cannot be used in the same manner as discriminated unions
+to distinguish between \texttt{SendState} and \texttt{ReceiveState},
+so we provide utility functions under EFSM.ts that define
+\textit{type guards} to narrow the type of \texttt{State}.
+
+\begin{lstlisting}[language=javascript,numbers=none]
+function isReceiveState(state: State): state is ReceiveState {
+	return Object.values(ReceiveState).includes(state)
+}
+\end{lstlisting}
+
+We use these type guards in the transition function,
+as shown in \cref{lst:reacttransitionfunc}.
+The choice of a string enum for state identifiers
+allow us to use it to index into the EFSM state component mapping
+provided by the developer, as seen on 
+\cref{line:reactadvance1,line:reactadvance2,line:reactadvance3}.
+Note that the value of \texttt{state} can be an union type
+(depending on the possible values in the enum),
+so the type of \texttt{View} may also be union types.
+We can still deterministically pass props and render the component,
+as all states of each particular type agree on what props to receive.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript]
+private advance(state: State) {
+	if (isSendState(state)) {
+		const View = this.props.states[state]; (*@\label{line:reactadvance1}@*)
+		this.setState({	
+			elem: <View factory={this.buildFactory} />
+		});
+	} else if (isReceiveState(state)) {
+		const View = this.props.states[state]; (*@\label{line:reactadvance2}@*)
+		this.setState({
+			elem: <View register={this.registerReceiveHandler} />
+		});
+	} else if (isTerminalState(state)) {
+		const View = this.props.states[state]; (*@\label{line:reactadvance3}@*)
+		this.setState({
+			elem: <View terminate={this.terminate} />
+		});
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{EFSM Transition Function for Browser-Side Endpoint}
+\label{lst:reacttransitionfunc}
+\end{figure}
+
+We elaborate on \dots
+
+\subsection{Sending Messages}
 \begin{itemize}
 \item passes in the factory prop, which is a factoryfactory to be precise;
 \item sendMessage is bound in the closure and sends the message in the same way as how Node codegen does, by convention
 \item (if not already mentioned in the node section) send is asynchronous
 \end{itemize}
 
-\subsection{Handling Message Receives}
+\begin{lstlisting}[language=javascript,tabsize=2]
+private buildFactory<T>(label: string, successor: State) {
+	return <K extends keyof DOMEvents>
+				 (ev: K, handler: EventHandler<E, K> => {
+		const send = (payload: T) => 
+			this.sendMessage(label, payload, successor);
+		return class extends React.Component {
+			render() {
+				const props = {
+					[ev as string]: (e: FunctionArguments<DOMEvents[K]>) => {
+						const payload = handler(e);
+						send(payload);
+					}
+				};
+				return <div {...props}>{this.props.children}</div>
+			}		
+		}	
+	}
+}
+\end{lstlisting}
+
+\subsection{Receiving Messages}
 \begin{itemize}
 \item same edge case as the back-end code generation, as message can arrive before handlers are registered
 \item use the same two-queue mechanism to keep track of `what comes first' -- i.e. if message comes first, then put in message queue, so handler can pop off when registered; vice-versa, if handler is registered first, put in handler queue so message can be processed when that is received

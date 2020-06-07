@@ -418,7 +418,7 @@ in \fancyname{ReactMPST}}
 We generate the \texttt{handle()} method for each
 abstract receive state component for state-specific message
 parsing and processing. We show the full generated code
-for state S42 in \cref{lst:reactreceivestate}.
+for state S42 in \cref{lst:reactreceivecomponent}.
 Unlike \fancyname{NodeMPST},
 the \texttt{handle()} method (\cref{line:reactreceivehandle})
 returns the successor state identifier to the runtime
@@ -466,7 +466,7 @@ abstract class S42<S> extends React.Component<Props, S> {
 \end{lstlisting}
 \captionof{lstlisting}{Generated Code for \trole{Client} 
 Receive State S42 in \tprotocol{Adder} protocol}
-\label{lst:reactreceivestate}
+\label{lst:reactreceivecomponent}
 \end{figure}
 
 \subsection{Terminal States}
