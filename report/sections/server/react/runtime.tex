@@ -178,44 +178,150 @@ private advance(state: State) {
 \label{lst:reacttransitionfunc}
 \end{figure}
 
-We elaborate on \dots
+We keep track of the current EFSM state in the state of the
+private \texttt{Client} component.
+This enables the UI to be re-rendered, and therefore ``react'',
+to EFSM state transitions, which is precisely the goal of \fancyname{ReactMPST}.
 
 \subsection{Sending Messages}
-\begin{itemize}
-\item passes in the factory prop, which is a factoryfactory to be precise;
-\item sendMessage is bound in the closure and sends the message in the same way as how Node codegen does, by convention
-\item (if not already mentioned in the node section) send is asynchronous
-\end{itemize}
+Messages are sent through the WebSocket in the same way 
+as \fancyname{NodeMPST} -- objects marked with label and payload
+are serialised into JSON. The process of sending is always followed
+by a transition to the successor state, so we define the
+\texttt{sendMessage()} method on the runtime to also take
+the successor state as a function argument, so it can make that transition
+immediately after.
 
+\begin{lstlisting}[language=javascript,numbers=none]
+private sendMessage(label: string, payload: any, next: State) {
+	this.props.ws.send(JSON.stringify({ label, payload }));
+	this.advance(next);
+}
+\end{lstlisting}
+
+We focus on the higher-order factory that the runtime passes
+to the send component as a prop. The implementation shown in
+\cref{lst:reactsendfactory} is less straightforward,
+so we will walk through the steps.
+
+The prop allows the send component to build factory functions
+for sending messages with a particular \texttt{label}
+followed by a transition to some \texttt{successor} state
+(\cref{line:sendfactoryparams}).
+The higher-order factory relies on \textit{closures}
+to bind the channel action into the generated component.
+Here, \texttt{buildFactory} returns a (factory) function that
+builds an anonymous React component which wraps the 
+component's children into a \texttt{<div>} with special props 
+(\cref{line:sendfactorydiv}).
+The props for this anonymous React component comprises of a new
+event listener bound to the UI event (\texttt{ev})
+specified by the developer (such as \lstonelinejs{'onClick'}).
+This new event listener is defined in terms of the
+\texttt{handler} from the developer's implementation:
+\textbf{(1)} it invokes the handler to obtain the payload to send 
+(\cref{line:sendfactoryhandler}), which is constrained by
+the generic type parameter to ensure it matches the protocol specification;
+then, \textbf{(2)} it sends the message, which triggers the EFSM
+to advance to the successor state.
+We cannot directly call \lstonelinejs{this.sendMessage} inside
+the generated React component because \lstonelinejs{this} refers
+to the anonymous class; instead, we define a partially applied
+version of the \texttt{sendMessage} method as a local variable 
+(\cref{line:sendfactorycurrysend}).
+
+\begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2]
-private buildFactory<T>(label: string, successor: State) {
+private buildFactory<T>(label: string, successor: State) { (*@\label{line:sendfactoryparams}@*)
 	return <K extends keyof DOMEvents>
 				 (ev: K, handler: EventHandler<E, K> => {
-		const send = (payload: T) => 
+		const send = (payload: T) => (*@\label{line:sendfactorycurrysend}@*)
 			this.sendMessage(label, payload, successor);
 		return class extends React.Component {
 			render() {
 				const props = {
 					[ev as string]: (e: FunctionArguments<DOMEvents[K]>) => {
-						const payload = handler(e);
+						const payload = handler(e); (*@\label{line:sendfactoryhandler}@*)
 						send(payload);
 					}
 				};
-				return <div {...props}>{this.props.children}</div>
+				return <div {...props}>{this.props.children}</div> (*@\label{line:sendfactorydiv}@*)
 			}		
 		}	
 	}
 }
 \end{lstlisting}
+\captionof{lstlisting}{Higher-Order Factory Function in 
+Browser-Side Runtime}
+\label{lst:reactsendfactory}
+\end{figure}
 
 \subsection{Receiving Messages}
-\begin{itemize}
-\item same edge case as the back-end code generation, as message can arrive before handlers are registered
-\item use the same two-queue mechanism to keep track of `what comes first' -- i.e. if message comes first, then put in message queue, so handler can pop off when registered; vice-versa, if handler is registered first, put in handler queue so message can be processed when that is received
-\item importantly -- only one queue is required, as server-centric topologies only have the client talk to the server
-\end{itemize}
+
+We take the same approach as \fancyname{NodeMPST} --
+the runtime keeps track of the ``active'' receive handler,
+and the \texttt{onmessage} event listener for the WebSocket
+is defined to dynamically process the incoming message
+using the active receive handler.
+We also need to address the same consistency problem, since
+a message arrival event can be handled \textit{before}
+the receive handler is registered.
+The receive handler is registered when the receive state component
+is rendered on the DOM, which occurs when \lstonelinejs{this.setState}
+is invoked in the transition function.
+\lstonelinejs{this.setState} may be \textit{asynchronous}
+as React will internally batch multiple calls into a single update
+for performance \cite{ReactState}, so it is possible for the WebSocket message
+event to be queued (and hence, procesesd) before the receive handler
+is registered.
+
+We address this problem using a pair of queues to keep track
+of messages waiting for handlers, and handlers waiting for messages.
+Unlike \fancyname{NodeMPST}, we do \textit{not} need a mapping
+of queues because browser-side endpoints only receive from the server.
+
+\begin{lstlisting}[language=javascript,numbers=none]
+private messageQueue: any[];
+private handlerQueue: MessageHandler[];
+\end{lstlisting}
+
+This lets us define the WebSocket \texttt{onmessage} event
+listener and the \texttt{register} function (which we pass as a prop
+to the receive state component) in a similar way compared with
+\fancyname{NodeMPST} -- we show this in \cref{lst:reactreceiveruntime}.
+Recall that the message handler registered
+by the receive state component returns the successor state,
+so we invoke the transition function on the result directly 
+(\cref{line:reactreceiveadvance1,line:reactreceiveadvance2}).
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript]
+private register(handler: MessageHandler) {
+	const message = this.messageQueue.shift();
+	if (message !== undefined) { this.advance(handler(message)); } (*@\label{line:reactreceiveadvance1}@*)
+	else { this.handlerQueue.push(handler); }
+}
+
+private receive({ data }: MessageEvent) {
+	const handler = this.handlerQueue.shift();
+	if (handler !== undefined) { this.advance(handler(data); } (*@\label{line:reactreceiveadvance2}@*)
+	else { this.messageQueue.push(data); }
+}
+\end{lstlisting}
+\captionof{lstlisting}{Receive Handler Registration and Message Event
+Listener in \fancyname{ReactMPST}}
+\label{lst:reactreceiveruntime}
+\end{figure}
 
 \subsection{Handling Termination}
-\begin{itemize}
-\item close the websocket with a clean exit code
-\end{itemize}
+
+The terminal state component notifies the runtime (through
+the \texttt{terminate} function passed down as a prop)
+to close the connection. The implementation is straightforward --
+we simply invoke the \texttt{close()} method on the WebSocket.
+
+\begin{lstlisting}[language=javascript,numbers=none]
+private terminate() {
+	this.props.ws.close();
+}
+\end{lstlisting}

@@ -386,7 +386,7 @@ to the runtime also performs the message parsing,
 so all receive states register a ``general handle function'' typed
 
 \begin{lstlisting}[language=javascript,numbers=none]
-type MessageHandler = (message: any) => void;
+type MessageHandler = (message: any) => State;
 \end{lstlisting}
 
 and define their own \texttt{MessageHandler} to handle
