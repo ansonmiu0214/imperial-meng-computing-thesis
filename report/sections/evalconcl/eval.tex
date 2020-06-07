@@ -69,4 +69,39 @@ global protocol Game(role Svr, role P1, role P2) {
 \item show that the routing aspect is transparent to both sides
 \end{itemize}
 
+\section{Delegated Sessions: \fancyname{ATM}}
+\label{section:evalatm}
+
+\begin{itemize}
+\item Show that delegation is not supported
+even if the protocol ``allows''
+\end{itemize}
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=Scribble, tabsize=2]
+module Delegation;
+
+global protocol ATM(role Svr, role Client) {
+	choice at Client {
+		WITHDRAW(string, number) from Client to Svr;
+		choice at Svr {
+			BALANCE(number) from Svr to Client;		
+		} or {
+			FAIL(string) from Svr to Client;		
+		}
+		do ATM(Svr, Client);
+	} or {
+		DEPOSIT(string, number) from Client to Svr;
+		BALANCE(number) from Svr to Client;
+		do ATM(Svr, Client);
+	} or {
+		BYE(string) from Client to Svr;
+		BYE() from Svr to Client;	
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{The \tprotocol{ATM} Protocol}
+\label{lst:atm}
+\end{figure}
+
 \input{sections/evalconcl/eval/benchmarks}

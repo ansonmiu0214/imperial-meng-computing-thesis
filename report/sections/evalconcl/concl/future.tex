@@ -1,17 +1,89 @@
 \section{Future Work}
 
-\paragraph{Note: from PLACES}
-Future work includes incorporating \textit{explicit connection actions}
-introduced in \cite{ExplicitConnections} in our API generation to better model
-real-world communication protocols that may feature in interactive web
-applications.
-% REVIEW: asynchronous
-Server-side implementations may perform asynchronous operations on the
-received messages, so supporting asynchronous values (such as JavaScript
-\textit{Promises} \cite{promise}) in IO actions would be a welcome addition.
-Whilst our approach supports multiparty sessions, the nature of
-WebSockets require some server-based role in the communication protocol and
-clients to interact via the server.
-Extending support to WebRTC \cite{WebRTC} would
-cater for peer-to-peer communication between browsers, which further opens up
-possibilities for communication protocols supported by our approach.
+We highlight several areas of future work
+to support a wider range of communication protocols
+for web applications and increase the 
+industrial relevance of our work.
+
+\subsection{Delegation}
+Delegation allows channels to be sent between endpoints.
+This directly addresses the limitations presented in
+\cref{section:evalatm}: in the \tprotocol{ATM} protocol,
+when the \trole{Client}
+connects to the \trole{Svr},
+the \trole{Svr} should be able to send a private channel
+for \trole{Client} to perform bank operations,
+whilst concurrently accepting new connections.
+
+The API generation solution 
+presented by Scalas et al. \cite{LinearDecomp} supports
+\textit{distributed multiparty delegation} in Scala.
+We have also shown in \cref{section:evalatm} that
+the developer can implement delegation with small changes
+to the session runtime.
+Future work can apply the findings from \cite{LinearDecomp},
+extend the Scribble protocol language for sending
+channels through messages, and formalise the workaround
+in \cref{section:evalatm} with respect to the extended 
+Scribble syntax for delegation.
+
+\subsection{Explicit Connection Actions}
+Hu and Yoshida \cite{ExplicitConnections} extends 
+multiparty session type theory
+with \textit{explicit connection actions} to support protocols 
+with optional participants.
+Supporting optional participants is a relevant concept
+for web applications, particularly for browser-side endpoints.
+
+Our work defines a way to handle connection requests
+and detect disconnection events. The implementation assumes that
+all participants join the session when the protocol begins.
+We also focus on disconnection events as a result of session
+cancellation rather than those stated in the protocol.
+
+\cite{ExplicitConnections} uses a variant of the Scribble protocol
+language that supports explicit connection actions. Future work
+can use that as a basis for code generation, and generalise
+our existing mechanisms for session connection and cancellation
+to support explicit connection actions.
+
+\subsection{Transport Abstraction}
+The MPST-based web development framework presented by 
+King et al. \cite{PureScript2019} defines the session runtime
+in a way that parameterises the transportation mechanism.
+The developer can run the session over different transportation,
+provided that the custom transport implements the behaviour
+of the \texttt{Transport} type class.
+
+Future work can generalise the session runtime for 
+\fancyname{NodeMPST} and \fancyname{ReactMPST} to provide
+similar abstractions. A successful implementation could
+possibly allow direct interactions between two Node.js-based
+endpoints, but this will also require the routed MPST
+theory to be adapted accordingly to reason about
+such interactions in a web-based context.
+
+\subsection{Generalised EFSM Encoding as Typestates}
+The concept of \textit{typestates} define the interface of
+an object to be dependent on its private state, meaning
+it can change at runtime.
+This is compatible with the EFSM abstraction from the
+MPST framework: the permitted methods (i.e. channel actions)
+of the EFSM depends on its current state.
+In fact, Kouzapas et al. \cite{StMungo} presents a way to
+generate typestate specifications for each endpoint of a
+Scribble protocol; Gay et al. \cite{ModularST} proposes
+an encoding of session types in object-oriented languages
+and discuss their approach with respect to typestates.
+
+Future work can explore implementing typestates
+in TypeScript. A linear type system would be useful towards 
+implementing typestates, but this is lacking in TypeScript.
+One interesting possibility for approximating this would
+be to combine \textit{decorators} with \textit{transformers}:
+the former lets the developer define typestate-related metadata,
+whilst the latter can parse the metadata and
+transform the source code into another TypeScript program that acts
+as an ``intermediate representation'',
+such that only implementations that respect the typestate specification
+will type-check with its intermediate representation.
