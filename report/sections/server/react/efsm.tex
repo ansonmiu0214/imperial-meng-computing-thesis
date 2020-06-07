@@ -293,7 +293,7 @@ then transition to the \texttt{ReceiveState.S42}
 successor state.
 
 \begin{figure}[!h]
-\begin{lstlisting}[language=javascript,tabsize=2]
+\begin{lstlisting}[language=javascript,tabsize=2,title=S40.tsx]
 type Props = { factory: SendComponentFactoryFactory };
 abstract class S40<State> extends React.Component<Props, State> {
 	protected ADD: SendComponentFactory<[number, number]>;
@@ -335,7 +335,8 @@ of stateful application data between UI components separately
 -- \fancyname{ReactMPST} only generates code for managing
 the communication automaton.
 
-We generate an abstract method for each permitted receive
+We generate an \textit{abstract method} 
+for each permitted receive
 transition, which is used as the receive handler.
 This allows the developer to intercept the
 message and perform operations -- such as updating
@@ -343,64 +344,144 @@ application state -- before the successor state is rendered.
 Specifying receive handlers as abstract methods mandate
 the developer to provide a concrete implementation.
 
-\begin{lstlisting}[language=javascript,tabsize=2]
-enum Labels {
-	THANKS = 'THANKS', TERMINATE = 'TERMINATE',
-};
+We demonstrate below how the developer could implement
+receive state S42 -- here, the developer manages
+stateful application data using the
+\textit{sessionStorage} API \cite{SessionStorage}
+available on the browser.
 
-type THANKSMessage = {
+\begin{lstlisting}[language=javascript]
+class WaitScreen extends S42 {
+	render() { return <h1>Waiting</h1>; }
+	RES(n: number) {
+		sessionStorage.setItem('result', n);
+	}
+}
+\end{lstlisting}
+
+Receive states in \fancyname{ReactMPST}
+work in a similar way as with \fancyname{NodeMPST}.
+The runtime will invoke the \tmsg{RES} method
+implemented by the developer upon receiving the message
+through the WebSocket.
+In order to do so, the S42 component 
+needs to \textit{register}
+the handler with the runtime.
+
+Recall that React supports an uni-directional data flow,
+so there is no direct way to pass the handler
+back up to the parent component.
+We overcome this limitation by allowing the
+runtime to pass a \texttt{register} function to the
+receive state component as a prop; once the receive state
+component is mounted on the DOM, it proactively 
+registers the handlers with the runtime.
+
+This raises questions about the type signature for the
+\texttt{register} function, as the receive handler
+identifiers and type signatures differ between receive states.
+We adopt the same strategy as with \fancyname{NodeMPST}:
+the receive handler registered by the receive state
+to the runtime also performs the message parsing,
+so all receive states register a ``general handle function'' typed
+
+\begin{lstlisting}[language=javascript,numbers=none]
+type MessageHandler = (message: any) => void;
+\end{lstlisting}
+
+and define their own \texttt{MessageHandler} to handle
+state-specific message parsing and processing.
+We construct similar types for the state-specific
+labels and message structures.
+This is illustrated in \cref{lst:reactreceivetypes}) --
+we use state S43 from \cref{fig:adderclientfsm} hereafter
+to show how our approach scales with multiple branches.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+enum Labels { THANKS = 'THANKS', TERMINATE = 'TERMINATE' };
+interface THANKSMessage {
     label: Labels.THANKS,
     payload: [string],
 };
-type TERMINATEMessage = {
+interface TERMINATEMessage {
     label: Labels.TERMINATE,
     payload: [],
 };
-
 type Message = | THANKSMessage | TERMINATEMessage;
 \end{lstlisting}
+\captionof{lstlisting}{Generated Label and Message Types
+in \fancyname{ReactMPST}}
+\label{lst:reactreceivetypes}
+\end{figure}
+	
+We generate the \texttt{handle()} method for each
+abstract receive state component for state-specific message
+parsing and processing. We show the full generated code
+for state S42 in \cref{lst:reactreceivestate}.
+Unlike \fancyname{NodeMPST},
+the \texttt{handle()} method (\cref{line:reactreceivehandle})
+returns the successor state identifier to the runtime
+to make the transition.
+We leverage the discriminated union from our
+generated message types (\cref{lst:reactreceivetypes})
+to invoke the correct receive handler (\cref{line:reactreceivediscriminate}).
 
+Again, due to language limitations, we are unable to 
+simplify the message processing step as
+
+\begin{lstlisting}[language=javascript,numbers=none]
+this[parsedMessage.label](...parsedMessage.payload);
+\end{lstlisting}
+
+because this is implicitly expressing a type dependency
+over union types,
+and \texttt{parsedMessage.label} is unknown at compile-time.
+
+\begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2]
 type Props = {
-	register: (role: Roles.Peers, handle: ReceiveHandler) => void
+	register: (handle: ReceiveHandler) => void
 };
 abstract class S42<S> extends React.Component<Props, S> {
 	abstract THANKS(payload1: string): void;
 	abstract TERMINATE(): void;
 	
 	componentDidMount() {
-		this.props.register(this.handle.bind(this));	
+		this.props.register(this.handle.bind(this));
 	}
 	
-	handle(message: any): State {
+	handle(message: any): State { (*@\label{line:reactreceivehandle}@*)
 		const parsedMessage = JSON.parse(message) as Message;
-		switch (parsedMessage.label) {
+		switch (parsedMessage.label) { (*@\label{line:reactreceivediscriminate}@*)
 			case Labels.THANKS:
-				return this.THANKS(...parsedMessage.payload);			
+				this.THANKS(...parsedMessage.payload);
+				return TerminalState.S41;
 			case Labels.TERMINATE:
-				return this.TERMINATE(...parsedMessage.payload);
+				this.TERMINATE(...parsedMessage.payload);
+				return TerminalState.S41;
 		}
 	}
 }
 \end{lstlisting}
-
-
-\begin{itemize}
-\item receive state is `shown' when waiting for a receive event
-\item base class has abstract methods -- one for each possible receive -- so the user must implement these when they extend the abstract base class
-\item each abstract method is named after the message label expected to be received, and parameterised by the payload
-\item no channel actions are passed to the state -- instead, once the receive state is mounted on the DOM (i.e. rendered), the abstract base class will register the event handlers to the runtime (using the register method passed as props)
-\item when the message arrives, the runtime will invoke the registered function (+ forward reference the next section with the edge case that the message arrives before handler registration occurs)
-\end{itemize}
+\captionof{lstlisting}{Generated Code for \trole{Client} 
+Receive State S42 in \tprotocol{Adder} protocol}
+\label{lst:reactreceivestate}
+\end{figure}
 
 \subsection{Terminal States}
-\begin{itemize}
-\item by convention and design choice, the client gracefully closes the connection with the server role
-\end{itemize}
+To be consistent with the conventions defined for \fancyname{NodeMPST},
+the browser endpoint proactively closes the connection at its terminal state.
+We generate an abstract React component for terminal states 
+to allow the developer to customise what to
+\texttt{render} upon protocol termination.
 
-\begin{lstlisting}[language=javascript,tabsize=2]
+\begin{lstlisting}[language=javascript]
 type Props = { terminate: () => void };
-abstract class S41<S> extends React.Component<Props, S> {
+abstract class S41<State> extends React.Component<Props, State> {
 	componentDidMount() { this.props.terminate(); }	
 }
 \end{lstlisting}
+
+When the component is mounted on the DOM, it notifies the runtime
+(via the received \texttt{terminate} prop) to terminate the session.
