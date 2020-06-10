@@ -8,16 +8,98 @@
 % Mainstream example of distirbuted programs: web services (microservice architecture), interactive web application; 
 % Objective: 
 
-Modern interactive web applications aim to provide a highly responsive user experience by minimising the communication latency between clients and servers. 
-Whilst the HTTP request-response model is sufficient for retrieving static assets, applying the same stateless communication approach for interactive use cases (such as multiplayer games) introduces undesirable performance overhead from having to frequently set up new connections for client-server interactions. 
-Developers have since adopted other communication transport abstractions over HTTP connections such as the WebSockets protocol \cite{WebSocketRFC} to enjoy low-latency full-duplex client-server communication in their applications over a single persistent connection. 
-Enabling more complex communication patterns caters for more interactive use cases, but introduces additional concerns to the developer with respect to implementation correctness.
+Modern interactive web applications aim to 
+provide a highly responsive user experience by 
+minimising the communication latency between clients and servers. 
+Whilst the \textit{HTTP} request-response model is 
+sufficient for retrieving static assets, applying the same 
+stateless communication approach for interactive use cases 
+(such as multiplayer games) introduces undesirable 
+performance overhead from having to frequently set up 
+new connections for client-server interactions. 
+Developers have since adopted other communication 
+transport abstractions over HTTP connections such as the WebSockets protocol \cite{WebSocketRFC} to enjoy low-latency full-duplex 
+client-server communication in their applications over 
+a single persistent connection. 
+Enabling more complex communication patterns caters for 
+more interactive use cases, but introduces additional 
+concerns to the developer with respect to implementation correctness.
 
 % Example: noughts and crosses
-Consider a classic turn-based board game of \textit{Noughts and Crosses} between two players. Both players are identified by either noughts or crosses respectively, and take turns to place a mark on an unoccupied cell of a 3-by-3 grid until one player wins (when their markers form one straight line on the board) or a stalemate is reached (when all cells are occupied). A web-based implementation may involve players connected to a game server via WebSocket connections and interacting with the game from their web browser, which serve a \textit{single-page application} (SPA) of the game client written in a popular framework like \textit{React.js} \cite{React}. SPAs feature a single HTML page and dynamically renders content via JavaScript in the browser. Players take turns to make a move on the game board and the server implements the game logic to progress the game forward until a result (either a win/loss or draw) can be declared. 
+Consider a classic turn-based board game of \textit{Noughts and Crosses} 
+between two players. Both players are identified by either noughts or crosses 
+respectively, and take turns to place a mark on an unoccupied cell 
+of a 3-by-3 grid until one player wins (when their markers form 
+one straight line on the board) or a stalemate is reached 
+(when all cells are occupied). A web-based implementation may 
+involve players connected to a game server via WebSocket connections 
+and interacting with the game from their web browser, which serve 
+a \textit{single-page application} (SPA) of the game client written 
+in a popular framework like \textit{React.js} \cite{React}. 
+SPAs feature a single HTML page and dynamically renders content 
+via JavaScript in the browser. 
+Players take turns to make a move on the game board and the server 
+implements the game logic to progress the game forward until 
+a result (either a win/loss or draw) can be declared. 
 
-Whilst WebSockets make this web-based implementation possible, it introduces the developer to a new family of communication errors, even for this simple game. In addition to the usual testing for game logic correctness, the developer needs to test against \textit{deadlocks} (e.g. both players waiting for each other to make a move at the same time) and \textit{communication mismatches} (e.g. player 1 sending a boolean to the game server instead of the board coordinates). The complexity of these errors, which correlate to the complexity of tests required against these errors, scale with the complexity of the communication patterns involved.
+Whilst WebSockets make this web-based implementation possible, 
+it introduces the developer to a new family of communication errors
+(in addition to the usual testing for game logic correctness), 
+even for this simple game:
+we highlight just a few:
 
-\textit{Multiparty Session Types} (MPST) \cite{MPST} provide a framework for formally specifying a structured communication pattern between concurrent processes and verifying implementations for correctness with respect to the communications aspect. By specifying the client-server interactions of our game as a protocol and verifying the implementations against the protocol for well-formedness, MPST theory guarantees well-formed implementations to be free from communication errors.
+\begin{itemize}
 
-We see the application of the MPST methodology to verifying interactive web applications written in TypeScript to be an interesting design space - to what extent can the MPST methodology be applied such that we leverage TypeScript language features to maximise static safety guarantees whilst preserving a flexible, natural and idiomatic workflow for TypeScript developers? Such a workflow would ultimately decrease the overhead for incorporating MPST into mainstream web development, which reduces development time by programmatically verifying implementations for communication correctness.
+\item
+\textbf{Deadlocks:} how can we prevent both players waiting for 
+each other to make a move at the same time?
+
+\item 
+\textbf{Communication mismatches:} what if player 1 sends
+a boolean to the game server instead of board coordinates?
+
+\item
+\textbf{Channel linearity:} if the game server takes time
+to update the game logic and respond to the players, what if 
+player 1 clicks the same cell twice and sends the coordinates twice?
+
+\end{itemize}
+
+The complexity of these errors, which correlate to the complexity of tests 
+required against these errors, scale with the complexity of the 
+communication patterns involved. Over-reliance on integration testing
+to attempt to expose communication-related bugs will also slow the
+development process, not to mention that the time taken for these
+integration tests would scale with the number of roles involved.
+A localised, static way for verifying communication correctness would
+be highly desirable.
+
+\textit{Multiparty Session Types} (MPST) \cite{MPST} provide 
+a framework for formally specifying a structured communication pattern 
+between concurrent processes and verifying implementations for 
+correctness with respect to the communications aspect. 
+By specifying the client-server interactions of our game as a protocol 
+and verifying the implementations against the protocol for well-formedness, 
+MPST theory guarantees well-formed implementations to be 
+free from communication errors.
+
+Existing work \cite{MVU2020,PureScript2019} that 
+adapt the MPST framework for web development
+acknowledge the limitations of JavaScript -- the language of the browser --
+in providing static type-level guarantees, and proceed to use
+languages equipped with stronger type systems that compile to JavaScript.
+This comes at the cost of a learning curve for the developer,
+and limits its utility in the mainstream web development space.
+
+Among the many languages that compile to JavaScript,
+TypeScript stands out as the most intuitive to use as it is defined
+to be a \textit{superset} of JavaScript. It provides developers
+with type-safety through its gradual, structural type system.
+Whilst some \cite{MVU2020} point out this limits its usability for
+encoding multiparty session types, we believe that the language
+offers sufficient features that we can use to provide developers with
+communication safety guarantees whilst preserving a flexible, natural
+and idiomatic workflow. By building our work upon TypeScript, we
+work towards incorporating MPST into mainstream web development,
+which reduces development time by programmatically verifying 
+implementations for communication correctness.
