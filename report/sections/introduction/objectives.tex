@@ -1,3 +1,20 @@
 \section{Objectives}
 
-The objective of this project is to \dots
+The objective of this project is to provide an end-to-end
+framework for writing full-stack web applications that
+\textbf{statically} conform to a communication protocol.
+Developers specify their communication protocol using
+the Scribble protocol description language \cite{Scribble}
+which is based on multiparty session type (MPST) theory \cite{MPST}.
+The Scribble protocol is used as a basis for generating
+TypeScript APIs targeted for the Node.js server-side runtime
+and React.js browser-side framework. 
+By implementing the generated APIs in their full-stack applications,
+developers can enjoy \textbf{static} guarantees with respect 
+to communication safety: there will not be any communication mismatches,
+and channel linearity will be respected.
+Finally, we extend our framework to support communication
+protocols that cannot be natively implemented over
+a server-centric network topology using WebSockets.
+This involves defining a theory of routed multiparty session types
+to formalise the preservation of communication safety properties.
