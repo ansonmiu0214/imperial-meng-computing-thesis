@@ -2,42 +2,13 @@
 \label{chap:eval}
 %benchmark -- compile time / benchmarking 
 
-\section{Binary Sessions: \fancyname{Calculator}}
-\label{section:evalcalculator}
-\begin{itemize}
-\item sample client implementation + snippet of generated code (full in appendix)
-\item show that not all the UI is being controlled by the runtime (i.e. calculator app has a header/fake navbar)
-\item show the calculator logic achievable using React Context
-\item sample server implementation + snippet of generated code (full in appendix)
-\end{itemize}
-
-\begin{figure}[!ht]
-\begin{lstlisting}[language=Scribble, tabsize=2]
-module BinarySession;
-
-global protocol Calculator(role Svr, role Client) {
-  choice at Client {
-    Add(number, number) from Client to Svr;
-    Res(number)         from Svr to Client;
-    do Calculator(Svr, Client);
-  } or {
-    Mult(number, number) from Client to Svr;
-    Res(number)          from Svr to Client;
-    do Calculator(Svr, Client);
-  } or {
-    Quit()               from Client to Svr;
-    Terminate()          from Svr to Client;
-  }
-}
-\end{lstlisting}
-\captionof{lstlisting}{The \tprotocol{Calculator} Protocol}
-\label{lst:calculator}
-\end{figure}
-
 \section{Multiparty Sessions: \fancyname{Noughts and Crosses}}
 \label{section:evalgame}
 \begin{itemize}
 \item sample client implementation -- show the flexibility of factory API for sending to be used in the UI part (since move selection can be be made )
+\item show that not all the UI is being controlled by the runtime (i.e. calculator app has a header/fake navbar)
+\item show the calculator logic achievable using React Context
+\item sample server implementation + snippet of generated code (full in appendix)
 \end{itemize}
 
 \begin{figure}[!ht]

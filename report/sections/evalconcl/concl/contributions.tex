@@ -1,16 +1,65 @@
 \section{Contributions}
 
-\paragraph{Note: from PLACES}
+In this project, we develop and present an
+MPST-based framework for developing full-stack
+interactive TypeScript applications over WebSocket transport.
 
-We have presented an MPST-based framework for developing full-stack interactive
-TypeScript applications with WebSocket communications.
-The implementation conforms to a specified
-protocol, statically providing linear channel usage guarantees and affine
-channel usage guarantees for back-end and front-end targets respectively.
+We motivate our API generation approach from 
+\cite{Hybrid2016,PureScript2019} to generate TypeScript APIs
+from a Scribble protocol specification.
+Developers write their full-stack applications
+by implementing the generated APIs, and can enjoy 
+communication safety guarantees by construction.
+We explain how our session type encodings target the Node.js
+server-side runtime and React.js framework in
+\cref{chap:node,chap:react} for server-side
+and browser-side endpoints respectively.
+
+In particular, we present a novel approach for integrating
+session types into web-based GUI programming based on
+translating the theory on model types \cite{MVU2020}
+to idiomatic practices on the React.js framework.
+With respect to session type theory, implementations using
+the generated APIs statically enjoy linear channel usage
+guarantees and affine channel usage guarantees for back-end
+and front-end targets respectively.
+
+Compared to previous work, we are not only able to
+\textbf{statically} provide the same level of communication safety
+guarantees from multiparty session type theory, but we do so
+using modern web programming practices to increase
+the relevance and usability of our work in industry:
+our work targets TypeScript, Node.js and React.js,
+and we explain in \cref{chap:ext} how we support advanced
+web development idioms such as asynchronous implementations.
+
+In addition, existing proposals on API generation for web development
+over WebSockets \cite{PureScript2019} only support protocols
+implementing server-centric topologies, in order to be 
+compatible with WebSocket transport.
+We formalise a theory of routed multiparty session types in 
+\cref{chap:theory} to prove that it is possible to relax the
+server-centric topology assumption over WebSocket transport in a way 
+that preserves communication along with the communication safety 
+properties inherited from canonical session type theory.
 
 % PLACES
-Our work has received positive feedback \dots
+Our work has received positive feedback from academia.
+The project has been accepted and published in the
+Proceedings of the 12th International Workshop on
+Programming Language Approaches to Concurrency- \& 
+Communication-cEntric Software (PLACES 2020) \cite{PLACES2020}.
+We were also invited to present this work as 
+\emph{Generating Interactive WebSocket Applications in TypeScript}
+at PLACES 2020.
 
 % OVERALL
-Overall, \dots
-
+Overall, we offer an end-to-end solution for integrating
+multiparty session type theory into modern full-stack web programming
+practices, in a way that actively encourages developers to
+design their application with communication safety in mind.
+Our formalism of routed multiparty session types enables our
+API generation tool to support a wider range of protocols, and
+further reveals the potential
+for implementing dynamic communication structures over centralised
+network topologies.
