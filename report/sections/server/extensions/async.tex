@@ -1,26 +1,192 @@
 \section{Supporting Asynchronous Implementations}
+\label{section:async}
 
 \subsection{Motivation}
 
-\begin{itemize}
-\item developer implementation in javascript -- let alone typescript -- will need asynchronous operations
-\item backend -- database calls are asynchronous (e.g. for a multiplayer game, server may update database before sending the game results)
-\item frontend -- may invoke third-party API calls (that are not part of the protocol) which return promises
-\item how to support asynchronous developer implementations
-\end{itemize}
+Consider a basic example of two-factor authentication 
+(\tprotocol{2FA}) in \cref{lst:2FA} motivated from \cite{Exceptional}:
+\trole{Client} tries to log in to \trole{Svr}, which either
+authorises or denies the login attempt. If \trole{Client} is logging 
+in from a new device, the \trole{Svr} sends a challenge key
+and waits for a response code before proceeding.
 
-\subsubsection{Concurrency Primitives in TypeScript}
-\begin{itemize}
-\item use an example to go over callbacks, promise and async/await functions
-\item compare promises to java futures
-\end{itemize}
+\begin{figure}[!h]
+\begin{lstlisting}[language=scribble]
+global protocol 2FA(role Svr, role Client) {
+	Login(string, string) from Client to Svr;
+	choice at Svr { (*@\label{line:2fachoice1}@*)
+		Authorised() from Svr to Client;
+		do Main(Svr, Client);		// Details are not important
+	} or {
+		Challenge(string)	from Svr to Client;
+		Response(number) 	from Client to Svr;
+		choice at Svr { (*@\label{line:2fachoice2}@*)
+			Authorised() from Svr to Client;
+			do Main(Svr, Client);
+		} or {
+			AccessDenied() from Svr to Client;
+		}
+	} or {
+		AccessDenied() from Svr to Client;	
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{The \tprotocol{Two Factor Authentication} Protocol}
+\label{lst:2FA}
+\end{figure}
+
+The developer's implementation on 
+\cref{line:2fachoice1,line:2fachoice2} is likely to query
+a database for credential verification.
+Database operations are implemented using \textit{asynchronous},
+\textit{non-blocking} APIs; it is
+recommended that file operations do not block the main execution,
+so a JavaScript database API may require a \textit{callback}
+to propagate the return value when it is available.
+A server endpoint implementation of \cref{lst:2FA}
+may resemble the following:
+
+\begin{lstlisting}[language=javascript]
+new Implementation.S40({
+	Login: (username: string, password: string) => {
+		db.lookup(username, password, (result) => {
+			// returns Implementation.S42 here
+		});
+	}
+});
+\end{lstlisting}
+
+Callbacks are commonplace in dealing with concurrency in JavaScript
+\cite{CallbackHell}; we will go over other widely-used
+concurrency primitives shortly.
+Whatever the case may be, asynchronous developer implementations
+using our generated APIs will not type-check as the function
+returns immediately (hence, has return type \lstonelinejs{void}),
+even though the callback function has the expected return type.
+The developer will encounter the following:
+
+\begin{lstlisting}[tabsize=2,numbers=none]
+Type '(username: string, password: string) => void' is not 
+assignable to type '(payload_0: string, payload_1: string) => S42'.
+\end{lstlisting}
+
+This is also possible for browser-side implementations:
+when the user invokes a UI event, the browser-side logic
+may first consult a third-party API for additional information
+(which is not part of the communication protocol)
+before performing a send action; the \textit{Fetch} API \cite{Fetch}
+for making API calls is asynchronous.
+
+In order to make \fancyname{SessionTS} more relevant and compatible
+with modern web programming practices, it is important to
+support asynchronous developer implementations as part of our
+generated APIs and runtime. 
+
+This means we should support
+the concurrency primitives built into TypeScript:
+
+\subparagraph{Callbacks}
+Callback-based APIs are higher-order functions -- they take functions
+as parameters and invoke them when the asynchronous operation is complete.
+The \texttt{setTimeout(fn, delay)} function available on the browser
+waits for \texttt{delay} milliseconds before invoking \texttt{fn()} --
+or more precisely, before queuing the execution of \texttt{fn()}.
+As a result, the code listing below prints \lstonelinejs{'Second!'}
+before \lstonelinejs{'First!'}, even though \texttt{setTimeout}
+was called with 0ms delay.
+
+\begin{lstlisting}[language=javascript,numbers=none]
+setTimeout(() => console.log('First!', 0);
+console.log('Second!');
+\end{lstlisting}
+
+\subparagraph{Promises}
+A Promise formalises the ``completion'' callback
+and its error handling construct. The developer passes a ``success''
+handler and ``error'' handler, conventionally named
+``then'' and ``catch'' respectively, to construct a Promise.
+This is analogue to the \texttt{Future} interface in Java \cite{JavaFuture}.
+The Promise will invoke the correct handler on completion.
+The benefits of Promises in our context is that TypeScript allows
+us to specify the type of payload that the Promise resolves to.
+
+\begin{lstlisting}[language=javascript,numbers=none]
+declare function promise(n: number): Promise<number>
+const promise = (n: number) => 
+	new Promise((resolve, reject) => {
+		if (n < 10)  resolve(n));
+		else reject('Number too big!');
+	});
+
+declare function handleNumber(n: number) { ... } 
+declare function handleError(err: string) { ... }
+
+promise(10).then(handleNumber).catch(handleError)
+\end{lstlisting}
+
+\subparagraph{Async/Await}
+The \lstonelinejs{async}/\lstonelinejs{await} construct
+is syntactic sugar for Promises. An \lstonelinejs{async}
+function always returns a Promise, and marking \lstonelinejs{await}
+for the identifier of the return value for a function returning a Promise
+``unwraps'' the resolved payload. A downside is that error handling
+reverts to the \lstonelinejs{try ... catch} construct.
+
+\begin{lstlisting}[language=javascript,numbers=none]
+const asyncSum = async (x: number, y: number) => {
+	return (await promise(x)) + (await promise(y));
+}
+
+asyncSum(1, 2);  // returns Promise<number> that resolves to 3
+\end{lstlisting}
 
 \subsection{API Extension}
 \begin{itemize}
 \item should be very short section -- use union type MaybePromise so developer can provide either
 \end{itemize}
 
+\begin{lstlisting}[language=javascript,numbers=none]
+type MaybePromise<T> = T | Promise<T>;
+type FromPromise<T> = T extends MaybePromise<infer R> ? R : never;
+\end{lstlisting}
+
+\begin{lstlisting}[language=javascript,tabsize=2]
+new Implementation.S40({
+	Login: (*@\hl{async}@*) (username: string, password: string) => {
+		const result = (*@\hl{await}@*) db.lookup(username, password);
+		if (result.valid)
+			return new Implementation.S42('Authorised', ...);
+		else if (result.unauthorised)
+			return new Implementation.S42('AccessDenied', ...);
+		else
+			return new Implementation.S42('Challenge', ..., challenger);
+	}
+});
+
+const challenger = (key: number) => {
+	return new (*@\hl{Promise}@*)((resolve, reject) => {
+		keychain.check(key, ok => {
+			if (ok)
+				resolve(new Implementation.S44('Authorised', ...);
+			else 
+				resolve(new Implementation.S44('AccessDenied', ...);	
+		});
+	});
+}
+\end{lstlisting}
+
+
+
 \subsection{Runtime Extension}
+
+Generally, minimal changes are required for the runtime.
+The key observation is that the concrete types for the any
+handlers are the same -- they just might be wrapped in a Promise
+construct.
+To handle potential Promises, we wrap existing logic
+as a delayed computation, colloquially known as a \textit{thunk}
+\cite{Thunk}.
+
 \begin{itemize}
 \item server send actions -- use the Thunk pattern to wrap the existing logic, the thunk takes the original payload type (extracted using conditional infer types) as parameter; implementation either returns promise or not-promise, so the implementation will either pass thunk as resolve or call thunk as-is
 \item server receive actions - thunk pattern as well
@@ -28,7 +194,70 @@
 \item browser receive action -- thunk pattern
 \end{itemize}
 
+\begin{figure}[!h]
+\begin{subfigure}{\textwidth}
+\begin{lstlisting}[language=javascript,tabsize=2]
+const [	label, payload, succ] = this.handler;
+send(label, payload);
+next(succ);
+\end{lstlisting}
+\caption{\dots}
+\end{subfigure}
+\hfill
+\begin{subfigure}{\textwidth}
+\begin{lstlisting}[language=javascript,tabsize=2]
+const thunk = (label, payload, succ) => {
+	send(label, payload);
+	next(succ);	
+};
+
+if (this.handler instanceof Promise)
+	this.handler.then(thunk);
+else 
+	thunk(this.handler);
+\end{lstlisting}
+\caption{\dots}
+\end{subfigure}
+\captionof{figure}{\dots}
+\end{figure}
+
+\begin{lstlisting}[language=javascript,tabsize=2]
+(*@\hl{let used = false;}@*)
+...
+return class extends React.Component {
+	render() {
+		const props = {
+			[eventLabel as string]: (event) => {
+				(*@\hl{if (used) return;}@*)
+				(*@\hl{used = true;}@*)
+				
+				const result = handler(event);
+				if (result instanceof Promise) {
+					result.then(send);				
+				} else {
+					send(result);				
+				}
+			}		
+		}
+	}
+}
+\end{lstlisting}
+
 \subsection{Limitations}
-\begin{itemize}
-\item for the browser target, we technically still provide affine linearity in the code, but the user would be able to click a button twice when it is sending as the promise resolution is asynchronous; to solve this, we add the used flag which is used in java paper for detecting channel reuse, which is `technically' a runtime check, depending on how one interprets
-\end{itemize}
+
+Supporting asynchronous logic on top of our
+existing implementation in \fancyname{ReactMPST} comes at a cost
+of losing affine linearity guarantees.
+If the send action handler is asynchronous, then the UI event handler
+returns before the runtime transitions, so the UI event that can trigger
+the send action is still active, which means the user can trigger
+a channel linearity violation. This means we need a boolean flag
+to keep track of channel usage for browser-side endpoints, 
+as done in \cite{Hybrid2016}.
+
+If we decouple the \texttt{sendMessage()} 
+from the \texttt{advance()} function, we could advance to the successor state
+immediately \textit{before} handling the asynchronous return value.
+This restores affine channel linearity guarantees, but 
+results in the UI being inconsistent with the channel
+actions.
