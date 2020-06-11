@@ -333,7 +333,9 @@ React Send State Components}
 \label{lst:asynclinearcheck}
 \end{figure}
 
-If we decouple the \texttt{sendMessage()} 
+Referring back to the \texttt{sendMessage()} method
+defined in \cref{subsection:reactruntimesend},
+if we decouple the \texttt{send()} 
 from the \texttt{advance()} function, we could advance to the successor state
 immediately \textit{before} handling the asynchronous return value.
 This restores affine channel linearity guarantees, but 

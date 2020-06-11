@@ -1,21 +1,119 @@
 \section{Error Handling}
 \label{section:error}
 
+A robust error handling framework is critical
+in a distributed setting.
+It is naive to assume that endpoint implementations
+are entirely free from exceptions.
+As Fowler pointed out in \cite{Exceptional},
+session type implementations that do not account for failure
+are of limited use in distributed programming.
+
+We motivate the need for handling a variety exceptions in
+modern web programming in \cref{subsection:errormotivation},
+demonstrate how we implement a structured error handling
+framework through extending the generated APIs and 
+runtime in \cref{subsection:errorapi,subsection:errorruntime}
+respectively, and explain the limitations of our framework
+in \cref{subsection:errorlimit}.
+
 \subsection{Motivation}
-\begin{itemize}
-\item existing work extends theory based on canonical session cancellations are from exceptions raised by logic
-\item refer to 2FA example in Fowler paper on exceptional session types
-\item need to also consider cancellations in a web-based scenario -- server dead, client closing their browser
-\item need to also offer developer a seam for handling cancellations -- this needs to be well-parameterised so the developer knows how to handle the cancellation (for example, which role cancelled -- e.g. if it is a multi-way transaction, the server needs to know which role cancelled, so they can update the database accordingly).
-\end{itemize}
+\label{subsection:errormotivation}
+
+Using the \tprotocol{2FA} example from
+\cref{lst:2FA}, the database lookup function
+might rely on a cloud service, and will throw an exception
+if the cloud service cannot be reached.
+This may cause \trole{Svr} to crash.
+From the perspective of session types, we need to
+ensure that \trole{Client} isn't blindly
+waiting for the session to continue if \trole{Svr}
+threw an exception.
+
+We classify this as an example where \trole{Svr}
+terminates the session because of a \textit{logical error}
+in its implementation.
+Existing work \cite{Exceptional,AffineSessions} 
+on error handling for session types address this
+through extending the process calculus with an
+\textit{explicit cancellation} operator to ensure that
+channel resources are closed during exception handling.
+
+However, the context of modern web programming
+introduces new possibilities for session cancellation
+that are not addressed by existing work.
+Browser-side endpoints can disconnect from the session due
+to network connectivity issues or simply by closing
+the browser. Similarly, the server may also face connectivity
+issues. In order to deliver a robust error handling
+framework tailored for integrating session types in 
+modern web programming, we must also take these variants
+of session cancellation into account.
+
+We also need a novel approach for defining cancellation handlers.
+The work by Fowler et al. \cite{Exceptional} integrates 
+exception handling for session types in a 
+\textit{functional language}, where their design of
+exception handlers build upon existing work on effect handlers.
+Our work targets a non-functional language in TypeScript,
+which means any piece of code can be ``effectful'',
+so the exception handler API we generate for developers
+need to respect this property.
+Exception handlers should also be well parameterised
+to empower the developer to handle cancellations more effectively
+-- for instance, if the developer knows which endpoint
+emitted the cancellation, appropriate clean-up operations
+(such as reverting database changes or application-specific
+logging) can be performed.
 
 \subsection{API Extension}
+\label{subsection:errorapi}
+
 \begin{itemize}
 \item developers just need to provide cancellation handlers along with the initial state
 \item we standardise on parameterising it with role and reason: the reason is typed `any' to give developers the autonomy for implementation details
 \end{itemize}
 
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript]
+new ATMSvr(wss, logic, async (role: Roles.All, reason: any) => {
+	if (role === Roles.Self) {
+		// Handle internal server error	
+	} else {
+		// Handle client error:
+		// revert incomplete transactions from database
+		await db.revertTransactions(role);
+	}
+});
+\end{lstlisting}
+\captionof{lstlisting}{Example Cancellation Handler for Server Endpoint}
+\label{lst:cancelsvr}
+\end{figure}
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript]
+<ATMClient
+	endpoint='ws://localhost:8080'
+	...
+	cancellation={(role: Roles.All, reason: any) => (
+		<div>
+			{role === Roles.Self
+				? <h1>Internal Error</h1>
+				: <h1>Server Error</h1>}
+			<p>{reason}</p>
+		</div>
+	)}	
+/>
+\end{lstlisting}
+\captionof{lstlisting}{Example Cancellation Handler for Browser Endpoint}
+\label{lst:cancelclient}
+\end{figure}
+
 \subsection{Runtime Extension}
+\label{subsection:errorruntime}
+
+The generated session runtime \dots
+
 \begin{itemize}
 \item build upon websocket RFC which specifies the `base' closing (or exit) code
 \item we additionally define contracts for exit codes in our use case (e.g. role occupied, logical error), and make sure it does not override any websocket `traditions' as per the RFC
@@ -40,6 +138,13 @@
 \end{itemize}
 
 \subsection{Limitations}
+\label{subsection:errorlimit}
+
+The expressiveness of our error handling framework is
+limited by the expressiveness of the 
+\lstonelinejs{try} / \lstonelinejs{catch} mechanism
+in TypeScript.
+
 \begin{itemize}
 \item Cancellation handlers are not typed -- namely, we use `any';
 \item exception handler blocks in typescript are not typed
