@@ -69,20 +69,52 @@ logging) can be performed.
 \subsection{API Extension}
 \label{subsection:errorapi}
 
-\begin{itemize}
-\item developers just need to provide cancellation handlers along with the initial state
-\item we standardise on parameterising it with role and reason: the reason is typed `any' to give developers the autonomy for implementation details
-\end{itemize}
+We extend the generated APIs to
+allow developers to provide a \textbf{session cancellation
+handler}. The runtime will invoke this
+to handle \textit{local} exceptions (e.g. exception
+thrown by application logic) and \textit{global} session
+cancellations (e.g. other endpoint disconnecting).
+
+The session cancellation handler is uniformly
+parameterised by the \texttt{role} which emitted the cancellation,
+and some arbitrary \texttt{reason}. For exceptions thrown
+by local application logic, the \texttt{reason} argument
+is populated with the thrown exception. Because the 
+\lstonelinejs{try} / \lstonelinejs{catch} block is not typed,
+we give the \texttt{reason} parameter the dynamic type of
+\lstonelinejs{any} to give developers the autonomy for 
+handling the exceptions they throw locally.
+
+Consider a binary session protocol specifying interactions
+between an \trole{ATMSvr} and \trole{ATMClient}.
+We demonstrate how the developer may choose to define
+the session cancellation handlers in the context of this protocol.
+
+\subparagraph{Server (\cref{lst:cancelsvr}):}
+The \trole{ATMSvr}
+may need to handle internal server errors 
+(\cref{line:cancelsvrinternal}) as a result of
+exceptions thrown by its implementation. 
+If the \trole{ATMClient} disconnects prematurely, 
+\trole{ATMSvr} can also notify the database 
+to revert the transaction (\cref{line:cancelsvrexternal}). 
+Note that session cancellation handlers can be 
+\textit{asynchronous}, as we appreciate that any required
+``clean-up'' operations may need to use asynchronous APIs
+provided by databases or other persistent storage solutions.
+The cancellation handler is passed into the runtime via
+the constructor of the public API.
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript]
 new ATMSvr(wss, logic, async (role: Roles.All, reason: any) => {
 	if (role === Roles.Self) {
-		// Handle internal server error	
+		// Handle internal server error	(*@\label{line:cancelsvrinternal}@*)
 	} else {
 		// Handle client error:
 		// revert incomplete transactions from database
-		await db.revertTransactions(role);
+		await db.revertTransactions(role); (*@\label{line:cancelsvrexternal}@*)
 	}
 });
 \end{lstlisting}
@@ -90,17 +122,29 @@ new ATMSvr(wss, logic, async (role: Roles.All, reason: any) => {
 \label{lst:cancelsvr}
 \end{figure}
 
+\subparagraph{Client (\cref{lst:cancelclient})}
+Session cancellation handlers for \fancyname{ReactMPST}
+are also parameterised by the \texttt{role} and \texttt{reason} for
+cancellation, but they must return a \texttt{ReactNode}
+for the runtime to render upon session cancellation, which
+guarantees that no channel actions will be rendered when a session
+is cancelled. Here, the developer renders a header depending
+on which role emitted the cancellation, and directly shows
+the reason in a paragraph. 
+The cancellation handler is passed into the runtime via a 
+prop defined on the public API.
+
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript]
 <ATMClient
-	endpoint='ws://localhost:8080'
 	...
 	cancellation={(role: Roles.All, reason: any) => (
 		<div>
+			// Customise heading to show which role cancelled
 			{role === Roles.Self
 				? <h1>Internal Error</h1>
 				: <h1>Server Error</h1>}
-			<p>{reason}</p>
+			<p>{reason}</p>		// Render reason in paragraph
 		</div>
 	)}	
 />
@@ -112,30 +156,228 @@ new ATMSvr(wss, logic, async (role: Roles.All, reason: any) => {
 \subsection{Runtime Extension}
 \label{subsection:errorruntime}
 
-The generated session runtime \dots
+The generated session runtime is extended
+with the capability of \textit{emitting} session
+cancellation and \textit{handling} session cancellation.
+We define session cancellation over WebSocket transport
+by invoking the \texttt{close()} method to emit cancellations,
+and overriding the \texttt{onclose} event listener to handle
+cancellations. 
 
-\begin{itemize}
-\item build upon websocket RFC which specifies the `base' closing (or exit) code
-\item we additionally define contracts for exit codes in our use case (e.g. role occupied, logical error), and make sure it does not override any websocket `traditions' as per the RFC
-\item all based on well-defined event listeners on the websocket close and error events
-\item must consider cancellation in two phases
-\end{itemize}
+The WebSocket \texttt{close()} method accepts a 
+\textit{close code}, which is analogue to exit codes for
+executables. We extend this mechanism to distinguish
+between the different variants of session cancellation,
+as motivated in \cref{subsection:errormotivation}.
+As shown in \cref{fig:cancelenum},
+we define unique close codes for different types
+of session cancellation under \filename{Cancellation.ts}
+for both server-side (\cref{subfig:cancelenumsvr})
+and browser-side endpoints (\cref{subfig:cancelenumclient}) 
+respectively. 
+To respect the convention specified in the WebSocket protocol
+RFC \cite{WebSocketRFC} that the 1xxx close codes 
+are reserved for internal use,
+we define our custom close codes from 4000 onwards.
+The enum values are named in a self-explanatory way.
 
-\subsubsection{Cancellations during Session Joining}
+\begin{figure}[!h]
+\begin{subfigure}{0.48\textwidth}
+\begin{lstlisting}[language=javascript,tabsize=2]
+export enum Receive {
+	NORMAL = 1000,
+	CLIENT_BROWSER_CLOSED = 1001,
+	LOGICAL_ERROR = 4001,
+};
 
-\begin{itemize}
-\item server -- emits role occupied
-\item client -- closes browser whilst waiting for others
-\end{itemize}
 
-\subsubsection{Cancellations during EFSM Execution}
+export enum Emit {
+	CLIENT_BROWSER_CLOSED = 4000,
+	LOGICAL_ERROR = 4001,
+	ROLE_OCCUPIED = 4002,
+};
+\end{lstlisting}
+\caption{Close Codes for \fancyname{NodeMPST}}
+\label{subfig:cancelenumsvr}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\begin{lstlisting}[language=javascript,tabsize=2]
+export enum Receive {
+	NORMAL = 1000,
+	SERVER_DISCONNECT = 1006,
+	CLIENT_DISCONNECT = 4000,
+	LOGICAL_ERROR = 4001,
+	ROLE_OCCUPIED = 4002,
+};
 
-\begin{itemize}
-\item server -- dies
-\item server -- logical error
-\item client -- dies
-\item client -- logical error
-\end{itemize}
+export enum Emit {
+	NORMAL = 1000,
+	LOGICAL_ERROR = 4001,
+};
+\end{lstlisting}
+\caption{Close Codes for \fancyname{ReactMPST}}
+\label{subfig:cancelenumclient}
+\end{subfigure}
+\caption{WebSocket Close Codes for Session Cancellation}
+\label{fig:cancelenum}
+\end{figure}
+
+The session runtime features two phases:
+\textbf{(1)} the \textit{connection} phase, when the server
+accepts incoming connections from session participants;
+and \textbf{(2)} the \textit{execution phase}, when all
+participants execute their EFSM.
+Cancellation can occur in both phases, and we outline
+how the runtime handles cancellation in each phase.
+
+\subsubsection{Cancellations during \textit{Connection} Phase}
+As the global protocol has not began at this phase,
+any cancellations that occur here do \textit{not} terminate
+the connection phase; the endpoints that have already
+joined just simply continue waiting for the remaining participants
+to connect.
+
+The server endpoint can emit a \texttt{ROLE_OCCUPIED} close event
+to the browser endpoint if the role is already taken.
+We know if a role is occupied if the payload of the
+incoming connection request message is not one of the roles
+that the server endpoint is waiting on.
+
+It is possible for a browser endpoint to have already joined
+the session but is still in the connection phase, because the
+server endpoint is waiting on other participants. If this browser
+endpoint disconnects prematurely (e.g. the user closes
+the browser), the server endpoint detects this and adds the role
+back to the set of roles it is waiting on. To do this, we keep
+a mapping of socket to role identifier; this is populated
+when the endpoint sends the connection request message,
+so if the endpoint disconnects prematurely, the server knows
+which role to wait for again. We show the changes made to 
+the connection management logic generated by \fancyname{NodeMPST}
+in \cref{lst:cancelconnectsvr}.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript]
+// Inside constructor of session runtime for server-side endpoint
+
+const socketToRole = new Map<WebSocket, Roles.Peers>();
+
+const onClose = ({ target: socket }) => {
+	// Wait for the role again
+	waiting.add(socketToRole.get(socket));
+}
+
+const onSubscribe = (event) => {
+	...
+	// Update role-WebSocket mapping.
+	roleToSocket[role] = socket;
+	socketToRole.set(socket, role);
+	waiting.delete(role);
+	...
+}
+\end{lstlisting}
+\captionof{lstlisting}{\dots}
+\label{lst:cancelconnectsvr}
+\end{figure}
+
+
+\subsubsection{Cancellations during \textit{Execution} Phase}
+Any cancellation event that occurs during the execution of the
+EFSM will terminate the protocol for all roles.
+We see the concept of recovery to be an implementation detail
+unique to each application, so we do not build recovery
+mechanisms in our session cancellation framework.
+There are four possible ways for a cancellation event
+to be emitted during this phase.
+
+
+\subparagraph{Server endpoint experiences logical error:}
+This is when the developer's implementation for the server
+endpoint throws an uncaught exception. 
+We wrap the runtime EFSM execution methods in
+\lstonelinejs{try}/\lstonelinejs{catch}
+blocks, and handle the error with a new \texttt{cancel()}
+method we generate for the runtime in \fancyname{NodeMPST}.
+The \texttt{cancel()} method invokes
+the \texttt{close()} method on all browser endpoints,
+then executes the user-defined cancellation handler.
+
+Browser endpoints detect this through the \texttt{onclose}
+WebSocket event listener. We extend the runtime
+generated by \fancyname{ReactMPST} to handle this event
+in the corresponding case of a switch statement
+defined on the close code, as shown below.
+
+\begin{lstlisting}[language=javascript,tabsize=2]
+private onClose({ code, reason }: CloseEvent) {
+	switch (code) {
+		case Cancellation.Receive.NORMAL: {
+			// Normal, clean cancellation
+			return;
+		}
+		case Cancellation.Receive.SERVER_DISCONNECT: {
+			// Server role disconnected
+			this.processCancellation(Roles.Server, 'server disconnected')
+			return;
+		}
+		case Cancellation.Receive.CLIENT_DISCONNECT: { ... }
+		case Cancellation.Receive.LOGICAL_ERROR: { ... }
+		default: { ... }
+	}
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=javascript,tabsize=2]
+private processCancellation(role: Roles.All, reason?: any) {
+	const cancelUI = ...
+	this.setState({
+		elem: this.props.cancellation(role, reason !== undefined ? String(reason) : reason),
+        });
+    }
+\end{lstlisting}
+
+\subparagraph{Server endpoint disconnects:}
+This follows the same logic as the above,
+except for the fact that the server does not
+\textit{emit} the cancellation through code, since
+it simply disconnects.
+
+
+\subparagraph{Browser endpoint experiences logical error:}
+% emit event to server
+% server needs to propagate cancellation
+% other browser endpoints receive in the same wayy
+
+
+\subparagraph{Browser endpoint disconnects:}
+% same as above, except the `emit' part is implicit
+This follows the same logic as the above,
+except for the fact that the browser does not
+\textit{emit} the cancellation through code, since
+it simply disconnects.
+
+\subsection{Caveats with Asynchronous Operations}
+Implementing session cancellation whilst
+preserving support for asynchronous operations introduces
+subtle caveats. 
+
+Consider the case where the developer implements
+some asynchronous logic for a send state on the server endpoint. 
+Whilst the \texttt{Promise} is being resolved, a cancellation
+event occurs concurrently. The session will be cancelled, but
+the asynchronous logic will \textit{not} be pre-empted; it
+will run to completion, and proceed to try perform the send
+action on a WebSocket that has already been closed.
+
+Traditionally, this will throw an error. However,
+the semantics of cancellation should dominate any asynchronous
+operations from the developer, so we need to work around
+the lack of pre-emption. We do this by defining a custom
+error handler for the WebSocket send action: in short,
+if a send action fails, and it is due to the session
+being cancelled prior, then there is nothing to worry about.
+
 
 \subsection{Limitations}
 \label{subsection:errorlimit}
@@ -144,9 +386,16 @@ The expressiveness of our error handling framework is
 limited by the expressiveness of the 
 \lstonelinejs{try} / \lstonelinejs{catch} mechanism
 in TypeScript.
+Unlike languages like Java, we cannot enforce the type
+of exceptions being thrown, so we have to resort to
+typing the \texttt{reason} of the cancellation as 
+\lstonelinejs{any} to be compatible with 
+exception handling constructs defined by the developer.
 
-\begin{itemize}
-\item Cancellation handlers are not typed -- namely, we use `any';
-\item exception handler blocks in typescript are not typed
-\item the `logical error' idea is also very vague as all code can be effectful in typescript (statically); cannot specifically say that the implementation is expected to `send payload of type int, but possibly throw error of type Error', which would otherwise be possible in other languages(?)
-\end{itemize}
+We could change the session cancellation handler
+to an object with specific handlers for each of the
+custom WebSocket close codes we defined, but it
+clutters the API which increases the learning
+curve for the developer, and also makes it
+more difficult to share cancellation handling logic
+across different WebSocket close codes.
