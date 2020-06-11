@@ -267,10 +267,11 @@ const thunk = (label, payload, succ) => { (*@\label{line:thunk}@*)
 	next(succ);	
 };
 
-if (this.handler instanceof Promise)
+if (this.handler instanceof Promise) {
 	this.handler.then(thunk);
-else
+} else {
 	thunk(this.handler);
+}
 \end{lstlisting}
 \caption{New \texttt{performSend()} for Optional \texttt{Promise}s}
 \label{subfig:newthunk}
@@ -306,7 +307,7 @@ We illustrate this in \cref{lst:asynclinearcheck},
 with the linearity checks highlighted.
 
 \begin{figure}[!h]
-\begin{lstlisting}[language=javascript,tabsize=2]
+\begin{lstlisting}[language=javascript]
 (*@\hl{let used = false;}@*)
 ...
 return class extends React.Component {
@@ -317,16 +318,18 @@ return class extends React.Component {
 				(*@\hl{used = true;}@*)
 				
 				const result = handler(event);
-				if (result instanceof Promise)
+				if (result instanceof Promise) {
 					result.then(send);
-				else
+				} else {
 					send(result);
+				}
 			}		
 		}
 	}
 }
 \end{lstlisting}
-\captionof{lstlisting}{\dots}
+\captionof{lstlisting}{Generating Runtime Linearity Checks for
+React Send State Components}
 \label{lst:asynclinearcheck}
 \end{figure}
 
