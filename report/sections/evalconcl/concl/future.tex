@@ -27,6 +27,9 @@ channels through messages, and formalise the workaround
 in \cref{section:evalatm} with respect to the extended 
 Scribble syntax for delegation.
 
+\paragraph{``Serverless'' Server-Side Endpoints}
+\dots
+
 \paragraph{Explicit Connection Actions}
 Hu and Yoshida \cite{ExplicitConnections} extends 
 multiparty session type theory
@@ -63,27 +66,27 @@ endpoints, but this will also require the routed MPST
 theory to be adapted accordingly to reason about
 such interactions in a web-based context.
 
-%\paragraph{EFSM Encoding as Typestates}
-%The concept of \textit{typestates} define the interface of
-%an object to be dependent on its private state, meaning
-%it can change at runtime.
-%This is compatible with the EFSM abstraction from the
-%MPST framework: the permitted methods (i.e. channel actions)
-%of the EFSM depends on its current state.
-%In fact, Kouzapas et al. \cite{StMungo} presents a way to
-%generate typestate specifications for each endpoint of a
-%Scribble protocol; Gay et al. \cite{ModularST} proposes
-%an encoding of session types in object-oriented languages
-%and discuss their approach with respect to typestates.
-%
-%Future work can explore implementing typestates
-%in TypeScript. A linear type system would be useful towards 
-%implementing typestates, but this is lacking in TypeScript.
-%One interesting possibility for approximating this would
-%be to combine \textit{decorators} with \textit{transformers}:
-%the former lets the developer define typestate-related metadata,
-%whilst the latter can parse the metadata and
-%transform the source code into another TypeScript program that acts
-%as an ``intermediate representation'',
-%such that only implementations that respect the typestate specification
-%will type-check with its intermediate representation.
+\paragraph{EFSM Encoding as Typestates}
+The concept of \textit{typestates} define the interface of
+an object to be dependent on its private state, meaning
+it can change at runtime.
+This is compatible with the EFSM abstraction from the
+MPST framework: the permitted methods (i.e. channel actions)
+of the EFSM depends on its current state.
+In fact, Kouzapas et al. \cite{StMungo} presents a way to
+generate typestate specifications for each endpoint of a
+Scribble protocol; Gay et al. \cite{ModularST} proposes
+an encoding of session types in object-oriented languages
+and discuss their approach with respect to typestates.
+
+Future work can explore implementing typestates
+in TypeScript. A linear type system would be useful towards 
+implementing typestates, but this is lacking in TypeScript.
+One interesting possibility for approximating this would
+be to combine \textit{decorators} with \textit{transformers}:
+the former lets the developer define typestate-related metadata,
+whilst the latter can parse the metadata and
+transform the source code into another TypeScript program that acts
+as an ``intermediate representation'',
+such that only implementations that respect the typestate specification
+will type-check with its intermediate representation.

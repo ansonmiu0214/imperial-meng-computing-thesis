@@ -184,6 +184,8 @@ This enables the UI to be re-rendered, and therefore ``react'',
 to EFSM state transitions, which is precisely the goal of \fancyname{ReactMPST}.
 
 \subsection{Sending Messages}
+\label{subsection:reactruntimesend}
+
 Messages are sent through the WebSocket in the same way 
 as \fancyname{NodeMPST} -- objects marked with label and payload
 are serialised into JSON. The process of sending is always followed
@@ -234,7 +236,7 @@ version of the \texttt{sendMessage} method as a local variable
 \begin{lstlisting}[language=javascript,tabsize=2]
 private buildFactory<T>(label: string, successor: State) { (*@\label{line:sendfactoryparams}@*)
 	return <K extends keyof DOMEvents>
-				 (ev: K, handler: EventHandler<E, K> => {
+				 (ev: K, handler: EventHandler<E, K>) => {
 		const send = (payload: T) => (*@\label{line:sendfactorycurrysend}@*)
 			this.sendMessage(label, payload, successor);
 		return class extends React.Component {
