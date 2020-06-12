@@ -11,6 +11,17 @@ implementation -- not using mainstream stuff,
 theory -- websocket transport restricts protocols)
 \end{itemize}
 
+\subsubsection{IDEA (similar to LinearDecomp structure)}
+\begin{itemize}
+\item importance of communication safety in webapps
+\item MPST framework for webapps for communication safety
+\item existing work achieves this
+\item problem 1 -- not using mainstream tools, not intuitively supporting modern practices (async logic), not a natural way for web development (event driven), limits usability, limits the benefits it brings to developers
+\item problem 2 -- rely on websocket transport (good, straightforward to map to session type implementation), which is ok, but limits the types of protocols we can support (e.g. TwoBuyer, can be session typed but violates websocket topology
+\item part 1 addresses problem 1 (same communication safety guarantees but targeting TS/Node/React)
+\item part 2 addresses problem 2 (RoutedMPST expresses arbitrary topology over server-centric network topology, not limitied by network topology)
+\end{itemize}
+
 % BREAK DOWN PARAGRAPHS
 
 % INTRODUCTION DIAGRAM
