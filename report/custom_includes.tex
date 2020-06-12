@@ -1,3 +1,6 @@
+% Paragraph === skip-line && no-indent
+%\usepackage[parfill]{parskip}
+
 \usepackage{bookmark}
 
 % Change chapter number size
@@ -24,6 +27,13 @@
 \newcommand{\tmsg}[1]{\texttt{#1}}
 \newcommand{\tprotocol}[1]{\textsc{#1}}
 \newcommand{\filename}[1]{\texttt{#1}}
+
+% Consistent names
+\usepackage{xspace}
+\newcommand{\newtheory}{\fancyname{RoutedSessions}\xspace}
+\newcommand{\nodecodegen}{\fancyname{NodeMPST}\xspace}
+\newcommand{\reactcodegen}{\fancyname{ReactMPST}\xspace}
+\newcommand{\codegen}{\fancyname{SessionTS}\xspace}
 
 % Nicer references
 \usepackage[noabbrev, capitalise]{cleveref}
