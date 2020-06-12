@@ -3,18 +3,60 @@
 
 We implement the \tprotocol{Two Buyer} protocol
 introduced in \cref{section:twobuyer}. 
+This protocol cannot be implemented using
+existing proposals \cite{PureScript2019,MVU2020} for integrating
+session types into web development.
+\codegen overcomes the limitations of existing work
+through implementing novel theory of routed multiparty
+session types formalised in \cref{chap:theory}.
 
+We present the implementation of the \trole{S}eller
+in \cref{lst:evaltwobuyerseller}, 
+and the implementation
+of the peer-to-peer interaction by buyer \trole{A}
+in \cref{lst:evaltwobuyerA}
+The main point to note is that the routing mechanism
+is completely transparent to the developer,
+which shows the elegance of our solution.
 
-Interested readers can find the full implementation on
-GitHub\footnote{\url{https://github.com/ansonmiu0214/SessionTS-Examples/TwoBuyer}}.
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript]
+// two buyer seller
+\end{lstlisting}
+\captionof{lstlisting}{\dots}
+\label{lst:evaltwobuyerseller}
+\end{figure}
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript]
+// two buyer A p2p
+\end{lstlisting}
+\captionof{lstlisting}{\dots}
+\label{lst:evaltwobuyerA}
+\end{figure}
 
 The \newtheory implementation does not affect
 the compatibility of our generated APIs with external libraries.
 The \trole{S}eller endpoint is set up as an Express.js
 application, and both buyers still use the React Context API
-for application state management.
+for application state management. We show an example of
+the latter in the developer's implementation for
+buyer \trole{A} receiving and keeping track of the server's quote
+using a React Context in \cref{lst:evaltwobuyercontext}.
 
-\begin{itemize}
-\item show that the routing aspect is transparent to both sides
-\item same flexibilities apply -- we use react context for state management
-\end{itemize}
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript]
+// two buyer A context
+\end{lstlisting}
+\captionof{lstlisting}{\dots}
+\label{lst:evaltwobuyercontext}
+\end{figure}
+
+We include the implementations of the remaining EFSM states
+for buyer \trole{A} in \cref{section:evalcodetwobuyer}
+for completeness;
+interested readers can find the full implementations for the other
+endpoints alongside the generated code on
+GitHub\footnote{
+\url{https://github.com/ansonmiu0214/SessionTS-Examples/TwoBuyer}
+}.
