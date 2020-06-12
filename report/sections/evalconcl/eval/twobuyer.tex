@@ -1,8 +1,18 @@
-\section{Routed Multiparty Sessions: \fancyname{Two Buyers}}
+\section{Routed Multiparty Sessions: \tprotocol{Two Buyers}}
 \label{section:evaltwobuyer}
+
+We implement the \tprotocol{Two Buyer} protocol
+introduced in \cref{section:twobuyer}. 
+
 
 Interested readers can find the full implementation on
 GitHub\footnote{\url{https://github.com/ansonmiu0214/SessionTS-Examples/TwoBuyer}}.
+
+The \newtheory implementation does not affect
+the compatibility of our generated APIs with external libraries.
+The \trole{S}eller endpoint is set up as an Express.js
+application, and both buyers still use the React Context API
+for application state management.
 
 \begin{itemize}
 \item show that the routing aspect is transparent to both sides

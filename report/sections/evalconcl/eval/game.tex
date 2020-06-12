@@ -42,19 +42,21 @@ global protocol Game(role Svr, role P1, role P2) {
 \label{lst:game}
 \end{figure}
 
-We only highlight implementation details that
-best illustrate the expressiveness of the generated APIs;
-the interested reader should read the full implementation on
+We focus on the implementation details that
+best illustrate the expressiveness of our work;
+the interested reader can find the full implementation on
 GitHub\footnote{
 \url{https://github.com/ansonmiu0214/SessionTS-Examples/NoughtsAndCrosses}
-}.
+}, and consult \texttt{README.md} to navigate between the generated code
+and developer implementation.
 
 \subsection{Game Server}
 We set up the WebSocket server as an Express.js \cite{Express} application
 on top of the Node.js runtime.
 We define our own game logic in a \texttt{Board} class
 to keep track of the game state and expose methods 
-to query the result.
+to query the result -- the implementation for \texttt{Board} is included
+in \cref{section:evalcodegame}.
 This custom logic is integrated into the 
 \texttt{handleP1Move} and \texttt{handleP2Move}
 handlers implemented by the developer, defined to
@@ -115,7 +117,7 @@ to use the asynchronous game logic API intuitively -- this is something
 prevalent in modern web programming, but not directly addressed in existing
 session type implementations for web development \cite{PureScript2019,MVU2020}.
 
-\subsection{Players}
+\subsection{Game Players}
 For simplicity, our game uses the same implementation for both
 \trole{P1} and \trole{P2}, although they can be different in theory --
 the developer could implement \trole{P1} using a GUI and provide
@@ -179,13 +181,14 @@ to the table cell.
 	</tr>
 )}
 \end{lstlisting}
-\captionof{lstlisting}{\dots}
+\captionof{lstlisting}{Safely Binding Send Actions to 
+\tprotocol{Noughts and Crosses} Game Board}
 \label{lst:gamesendfactory}
 \end{figure}
 
-The developer can also leverage the session cancellation handler
-to render useful messages to the player.
-A different UI can be rendered depending on whether
+The session cancellation handler allows the developer
+to render useful messages to the player, since
+a different component can be rendered depending on whether
 the server or the opposition has disconnected,
 and make \textit{application-specific} interpretations of the cancellation.
 For example, if the opposition has disconnected,
@@ -200,5 +203,7 @@ We highlighted specific features in the generated APIs for both
 server and browser endpoints that allow the developer
 to intuitively implement their application logic.
 In particular, we observed that the extensions introduced
-in \cref{chap:ext} played crucial roles in
-improving the usability of the generated APIs.
+in \cref{chap:ext} play crucial roles in
+improving the usability of the generated APIs when
+compared with existing work on session types for web development 
+\cite{PureScript2019,MVU2020,LINKS}.
