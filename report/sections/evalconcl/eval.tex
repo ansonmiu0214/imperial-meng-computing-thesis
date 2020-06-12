@@ -1,78 +1,82 @@
 \chapter{Evaluation}
 \label{chap:eval}
-%benchmark -- compile time / benchmarking 
 
-\section{Multiparty Sessions: \fancyname{Noughts and Crosses}}
-\label{section:evalgame}
-\begin{itemize}
-\item sample client implementation -- show the flexibility of factory API for sending to be used in the UI part (since move selection can be be made )
-\item show that not all the UI is being controlled by the runtime (i.e. calculator app has a header/fake navbar)
-\item show the calculator logic achievable using React Context
-\item sample server implementation + snippet of generated code (full in appendix)
-\end{itemize}
+In this chapter, we
+evaluate the expressiveness
+and performance of our API generation
+toolchain.
 
-\begin{figure}[!ht]
-\begin{lstlisting}[language=Scribble, tabsize=2]
-module NoughtsAndCrosses;
-type <typescript> "Coordinate" from "./Types" as Point;
+%TODO: add when finalised
+%with respect to the main objective
+%of \dots
 
-global protocol Game(role Svr, role P1, role P2) {
-	Pos(Point) from P1 to Svr;
-	choice at Svr {
-		Lose(Point)   from Svr to P2;
-		Win(Point)    from Svr to P1;
-	} or {
-		Draw(Point)   from Svr to P2;
-		Draw(Point)   from Svr to P1;
-	} or {
-		Update(Point) from Svr to P2;
-		Update(Point) from Svr to P1;
-		do Game(Svr, P2, P1);
-	}
-}
-\end{lstlisting}
-\captionof{lstlisting}{The \tprotocol{Noughts and Crosses} Protocol}
-\label{lst:game}
-\end{figure}
-
-\section{Routed Multiparty Sessions: \fancyname{Two Buyers}}
-\begin{itemize}
-\item show that the routing aspect is transparent to both sides
-\end{itemize}
-
-\section{Delegated Sessions: \fancyname{ATM}}
-\label{section:evalatm}
+To evaluate the expressiveness
+of our work,
+we use three case studies
+of protocols found in webservices
+to demonstrate strengths and weaknesses
+of our work:
 
 \begin{itemize}
-\item Show that delegation is not supported
-even if the protocol ``allows''
+
+\item
+\textbf{\tprotocol{Noughts and Crosses} Game:}
+
+In \cref{section:evalgame},
+we implement a classic multiplayer game which involves a game server
+and two players interacting with the game via the browser,
+to show that our work is compatible with multiparty sessions,
+which isn't the case in \cite{MVU2020,Exceptional}.
+We show how our generated APIs are compatible with the
+state management solution used by the game, and give examples of 
+how the generated APIs empower the developer to intuitively 
+implement the game interface.
+
+\item
+\textbf{\tprotocol{Two Buyers} Protocol, as introduced in \cref{section:twobuyer}:}
+
+In \cref{section:evaltwobuyer},
+we walk through an implementation of the \tprotocol{Two Buyers}
+protocol. This \textit{cannot} be implemented in
+\cite{PureScript2019,MVU2020}, which illustrates the novelty
+of our \newtheory theory on routed multiparty session types.
+We emphasise how the routing mechanism is transparent to the
+developer implementing the protocol, which demonstrates
+the practicality of our extensions to \codegen to support
+\newtheory.
+
+\item
+\textbf{\tprotocol{ATM} Protocol:}
+
+In \cref{section:evalatm},
+we implement an ATM web application to demonstrate
+limitations of our work. Our generated APIs do not allow
+the server endpoint (in this case, the \trole{Bank})
+to participate in concurrent sessions (i.e. interacting
+with different \trole{Client}s concurrently), even though
+the protocol is written in a way that allows this.
+However, we propose a way to address this limitation, and expand
+upon this in \cref{section:future}.
+
 \end{itemize}
 
-\begin{figure}[!ht]
-\begin{lstlisting}[language=Scribble, tabsize=2]
-module Delegation;
 
-global protocol ATM(role Svr, role Client) {
-	choice at Client {
-		WITHDRAW(string, number) from Client to Svr;
-		choice at Svr {
-			BALANCE(number) from Svr to Client;		
-		} or {
-			FAIL(string) from Svr to Client;		
-		}
-		do ATM(Svr, Client);
-	} or {
-		DEPOSIT(string, number) from Client to Svr;
-		BALANCE(number) from Svr to Client;
-		do ATM(Svr, Client);
-	} or {
-		BYE(string) from Client to Svr;
-		BYE() from Svr to Client;	
-	}
-}
-\end{lstlisting}
-\captionof{lstlisting}{The \tprotocol{ATM} Protocol}
-\label{lst:atm}
-\end{figure}
+To evaluate the performance of our work,
+we run micro-benchmarks
+on a variant of the \tprotocol{Ping Pong}
+protocol parameterised by the number
+of round trips
+to analyse the overhead of our implementation,
+compared with implementations written
+without using our generated APIs,
+as the number of round trips increase.
+We describe the experiment methodology
+and comment on our findings in \cref{section:benchmarks}.
+
+\input{sections/evalconcl/eval/game}
+
+\input{sections/evalconcl/eval/twobuyer}
+
+\input{sections/evalconcl/eval/atm} 
 
 \input{sections/evalconcl/eval/benchmarks}

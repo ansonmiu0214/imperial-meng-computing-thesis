@@ -1,0 +1,204 @@
+\section{Multiparty Sessions: \tprotocol{Noughts and Crosses}}
+\label{section:evalgame}
+
+We implement the classic turn-based board game of \textit{Noughts and Crosses}
+between two players,
+as introduced in \cref{section:intro}.
+We formalise the game interactions using a Scribble protocol
+presented in \cref{lst:game}.
+The \tprotocol{Game} protocol describes one turn:
+\trole{P1} makes a move by sending the coordinates of a
+vacant cell on the game board to \trole{Svr},
+then \trole{Svr} reports the outcome of that move
+to both players. If another round is required
+to determine the game result, the \tprotocol{Game}
+protocol is recursively invoked (\cref{line:gamerec}) with
+roles \trole{P1} and \trole{P2} swapped.
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=Scribble]
+module NoughtsAndCrosses;
+
+// TypeScript definition:
+// interface Point {x: number, y: number}
+type <typescript> "Coordinate" from "./Types" as Point;
+
+global protocol Game(role Svr, role P1, role P2) {
+	Pos(Point) from P1 to Svr;
+	choice at Svr {
+		Lose(Point)   from Svr to P2;
+		Win(Point)    from Svr to P1;
+	} or {
+		Draw(Point)   from Svr to P2;
+		Draw(Point)   from Svr to P1;
+	} or {
+		Update(Point) from Svr to P2;
+		Update(Point) from Svr to P1;
+		do Game(Svr, P2, P1); (*@\label{line:gamerec}@*)
+	}
+}
+\end{lstlisting}
+\captionof{lstlisting}{The \tprotocol{Noughts and Crosses} Protocol}
+\label{lst:game}
+\end{figure}
+
+We only highlight implementation details that
+best illustrate the expressiveness of the generated APIs;
+the interested reader should read the full implementation on
+GitHub\footnote{
+\url{https://github.com/ansonmiu0214/SessionTS-Examples/NoughtsAndCrosses}
+}.
+
+\subsection{Game Server}
+We set up the WebSocket server as an Express.js \cite{Express} application
+on top of the Node.js runtime.
+We define our own game logic in a \texttt{Board} class
+to keep track of the game state and expose methods 
+to query the result.
+This custom logic is integrated into the 
+\texttt{handleP1Move} and \texttt{handleP2Move}
+handlers implemented by the developer, defined to
+handle the moves made by \trole{P1} and \trole{P2} respectively.
+We illustrate this in \cref{lst:gamesvr}.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+const handleP1Move = new Implementation.S13({
+	Pos: async (move: Point) => {
+		// `board` manages game state;
+		// `board.P1` registers the move and returns the game result
+		const result = await board.P1(move);
+		switch (result) {
+			case MoveResult.Win: {
+				return new Implementation.S15([
+					// Send losing result to P2
+					[Labels.S15.Lose, [move], new Implementation.S16(
+						// Send winning result to P1
+						[Labels.S16.Win, [move], new Implementation.Terminal()]
+					)]
+				]);
+			}
+			case MoveResult.Draw: { ... }
+			case MoveResult.Continue: {
+				return new Implementation.S15(
+					// Notify both players and proceed
+					// with next round using `handleP2Move`
+					[Labels.S15.Update, [move], new Implementation.S18(
+						[Labels.S18.Update, [move], handleP2Move]
+					)]
+				);	
+			}		
+		}
+	}
+});
+
+const handleP2Move = ...		// Defined similarly as handleP1Move
+
+new Svr(wss, handleP1Move, (role, reason) => {
+	console.log(`${role} cancelled because of ${reason}`);
+});
+\end{lstlisting}
+\captionof{lstlisting}{Implementing \tprotocol{Noughts and Crosses} Game Server using
+\codegen}
+\label{lst:gamesvr}
+\end{figure}
+
+When the server receives a move, it notifies
+the game logic to update the game state and return the game
+result caused by that move.
+The game logic is likely to keep track of move history
+using a database; we simulate this with a delay, so 
+the game result returned by the game logic is a \texttt{Promise}.
+The expressiveness of our generated APIs enable the developer
+to define the handlers as \lstonelinejs{async} functions
+to use the asynchronous game logic API intuitively -- this is something
+prevalent in modern web programming, but not directly addressed in existing
+session type implementations for web development \cite{PureScript2019,MVU2020}.
+
+\subsection{Players}
+For simplicity, our game uses the same implementation for both
+\trole{P1} and \trole{P2}, although they can be different in theory --
+the developer could implement \trole{P1} using a GUI and provide
+\trole{P2} with a text-based game experience on the browser.
+
+The main implementation detail for players
+is to make a move. 
+Intuitively, the developer implements a grid and binds a handler
+to the \lstonelinejs{'onClick'} event of each vacant cell to send that cell's coordinate 
+in a \tmsg{Pos(Point)} message to the game server.
+A common source of bugs would be not preventing the user from selecting
+a second cell when waiting for the game server's response,
+which violates the game rules (and the global protocol).
+
+Our approach of providing \textit{component factories} for send states
+in \reactcodegen makes this very intuitive and guarantees communication safety.
+First, it gives the developer the flexibility to trigger
+the same send action (in this case, \tmsg{Pos(Point)} via multiple
+UI elements -- the developer can generate a send action wrapper component 
+for each vacant cell on the game board.
+Moreover, each generated wrapper component sends a different payload
+corresponding to the coordinates of the cell:
+our generated APIs support this as the handler supplied
+to the send component factory can access the cell's coordinates in the closure.
+Finally, the send action is always followed by a transition to the receive
+state component, so the user cannot violate channel linearity by selecting
+two cells.
+
+We demonstrate how this works in \cref{lst:gamesendfactory}.
+The factory function for binding the \tmsg{Pos(Point)} send action
+is defined under \lstonelinejs{this.props.Pos}.
+For each x-y coordinate on the game board, if the cell is vacant,
+we create a \texttt{<SelectPoint>} React component from the
+component factory function (which reads ``build a react
+component that sends the \tmsg{Pos} message with x-y coordinate
+as payload when the user clicks on it''), and we wrap
+a \texttt{<td>} table cell (since the game board is rendered as an
+HTML table) inside the generated component to bind the click event
+to the table cell.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=javascript,tabsize=2]
+// Inside some render() function...
+{board.map((row, x) =>
+	<tr>
+	{row.map((cell, y) => {
+		if (cell === Cells.VACANT) {
+			const sendPoint = (event: React.MouseEvent) => {
+				// Don't refresh the screen
+				event.preventDefault();
+				return { x, y };
+			});
+			const SelectPoint = this.pros.Pos('onClick', sendPoint);
+			return <SelectPoint><td>{cell}</td></SelectPoint>
+		} else {
+			// Render nought or cross,
+			// but clicking on this cell 	will *not* send anything
+			return <td>{cell}</td>
+		}		
+	})}
+	</tr>
+)}
+\end{lstlisting}
+\captionof{lstlisting}{\dots}
+\label{lst:gamesendfactory}
+\end{figure}
+
+The developer can also leverage the session cancellation handler
+to render useful messages to the player.
+A different UI can be rendered depending on whether
+the server or the opposition has disconnected,
+and make \textit{application-specific} interpretations of the cancellation.
+For example, if the opposition has disconnected,
+the developer can interpret this as a forfeit and
+render a winning message to the user.
+
+\subsection{Summary}
+We demonstrated how the developer can use the generated APIs
+from \codegen to implement a complex multiparty protocol
+which features branching, selection and recursion.
+We highlighted specific features in the generated APIs for both
+server and browser endpoints that allow the developer
+to intuitively implement their application logic.
+In particular, we observed that the extensions introduced
+in \cref{chap:ext} played crucial roles in
+improving the usability of the generated APIs.
