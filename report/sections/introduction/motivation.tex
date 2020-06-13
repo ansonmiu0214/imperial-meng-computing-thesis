@@ -1,38 +1,62 @@
+\subsubsection{New Structure (similar to ECOOP2017):}
+\begin{itemize}
+
+\item \textbf{Section 1.1:}
+
+Interactive webapps over WebSockets, harder to guarantee communication safety
+
+\item
+Example protocol similar to travel agency  -- motivate that it is difficult to manually verify communication safety
+
+\begin{itemize}
+\item traveller enquires availability, flight server replies yes/no then traveller confirms/denies.
+\item The flight server will reserve the seat until the traveller denies.
+\item Source of hidden bugs -- traveller may enquire twice (e.g. click twice), but server processes one enquiry, so one seat is held up for no reason
+\end{itemize} 
+
+\item MPST framework can be applied for webapps.
+This is solved by existing work PureScript and MVU2020.
+
+\item \textbf{Problem1}: 
+
+existing work provides a workflow for session typed web development, but requires the developer to compromise by adapting to programming paradigms and practices not conventional for modern web programming. E.g. functional paradigm, sequential UI framework, PureScript and LINKS not interoperable with the ever-growing universe of JavaScript libraries. These compromises limit the usability of MPST framework
+for web development.
+
+\item \textbf{PRoblem2}: 
+
+existing work based on WebSocket transport, which
+is simple to reason about. But WebSocket transport enforces a server-centric
+network configuration, so existing work isn't expressive enough for
+more general protoocls. Suppose traveler contacts agency first to get a quote and then compare (similar to 2-buyer). Existing work cannot implement this.
+
+\item \textbf{Section 1.2: }
+
+Our objective is to present a novel variant of MPST framework
+that is compatible / supports the flexibility of modern web programming.
+We address the two problems in two parts:
+
+\item We solve problem 1 in part 1: 
+
+SessionTS is API generation workflow based on MPST, which
+provides developers with same communication safety guarantees in a way that is idiomatic for modern web programming. We use industry tools (TS/Node/REact), compatible with async logic, error handling specific to web (e.g. client disconnection)
+
+\item We solve problem 2 in part 2:
+
+develop novel theory for routed MPST which lets us implement non-server-centric commuication structures over a server-centric network topology, prove
+that our theory preserves properties like communication safety, deadlock freedom, etc.
+
+\item Section 1.3: diagram similar to FZ for outline
+
+\end{itemize}
+
+% Aim of introductio: motivate what is the problem 
+%(session types fix web, PureScript and LINKS have two problems: 
+%implementation -- not using mainstream stuff, 
+%theory -- websocket transport restricts protocols)
+
+
 \section{Motivation}
 \label{section:intro}
-
-\subsubsection{TODO}
-\begin{itemize}
-\item Break down into paragraphs for theory, implementation
-\item Diagrams similar to FZ
-\item Aim of introductio: motivate what is the problem 
-(session types fix web, PureScript and LINKS have two problems: 
-implementation -- not using mainstream stuff, 
-theory -- websocket transport restricts protocols)
-\end{itemize}
-
-\subsubsection{IDEA (similar to LinearDecomp structure)}
-\begin{itemize}
-\item importance of communication safety in webapps
-\item MPST framework for webapps for communication safety
-\item existing work achieves this
-\item problem 1 -- not using mainstream tools, not intuitively supporting modern practices (async logic), not a natural way for web development (event driven), limits usability, limits the benefits it brings to developers
-\item problem 2 -- rely on websocket transport (good, straightforward to map to session type implementation), which is ok, but limits the types of protocols we can support (e.g. TwoBuyer, can be session typed but violates websocket topology
-\item part 1 addresses problem 1 (same communication safety guarantees but targeting TS/Node/React)
-\item part 2 addresses problem 2 (RoutedMPST expresses arbitrary topology over server-centric network topology, not limitied by network topology)
-\end{itemize}
-
-% BREAK DOWN PARAGRAPHS
-
-% INTRODUCTION DIAGRAM
-
-% REFER TO FANGYI
-
-% Rise of distributed programs -> main challenges
-% How to ensure correctness in general: type system, data types
-% Type discipline for concurrent programs - behavioural types (--> session types)
-% Mainstream example of distirbuted programs: web services (microservice architecture), interactive web application; 
-% Objective: 
 
 Modern interactive web applications aim to 
 provide a highly responsive user experience by 
