@@ -2,27 +2,185 @@
 Routed Multiparty Session Types}
 \label{chap:theory}
 
+In this chapter, we present
+\newtheory, an extension of the
+canonical multiparty session type (MPST)
+theory with a message routing mechanism.
+We build upon the variant of MPST theory introduced
+in \cite{LessIsMore}
+(which we have also discussed in\cref{subsection:bgmpst}), 
+and extend it
+with constructs for communication actions
+that are routed through a participant.
+We introduce the extended syntax for types in 
+\cref{section:syntax}, and give semantics of our
+syntax extensions in \cref{section:lts}.
+
+\newtheory provides the theoretical basis
+for allowing developers to implement
+protocols with browser-to-browser interactions
+(such as the \tprotocol{Two Buyer} protocol
+introduced in \cref{section:twobuyer})
+over a server-centric network topology
+which uses WebSocket transport.
+We define a router-parameterised encoding
+for MPST into \newtheory in \cref{section:encoding}
+and prove the preservation of well-formedness
+and communication.
+We proceed to extend \codegen to implement \newtheory
+in \cref{chap:impl}.
+
 \section{Syntax}
-
-\subsection{Local Types}
-
-\begin{itemize}
-\item routing construct
-\item proxy send/receive
-\end{itemize}
+\label{section:syntax}
 
 \subsection{Global Types}
+As motivated by \ref{section:routerchallenges},
+we need to handle \textit{routed communication} separately
+from normal send and receive actions.
+We define the syntax of global types for \newtheory 
+in \cref{fig:newsyntaxglobal}, and explain the 
+new construct for expressing routed communication.
+
+\begin{figure}[!h]
+\doublespacing
+\[
+\begin{array}{rlr}
+G ::= & \dots & \text{Global Types} \\
+\mid & \groute{p}{q}{s}{l_i: G_i}{i \in I}
+& \text{Routed Communication through $\role{s}$} \\
+\end{array}
+\]
+\singlespacing
+\captionof{figure}{Global Types in \newtheory}
+\label{fig:newsyntaxglobal}
+\end{figure}
+
+The new construct $\groute{p}{q}{s}{l_i: G_i}{i \in I}$ reads, 
+\textit{
+``the communication $\gcomm{p}{q}{l_i: G_i}{i \in I}$
+between $\role{p}$ and $\role{q}$
+is routed by $\role{s}$''
+}.
+We refer to $\role{s}$ hereafter as the \textit{router}.
+$\role{s}$ ranges over the set of roles 
+$\role{p},\role{q},\role{r},\role{s},\dots$,
+but we use $\role{s}$ by convention as the server endpoint
+is usually the router.
+We also extend the definition of the participants function,
+$\pt{G}$, in \cref{def:newpt}.
+
+\begin{definition}[Participants]
+\textit{The participants function 
+represents the set of roles involved in
+the communication specified by $G$.}
+
+\doublespacing
+\[
+\begin{array}{>{\displaystyle}rc>{\displaystyle}l}
+
+\pt{\dots} & = & \dots \\
+
+\pt{\groute{p}{q}{s}{l_i: G_i}{i \in I}} & = & 
+\left\{ \role{p}, \role{q}, \role{s} \right\} 
+\cup \bigcup_{i \in I}\pt{G_i} \\
+
+\end{array}
+\]
+\singlespacing
+\label{def:newpt}
+\end{definition}
+
+\subsection{Local Types}
+Local types are obtained from global types via
+\textit{projection}, so we also need new
+constructs to express routed communication
+from the \textit{local} perspective of individual
+endpoints.
+We explain the extensions to
+projection in \cref{subsection:newprojection}.
+
+We define the syntax of local types for \newtheory 
+in \cref{fig:newsyntaxlocal}, and walk through
+the new constructs below.
+
+\begin{figure}[!h]
+\doublespacing
+\[
+\begin{array}{rlr}
+T ::= & \dots & \text{Local Types} \\
+\mid & \router{p}{q}{l_i: T_i}{i \in I}
+& \text{Routing communication from $\role{p}$ to $\role{q}$} \\
+\mid & \tselproxy{p}{q}{l_i: T_i}{i \in I}
+& \text{Selecting from $\role{p}$ via proxy $\role{q}$} \\
+\mid & \tbraproxy{p}{q}{l_i: T_i}{i \in I}
+& \text{Receiving from $\role{p}$ via proxy $\role{q}$} \\
+\end{array}
+\]
+\singlespacing
+\captionof{figure}{Global Types in \newtheory}
+\label{fig:newsyntaxlocal}
+\end{figure}
 
 \begin{itemize}
-\item global type syntax
-\item go over `routed communication'
-\item participants
-\item `acts as server role' (the diamond)
-\item projection onto local types
-\item well-formedness
+
+\item \textbf{Routed communication:}
+
+\dots
+
+\item \textbf{Proxy selection:}
+
+\dots
+
+\item \textbf{Proxy receive:}
+
+\dots
+
 \end{itemize}
 
-\section{Labelled Transition System (LTS) Semantics}
+% routing construct
+% proxy send and receive
+
+
+\subsection{Projection}
+\label{subsection:newprojection}
+
+Projection
+
+Full Merge
+
+% projection onto local types
+% full merge
+
+\subsection{Well-Formedness}
+Recall that well-formedness is a predicate defined 
+\textit{solely} on the global type
+in canonical MPST theory: a global type is well-formed 
+if a projection xists for all its participants.
+
+\[
+\dots
+\]
+
+In \newtheory, we require that there is \textit{exactly
+one} router, say $\role{s}$, in the global type, so
+we need to express that a global type to be
+well-formed \textit{with respect to the role $\role{s}$
+acting as the router}.
+
+
+
+% act as server role
+
+
+\begin{definition}[Centroid]
+\textit{Let} $\centroid{G}{s}$ \textit{denote \dots}
+
+\end{definition}
+
+% well-formedness
+
+\section{Labelled Transition System (LTS) Semanics}
+\label{section:lts}
 
 \begin{itemize}
 \item extend action syntax
@@ -39,6 +197,7 @@ Routed Multiparty Session Types}
 \subsection{Deadlock Freedom}
 
 \section{Router-Parameterised Encoding}
+\label{section:encoding}
 
 \begin{itemize}
 \item define encoding on global types

@@ -75,3 +75,52 @@
   \node[anchor=base,inner sep=2pt,outer sep=0pt,fill = #2!20] {#1};
     }%
 }%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{ bm }			% \bm
+\usepackage{ cmll }		% \with
+
+% GENERAL
+\newcommand{\role}[1]{
+{\color{blue}\bm{\mathsf{#1}}}
+}
+\newcommand{\pt}[1]{
+\texttt{pt}\left({#1}\right)
+}
+
+% NEW GENERAL
+\newcommand{\centroid}[2]{
+{#1} \circledast \role{#2}
+}
+
+% GLOBAL TYPES
+\newcommand{\gcomm}[4]{
+\role{#1} \to \role{#2} : \left\{ {#3} \right\}_{#4}
+}
+
+% NEW GLOBAL TYPES
+\newcommand{\groute}[5]{
+\role{#1} \xrightarrow[\role{#3}]{} \role{#2} : \left\{ {#4} \right\}_{#5}
+}
+
+% LOCAL TYPES
+\newcommand{\tbra}[3]{
+\role{#1} \with \left\{ #2 \right\}_{#3}
+}
+\newcommand{\tsel}[3]{
+\role{#1} \oplus \left\{ {#2} \right\}_{#3}
+}
+
+% NEW LOCAL TYPES
+\newcommand{\router}[4]{
+\texttt{route}\left(\role{#1} \to \role{#2}: \left\{{#3}\right\}_{#4}\right)
+}
+
+\newcommand{\tselproxy}[4]{
+\tsel{\role{#1}_{\role{#2}}}{#3}{#4}
+}
+
+\newcommand{\tbraproxy}[4]{
+\tbra{\role{#1}_{\role{#2}}}{#3}{#4}
+}
