@@ -1,0 +1,392 @@
+\section{Labelled Transition System (LTS) Semantics}
+\label{section:lts}
+
+We define labelled transition system (LTS) semantics
+on global types (\cref{subsection:newltsglobal}) 
+and local types (\cref{subsection:newltslocal})
+for \newtheory,
+building upon the work of Deni\'elou and Yoshida in
+\cite{characterisation}.
+We show the soundness and completeness of projection
+with respect to the LTSs through proving the
+\textit{trace equivalence} of
+a global type and the collection of local types projected
+from the global type (\cref{subsection:newtraceeq}).
+We then use this result to
+conclude that \newtheory provide the same
+communication safety guarantees from canonical
+MPST theory for well-formed global types, 
+namely deadlock freedom (\cref{subsection:newdeadlockfreedom}).
+
+First, we extend the label in the LTS, as shown in 
+\cref{fig:newlts}, to distinguish
+the \textit{direct} sending (and reception) of a message
+from the sending (and reception) of a message
+\textit{via} an intermediate routing endpoint.
+Labels range over $l, l', \dots$
+
+\begin{figure}[!h]
+\doublespacing
+\[
+\begin{array}{rlr}
+l ::= & & \text{Labels} \\
+	\mid & \aout{p}{q}{j} & 
+		\text{Direct Send} \\
+	\mid & \ain{p}{q}{j} & 
+		\text{Direct Receive} \\
+	\mid & \via{s}{\aout{p}{q}{j}} & 
+		\text{Routed Send} \\
+	\mid & \via{s}{\ain{p}{q}{j}} & 
+		\text{Routed Receive} \\
+\end{array}
+\]
+\singlespacing
+\captionof{figure}{LTS Labels in \newtheory}
+\label{fig:newlts}
+\end{figure}
+
+\begin{itemize}
+\item \textbf{Routed send:}
+
+The label $\via{s}{\aout{p}{q}{j}}$ represents the
+\textit{sending} (performed by $\role{p}$)
+of a message labelled $j$ to $\role{q}$ through
+the intermediate router $\role{s}$.
+
+\item \textbf{Routed receive:}
+
+The label $\via{s}{\ain{p}{q}{j}}$ represents the
+\textit{reception} (initiated by $\role{q}$) 
+of a message labelled $j$
+send from $\role{p}$ through
+the intermediate router $\role{s}$.
+\end{itemize}
+
+Labels represent communication actions, so we refer
+to $l$ as labels and actions interchangeably,
+as is the case in the literature.
+
+Building upon \cite{characterisation},
+the \textit{subject} of a label is the role
+that initiates the action. 
+Intuitively, the actions for routed send and routed
+receive are still initiated by the original sender and
+recipient respectively;
+we extend the definition
+of subjects in \cref{def:newsubj} to reflect this.
+
+\begin{definition}[Subject]
+\textit{The subject of a LTS label, or $\subj{l}$, is defined as:}
+
+\doublespacing
+\[
+\begin{array}{c}
+\subj{\via{s}{\aout{p}{q}{j}}} = 
+	\subj{\aout{p}{q}{j}} = \mrole{p} \\
+\subj{\via{s}{\ain{p}{q}{j}}} = 
+	\subj{\ain{p}{q}{j}} = \mrole{q} \\
+\end{array}
+\]
+\singlespacing
+\label{def:newsubj}
+\end{definition}
+
+\subsection{LTS over Global Types}
+\label{subsection:newltsglobal}
+
+The LTS semantics presented in \cite{characterisation}
+models \textit{asynchronous communication},
+which is consistent with our proposal.
+In order to define LTS over global types for
+asynchronous communication, we need to
+represent intermediate states (i.e. messages in transit)
+within the grammar of global types.
+
+\cite{characterisation} added the construct
+{$\gtrans{p}{q}{j}{l_i: G_i}{i \in I}$}
+to represent that the message $l_j$ has been
+sent by $\role{p}$ but not yet received by $\role{q}$.
+
+We add a similar construct
+{$\gtransroute{p}{q}{s}{j}{l_i: G_i}{i \in I}$}
+to represent that the message $l_j$ has
+been sent from $\role{p}$ to the router $\role{s}$
+but not yet routed to $\role{q}$.
+
+Because routed communication is treated differently
+from normal send and receive actions, the notion
+of asynchrony differs between the two types of communication
+too. This definition allows us to extend
+the LTS semantics defined in \cite{characterisation}
+more naturally.
+
+We define the LTS semantics 
+over global types,
+defined by $\treduce{G}{G'}{l}$,
+in \cref{fig:newglobal}.
+
+\begin{figure}[!h]
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{Gr6}}
+\UnaryInfC{$
+\treducelong
+	{\groute{p}{q}{s}{l_i: G_i}{i \in I}}
+	{\gtransroute{p}{q}{s}{j}{l_i: G_i}{i \in I}}
+	{\via{s}{\aout{p}{q}{j}}}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{Gr7}}
+\UnaryInfC{$
+\treducelong
+	{\gtransroute{p}{q}{s}{j}{l_i: G_i}{i \in I}}
+	{G_j}
+	{\via{s}{\ain{p}{q}{j}}}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$\forall i \in I. ~ \treduce{G_i}{G'_i}{l}$}
+\AxiomC{$\subj{l} \notin \{\mrole{p}, \mrole{q}\}$}
+\RightLabel{\rulename{Gr8}}
+\BinaryInfC{$
+\treducelong
+	{\groute{p}{q}{s}{l_i: G_i}{i \in I}}
+	{\groute{p}{q}{s}{l_i: G'_i}{i \in I}}
+	{l}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$\treduce{G_j}{G'_j}{l}$}
+\AxiomC{$\subj{l} \neq \mrole{q}$}
+\AxiomC{$\forall i \in I \setminus \{ j \}. ~ G'_i = G_i$}
+\RightLabel{\rulename{Gr9}}
+\TrinaryInfC{$
+\treducelong
+	{\gtransroute{p}{q}{s}{j}{l_i: G_i}{i \in I}}
+	{\gtransroute{p}{q}{s}{j}{l_i: G'_i}{i \in I}}
+	{l}
+$}
+\end{prooftree}
+
+\captionof{figure}{LTS Semantics over Global Types in \newtheory}
+\label{fig:newglobal}
+\end{figure}
+
+\begin{itemize}
+
+\item \rulename{Gr6}: 
+TODO
+%The emission of a routed message $j$
+%results in the message
+
+\item \rulename{Gr7}:
+TODO
+
+\item \rulename{Gr8}:
+TODO
+
+\item \rulename{Gr9}:
+TODO
+
+\end{itemize}
+
+\subsection{LTS over Local Types}
+\label{subsection:newltslocal}
+
+We define the LTS semantics 
+over local types,
+defined by $\treduce{T}{T'}{l}$,
+in \cref{fig:newlocal}.
+
+%TODO: LR1-3?
+
+\begin{figure}[!h]
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{Lr4}}
+\UnaryInfC{$
+\treducelong
+	{\tselproxy{q}{s}{l_i: T_i}{i \in I}}
+	{T_j}
+	{\via{s}{\aout{p}{q}{j}}}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{Lr5}}
+\UnaryInfC{$
+\treducelong
+	{\tbraproxy{q}{s}{l_i: T_i}{i \in I}}
+	{T_j}
+	{\via{s}{\ain{q}{p}{j}}}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{Lr6}}
+\UnaryInfC{$
+\treducelong
+	{\router{p}{q}{l_i: T_i}{i \in I}}
+	{\routertrans{p}{q}{j}{l_i: T_i}{i \in I}}
+	{\via{s}{\aout{p}{q}{j}}}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{Lr7}}
+\UnaryInfC{$
+\treducelong
+	{\routertrans{p}{q}{j}{l_i: T_i}{i \in I}}
+	{T_j}
+	{\via{s}{\ain{p}{q}{j}}}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$\forall i \in I. ~ \treduce{T_i}{T'_i}{l}$}
+\AxiomC{$\subj{l} \notin \{\mrole{p}, \mrole{q}\}$}
+\RightLabel{\rulename{Lr8}}
+\BinaryInfC{$
+\treducelong
+	{\router{p}{q}{l_i: T_i}{i \in I}}
+	{\router{p}{q}{l_i: T'_i}{i \in I}}
+	{l}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$\treduce{T_j}{T'_j}{l}$}
+\AxiomC{$\subj{l} \neq \mrole{q}$}
+\AxiomC{$\forall i \in I \setminus \{ j \}. ~ T'_i = T_i$}
+\RightLabel{\rulename{Lr9}}
+\TrinaryInfC{$
+\treducelong
+	{\routertrans{p}{q}{j}{l_i: T_i}{i \in I}}
+	{\routertrans{p}{q}{j}{l_i: T'_i}{i \in I}}
+	{l}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$l = \via{s}{\cdot}$}
+\AxiomC{$\subj{l} \neq \mrole{q}$}
+\AxiomC{$\forall i \in I. ~ \treduce{T_i}{T'_i}{l}$}
+\RightLabel{\rulename{Lr10}}
+\TrinaryInfC{$
+\treducelong
+	{\tsel{q}{l_i: T_i}{i \in I}}
+	{\tsel{q}{l_i: T'_i}{i \in I}}
+	{l}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$l = \via{s}{\cdot}$}
+\AxiomC{$\subj{l} \neq \mrole{q}$}
+\AxiomC{$\forall i \in I. ~ \treduce{T_i}{T'_i}{l}$}
+\RightLabel{\rulename{Lr11}}
+\TrinaryInfC{$
+\treducelong
+	{\tbra{q}{l_i: T_i}{i \in I}}
+	{\tbra{q}{l_i: T'_i}{i \in I}}
+	{l}
+$}
+\end{prooftree}
+
+\label{fig:newlocal}
+\captionof{figure}{LTS over Local Types in \newtheory}
+\end{figure}
+
+We explain rules \rulename{Lr4} and \rulename{Lr5}
+from the perspective of role $\role{p}$.
+
+\begin{itemize}
+
+\item \rulename{Lr4}: 
+TODO
+
+\item \rulename{Lr5}:
+TODO
+
+\end{itemize}
+
+We explain rules \rulename{Lr6}, \rulename{Lr7},
+\rulename{Lr10} and \rulename{Lr11}
+from the perspective of role $\role{s}$.
+
+\begin{itemize}
+
+\item \rulename{Lr6}:
+TODO
+
+\item \rulename{Lr7}:
+TODO
+
+\item \rulename{Lr10}:
+TODO
+
+\item \rulename{Lr11}:
+TODO
+
+\end{itemize}
+
+We explain the remaining inductively defined rules.
+
+\begin{itemize}
+
+\item \rulename{Lr8}:
+TODO
+
+\item \rulename{Lr9}:
+TODO
+
+\end{itemize}
+
+%\subsection{LTS over Collections of Local Types}
+%\label{subsection:newltssystem}
+
+\subsection{Soundness and Completeness w.r.t. Projection}
+\label{subsection:newtraceeq}
+
+We work towards proving the soundness and completeness
+of our LTS semantics with respect to projection.
+Our approach is motivated from \cite{characterisation}:
+
+\begin{enumerate}
+
+\item We first extend the LTS semantics to
+a collection of local types (hereafter referred to
+as a \textit{configuration} to be consistent with
+the literature);
+
+\item Then, we extend the definition of projection to
+obtain the configuration of a global type 
+(hereafter referred to as the \textit{projected configuration});
+
+\item Finally, we prove the trace equivalence between 
+the global type and its projected configuration.
+
+\end{enumerate}
+
+\begin{theorem}[Trace Equivalence]
+Let $G$ be a global type with participants 
+$\mathcal{P} = \mathrm{\pt{G}}$.
+Then $G \approx (\vec T, \vec \epsilon)$.
+\end{theorem}
+
+\begin{proof}
+\dots
+\end{proof}
+
+\subsection{Deadlock Freedom}
+\label{subsection:newdeadlockfreedom}

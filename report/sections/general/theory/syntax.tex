@@ -1,0 +1,347 @@
+\section{Syntax}
+\label{section:syntax}
+
+We extend the syntax for global types
+in \cref{subsection:newglobal} and
+local types in \cref{subsection:newlocal}.
+The same conventions introduced in \cref{subsection:bgmpst}
+apply here: 
+we omit message payload types,
+and deterministic send and receive actions
+are represented by single selection and
+single branching constructs respectively.
+With these syntax extensions, we appropriately extend
+the definition of \textit{projection} and 
+\textit{well-formedness} in 
+\cref{subsection:newprojection,subsection:newwf}
+respectively.
+
+\subsection{Global Types}
+\label{subsection:newglobal}
+
+As motivated by \cref{section:routerchallenges},
+we need to handle \textit{routed communication} separately
+from normal send and receive actions.
+We define the syntax of global types for \newtheory 
+in \cref{fig:newsyntaxglobal}, and explain the 
+new construct for expressing routed communication.
+Global types range over $G, G', G_i, \dots$
+
+\begin{figure}[!h]
+\doublespacing
+\[
+\begin{array}{rlr}
+G ::= & \dots & \text{Global Types} \\
+\mid & \groute{p}{q}{s}{l_i: G_i}{i \in I}
+& \text{Routed Communication through $\role{s}$} \\
+\end{array}
+\]
+\singlespacing
+\captionof{figure}{Global Types in \newtheory}
+\label{fig:newsyntaxglobal}
+\end{figure}
+
+The new construct $\groute{p}{q}{s}{l_i: G_i}{i \in I}$ reads, 
+\textit{
+``the communication $\gcomm{p}{q}{l_i: G_i}{i \in I}$
+is routed by $\role{s}$''
+}.
+To be more verbose,
+$\role{p}$ offers $\role{q}$ a set of choices
+$\left\{l_i\right\}_{i \in I}$,
+$\role{q}$ sends their choice to
+$\role{s}$, so $\role{p}$ receives the
+selection $l_i$ made by $\role{q}$ via $\role{s}$,
+and the communication system proceeds with continuation $G_i$.
+We refer to $\role{s}$ hereafter as the \textit{router}.
+$\role{s}$ ranges over the set of roles 
+$\role{p},\role{q},\role{r},\role{s},\dots$,
+but we use $\role{s}$ by convention as the server endpoint
+is usually the router.
+
+We also extend the definition of the participants function,
+$\pt{G}$, in \cref{def:newpt}, to formalise that the router 
+participates in the routed communication.
+
+\begin{definition}[Participants]
+\textit{The set of roles involved in the communication
+interactions specified by $G$, written} $\pt{G}$
+\textit{, is:}
+
+\doublespacing
+\[
+\begin{array}{>{\displaystyle}rc>{\displaystyle}l}
+
+\pt{\dots} & = & \dots \\
+
+\pt{\groute{p}{q}{s}{l_i: G_i}{i \in I}} & = & 
+\left\{ \mrole{p}, \mrole{q}, \mrole{s} \right\} 
+\cup \bigcup_{i \in I}\pt{G_i} \\
+
+\end{array}
+\]
+\singlespacing
+\label{def:newpt}
+\end{definition}
+
+\subsection{Local Types}
+\label{subsection:newlocal}
+
+Local types are obtained from global types via
+\textit{projection}, so we also need new
+constructs to express routed communication
+from the \textit{local} perspective of individual
+endpoints.
+We explain the extensions to
+projection in \cref{subsection:newprojection}.
+
+We define the syntax of local types for \newtheory 
+in \cref{fig:newsyntaxlocal}, and walk through
+the new constructs below from the perspective of
+some arbitrary role $\role{r}$.
+Local types range over $T, T', T_i, \dots$
+
+\begin{figure}[!h]
+\doublespacing
+\[
+\begin{array}{rlr}
+T ::= & \dots & \text{Local Types} \\
+\mid & \router{p}{q}{l_i: T_i}{i \in I}
+& \text{Routing communication from $\role{p}$ to $\role{q}$} \\
+\mid & \tselproxy{p}{q}{l_i: T_i}{i \in I}
+& \text{Selecting from $\role{p}$ via proxy $\role{q}$} \\
+\mid & \tbraproxy{p}{q}{l_i: T_i}{i \in I}
+& \text{Receiving from $\role{p}$ via proxy $\role{q}$} \\
+\end{array}
+\]
+\singlespacing
+\captionof{figure}{Global Types in \newtheory}
+\label{fig:newsyntaxlocal}
+\end{figure}
+
+\begin{itemize}
+
+\item \textbf{Routed communication:}
+
+If $\role{r}$ has local type $\router{p}{q}{l_i: T_i}{i \in I}$,
+$\role{r}$ is routing the communication between 
+$\role{p}$ and $\role{q}$.
+$\role{r}$ routes the message $l_i$ sent by $\role{p}$
+to the intended recipient $\role{q}$ and proceeds 
+with continuation $T_i$.
+
+\item \textbf{Proxy selection:}
+
+If $\role{r}$ has local type $\tselproxy{p}{q}{l_i: T_i}{i \in I}$,
+$\role{r}$ is making a selection from the
+\textit{intended recipient} $\role{p}$,
+but the selection is sent to the intermediate proxy $\role{q}$. 
+$\role{r}$ sends their internal choice $l_i$ to $\role{q}$
+and proceeds with continuation $T_i$.
+
+\item \textbf{Proxy branching:}
+
+If $\role{r}$ has local type $\tbraproxy{p}{q}{l_i: T_i}{i \in I}$,
+$\role{r}$ is offering a choice to the
+\textit{intended sender} $\role{p}$,
+but the message is received from the intermediate proxy $\role{q}$.
+$\role{r}$ receives the external choice $l_i$ from $\role{q}$
+and proceeds with continuation $T_i$.
+
+\end{itemize}
+
+As a general comment, the new local types of proxy selection
+and proxy branching should ``behave'' as normal selection and
+receive types with respect to their intended recipient and sender
+respectively. We keep track of the proxy role in the syntax
+to allow us to distinguish between routing communications
+from normal send and receive interactions.
+
+\subsection{Projection}
+\label{subsection:newprojection}
+
+We extend the projection operator to be defined
+on routed communication. Given the explanations of the
+new routing constructs for both global and local types,
+\cref{def:newprojection} should be self-explanatory.
+
+\begin{definition}[Projection]
+\textit{The projection of $G$ onto $\role{r}$,
+written $\proj{G}{r}$, is defined as:}
+
+\doublespacing
+\[
+\begin{array}{>{\displaystyle}rc>{\displaystyle}l}
+
+\proj{
+\left(\groute{p}{q}{s}{l_i: G_i}{i \in I}\right)
+}{r} & = & 
+\begin{cases}
+\tselproxy{q}{s}{l_i: (\proj{G_i}{r})}{i \in I}
+	& \text{if} ~ \mrole{r} = \mrole{p} \\
+\tbraproxy{p}{s}{l_i: (\proj{G_i}{r})}{i \in I}
+	& \text{if} ~ \mrole{r} = \mrole{q} \\
+\router{p}{q}{l_i: (\proj{G_i}{r})}{i \in I}
+	& \text{if} ~ \mrole{r} = \mrole{s} \\
+\underset{i \in I}{\MERGEOP}\proj{G_i}{r}
+	& \text{otherwise} \\
+\end{cases}
+\\
+
+\end{array}
+\]
+\singlespacing
+
+\label{def:newprojection}
+\end{definition}
+
+As shown in the last (4th) case, 
+the same concept of \textit{merging}
+applies for routed communication:
+when projecting a routed communication
+onto a non-participant, the projections of
+all continuations must be ``compatible'',
+namely they can be merged using the
+the \textit{merging operator}, $\mergeop$.
+
+As the merging operator is defined on local
+types, we extend the merging operator to be defined
+on the extended syntax in \cref{def:newmerge}.
+Recall that proxy selection and proxy
+branching behave in the same way as their ``non-proxified''
+counterparts -- the merging operator reflects this
+similarity.
+
+\begin{definition}[Merging Operator]
+\textit{The merging operator $\mergeop$ on local types is defined as:}
+
+\doublespacing
+\[
+\begin{array}{rcl}
+\tmerge
+{(\tselproxy{p}{q}{l_i: T_i}{i \in I})}
+{(\tselproxy{p}{q}{l_i: T_i}{i \in I})}
+	& = & \tselproxy{p}{q}{l_i: T_i}{i \in I} \\
+	
+\tmerge
+{(\tbraproxy{p}{q}{l_i: T_i}{i \in I})}
+{(\tbraproxy{p}{q}{l_j: T'_j}{j \in J})}
+	& = & \tbraproxy{p}{q}{l_k: T''_k}{k \in I \cup J} \\
+\text{where} & & T''_k = \begin{cases}
+T_k & \text{if} ~ k \in I \setminus J \\
+T'_k & \text{if} ~ k \in J \setminus I \\
+\tmerge{T_k}{T'_k} & \text{if} ~ k \in I \cap J \\
+\end{cases} \\
+\end{array}
+\]
+\singlespacing
+
+\label{def:newmerge}
+\end{definition}
+
+\subsection{Well-formedness}
+\label{subsection:newwf}
+
+Recall that well-formedness is a predicate defined 
+\textit{solely} on the global type
+in canonical MPST theory: a global type $G$ is well-formed
+if a projection exists for all its participants.
+
+\[
+\wf{G} \iff 
+\forall \mrole{p} \in \pt{G}. ~ \proj{G}{p} \text{ exists}
+\]
+
+In \newtheory, we require that there is \textit{exactly
+one} router, say $\role{s}$, in the global type, so
+we need to express that a global type to be
+well-formed \textit{with respect to the role $\role{s}$
+acting as the router}.
+
+We need to define the characteristics that $\role{s}$
+must display in $G$ to prove that it is the \textit{only}
+router. 
+We formalise this as an \textit{inductively} defined relation,
+$\centroid{G}{s}$, which reads \textit{``$\role{s}$ is the
+centroid in $G$''}.
+The intuition is that $\role{s}$ is at the centre
+of all communication interactions.
+We define what it means to be a \textit{centroid} in
+\cref{def:centroid}.
+
+% characteristics of router as centroid
+\begin{definition}[Centroid]
+\textit{Let} $\centroid{G}{s}$ \textit{denote \dots}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{$\centroidop$-End}}
+\UnaryInfC{$\centroid{\tend}{s}$}
+\end{prooftree} 
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{$\centroidop$-RecVar}}
+\UnaryInfC{$\centroid{\trecvar}{s}$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$\centroid{G}{s}$}
+\RightLabel{\rulename{$\centroidop$-Rec}}
+\UnaryInfC{$\centroid{\trec{G}}{s}$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$\mrole{s} \in \left\{ \mrole{p}, \mrole{q} \right\}$}
+\AxiomC{$\forall i \in I. ~ \centroid{G_i}{s}$}
+\RightLabel{\rulename{$\centroidop$-Comm}}
+\BinaryInfC{$\centroid{\gcomm{p}{q}{l_i: G_i}{i \in I}}{s}$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$\mrole{r} = \mrole{s}$}
+\AxiomC{$\forall i \in I. ~ \centroid{G_i}{s}$}
+\RightLabel{\rulename{$\centroidop$-RouteComm}}
+\BinaryInfC{$\centroid{\groute{p}{q}{r}{l_i: G_i}{i \in I}}{s}$}
+\end{prooftree}
+
+\label{def:centroid}
+\end{definition}
+
+\begin{itemize}
+\item 
+\rulename{$\centroidop$-End}, 
+\rulename{$\centroidop$-RecVar}, 
+\rulename{$\centroidop$-Rec}:
+Trivial.
+
+\item 
+\rulename{$\centroidop$-Comm}:
+For normal communication, $\role{s}$ must
+be a participant and the centroid of all continuations.
+
+\item 
+\rulename{$\centroidop$-RoutedComm}:
+For routed communication, $\role{s}$ must
+be the router and be the centroid of all continuations.
+
+\end{itemize}
+
+Now we are in a position to formalise the definition
+of well-formedness in \newtheory. We present this in
+\cref{def:newwf}.
+
+\begin{definition}[Well-formedness]
+\textit{Let} $\wfnew{G}{s}$ 
+\textit{denote that the global type} $G$
+\textit{is well-formed with respect to the router} $\role{s}$.
+
+\[
+\wfnew{G}{s} \iff 
+(\forall \role{p} \in \pt{G}. ~ \proj{G}{p} \text{ exists})
+\wedge
+\centroid{G}{s}
+\]
+
+\label{def:newwf}
+\end{definition}

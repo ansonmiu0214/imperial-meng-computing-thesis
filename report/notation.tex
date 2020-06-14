@@ -8,7 +8,7 @@
 %\newcommand*{\point}[1]{\vec{\mkern0mu#1}}
 \newcommand{\ci}[0]{\perp\!\!\!\!\!\perp} % conditional independence
 \newcommand{\point}[1]{{#1}} % points 
-\renewcommand{\vec}[1]{{\boldsymbol{{#1}}}} % vector
+% \renewcommand{\vec}[1]{{\boldsymbol{{#1}}}} % vector
 \newcommand{\mat}[1]{{\boldsymbol{{#1}}}} % matrix
 \newcommand{\R}[0]{\mathds{R}} % real numbers
 \newcommand{\Z}[0]{\mathds{Z}} % integers
@@ -78,49 +78,110 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\usepackage{ bm }			% \bm
-\usepackage{ cmll }		% \with
+\usepackage{ bm }					% \bm
+\usepackage{ cmll }				% \with
+\usepackage{ mathtools }		% \mathmakebox
 
 % GENERAL
 \newcommand{\role}[1]{
 {\color{blue}\bm{\mathsf{#1}}}
 }
+\newcommand{\mrole}[1]{
+{\mathtt{#1}}
+}
 \newcommand{\pt}[1]{
 \texttt{pt}\left({#1}\right)
 }
+\newcommand{\rulename}[1]{
+[\textsc{#1}]
+}
 
 % NEW GENERAL
+\newcommand{\centroidop}{\circledast}
 \newcommand{\centroid}[2]{
-{#1} \circledast \role{#2}
+{#1} \centroidop \mrole{#2}
 }
 
 % GLOBAL TYPES
+\newcommand{\tend}{\texttt{end}}
+\newcommand{\trecvar}{\texttt{t}}
+\newcommand{\trec}[1]{\mu\trecvar.{#1}}
 \newcommand{\gcomm}[4]{
-\role{#1} \to \role{#2} : \left\{ {#3} \right\}_{#4}
+\mrole{#1} \to \mrole{#2} : \left\{ {#3} \right\}_{#4}
+}
+\newcommand{\gtrans}[5]{
+\mrole{#1} \rightsquigarrow \mrole{#2}. ~ {#3} : \left\{ {#4} \right\}_{#5}
+}
+\newcommand{\wf}[1]{
+\texttt{wellFormed}\left(#1\right)
+}
+\newcommand{\proj}[2]{
+{#1} \projop \mrole{#2}
+}
+\newcommand{\projop}{\upharpoonright}
+\newcommand{\mergeop}{
+\sqcap
+}
+\newcommand{\MERGEOP}{
+{\mbox{\LARGE$\sqcap$}}
+}
+\newcommand{\tmerge}[2]{
+{#1}\,{\mergeop}\,{#2}
 }
 
 % NEW GLOBAL TYPES
 \newcommand{\groute}[5]{
-\role{#1} \xrightarrow[\role{#3}]{} \role{#2} : \left\{ {#4} \right\}_{#5}
+\mrole{#1} \xrightarrow[\mrole{#3}]{} \mrole{#2} : \left\{ {#4} \right\}_{#5}
+}
+\newcommand{\gtransroute}[6]{
+\mrole{#1} \underset{\mrole{#3}}{\rightsquigarrow} \mrole{#2}. ~ {#4} : \left\{ {#5} \right\}_{#6}
+}
+\newcommand{\wfnew}[2]{
+\texttt{wellFormed}\left(#1, \mrole{#2}\right)
 }
 
 % LOCAL TYPES
 \newcommand{\tbra}[3]{
-\role{#1} \with \left\{ #2 \right\}_{#3}
+\mrole{#1} \with \left\{ #2 \right\}_{#3}
 }
 \newcommand{\tsel}[3]{
-\role{#1} \oplus \left\{ {#2} \right\}_{#3}
+\mrole{#1} \oplus \left\{ {#2} \right\}_{#3}
 }
 
 % NEW LOCAL TYPES
 \newcommand{\router}[4]{
-\texttt{route}\left(\role{#1} \to \role{#2}: \left\{{#3}\right\}_{#4}\right)
+\texttt{route}\left(\mrole{#1} \to \mrole{#2}: \left\{{#3}\right\}_{#4}\right)
+}
+\newcommand{\routertrans}[5]{
+\texttt{route}\left(\mrole{#1} \rightsquigarrow \mrole{#2}. ~ {#3} : \left\{{#4}\right\}_{#5}\right)
 }
 
 \newcommand{\tselproxy}[4]{
-\tsel{\role{#1}_{\role{#2}}}{#3}{#4}
+\tsel{\mrole{#1}_{\mrole{#2}}}{#3}{#4}
 }
 
 \newcommand{\tbraproxy}[4]{
-\tbra{\role{#1}_{\role{#2}}}{#3}{#4}
+\tbra{\mrole{#1}_{\mrole{#2}}}{#3}{#4}
+}
+
+% LTS
+\newcommand{\aout}[3]{
+\mrole{#1}\mrole{#2}!{#3}
+}
+\newcommand{\ain}[3]{
+\mrole{#1}\mrole{#2}?{#3}
+}
+\newcommand{\subj}[1]{
+\text{subj}({#1})
+}
+\newcommand{\treduce}[3]{
+{#1} \xrightarrow{\mathmakebox[1em]{#3}} {#2} 
+}
+\newcommand{\treducelong}[3]{
+{#1} \xrightarrow{\mathmakebox[3.5em]{#3}} {#2} 
+}
+
+% NEW LTS
+\newcommand{\via}[2]{
+{\texttt{via}_{\mrole{#1}}({#2})}
 }
