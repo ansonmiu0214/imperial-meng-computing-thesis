@@ -31,9 +31,13 @@ Global types range over $G, G', G_i, \dots$
 \doublespacing
 \[
 \begin{array}{rlr}
-G ::= & \dots & \text{Global Types} \\
+G ::= & & \text{Global Types} \\
+\mid & \tend & \text{Termination} \\
+\mid & \trecvar & \text{Type Variable} \\
+\mid & \trec{G} & \text{Recursive Type} \\
+\mid & \gcomm{p}{q}{l_i: G_i}{i \in I} & \text{Direct Communication} \\
 \mid & \groute{p}{q}{s}{l_i: G_i}{i \in I}
-& \text{Routed Communication through $\role{s}$} \\
+	& \text{\hl{Routed Communication}} \\
 \end{array}
 \]
 \singlespacing
@@ -59,7 +63,7 @@ $\role{p},\role{q},\role{r},\role{s},\dots$,
 but we use $\role{s}$ by convention as the server endpoint
 is usually the router.
 Just as it is assumed that $\role{p} \neq \role{q}$ for
-direct communication ($\gcomm{p}{q}{l_i: G_i}{i \in I}$),
+direct communication,
 we also assume that
 $\role{p} \neq \role{q} \neq \role{s}$ for routed communication.
 
@@ -74,8 +78,6 @@ interactions specified by $G$, written $\pt{G}$, is:
 \doublespacing
 \[
 \begin{array}{>{\displaystyle}rc>{\displaystyle}l}
-
-\pt{\dots} & = & \dots \\
 
 \pt{\groute{p}{q}{s}{l_i: G_i}{i \in I}} & = & 
 \left\{ \mrole{p}, \mrole{q}, \mrole{s} \right\} 
@@ -108,13 +110,18 @@ Local types range over $T, T', T_i, \dots$
 \doublespacing
 \[
 \begin{array}{rlr}
-T ::= & \dots & \text{Local Types} \\
+T ::= &  & \text{Local Types} \\
+\mid & \tend & \text{Termination} \\
+\mid & \trecvar & \text{Type Variable} \\
+\mid & \trec{T} & \text{Recursive Type} \\
+\mid & \tsel{p}{l_i: T_i}{i \in I} & \text{Selection} \\
+\mid & \tbra{p}{l_i: T_i}{i \in I} & \text{Branching} \\
 \mid & \router{p}{q}{l_i: T_i}{i \in I}
-& \text{Routing communication from $\role{p}$ to $\role{q}$} \\
+& \text{\hl{Routing Communication}} \\
 \mid & \tselproxy{p}{q}{l_i: T_i}{i \in I}
-& \text{Selecting from $\role{p}$ via proxy $\role{q}$} \\
+& \text{\hl{Proxy Selection}} \\
 \mid & \tbraproxy{p}{q}{l_i: T_i}{i \in I}
-& \text{Receiving from $\role{p}$ via proxy $\role{q}$} \\
+& \text{\hl{Proxy Branching}} \\
 \end{array}
 \]
 \singlespacing
@@ -206,18 +213,13 @@ onto a non-participant, the projections of
 all continuations must be ``compatible'',
 namely they can be merged using the
 the \textit{merging operator}, $\mergeop$.
-
 As the merging operator is defined on local
 types, we extend the merging operator to be defined
 on the extended syntax in \cref{def:newmerge}.
-Recall that proxy selection and proxy
-branching behave in the same way as their ``non-proxified''
-counterparts -- the merging operator reflects this
-similarity.
 
 \begin{definition}[Merging Operator]
 The merging operator $\mergeop$ on local types
-is defined as:
+is:
 
 \doublespacing
 \[
@@ -242,6 +244,11 @@ T'_k & \text{if} ~ k \in J \setminus I \\
 
 \label{def:newmerge}
 \end{definition}
+
+Recall that proxy selection and proxy
+branching behave in the same way as their ``non-proxified''
+counterparts -- the merging operator reflects this
+similarity.
 
 \subsection{Well-formedness}
 \label{subsection:newwf}
@@ -275,7 +282,8 @@ We define what it means to be a \textit{centroid} in
 
 % characteristics of router as centroid
 \begin{definition}[Centroid]
-Let $\centroid{G}{s}$ denote \dots
+Let $\centroid{G}{s}$ denote that $\mrole{s}$ is the 
+centroid of $G$.
 
 \begin{prooftree}
 \AxiomC{}

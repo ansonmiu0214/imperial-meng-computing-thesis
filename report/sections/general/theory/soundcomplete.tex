@@ -244,8 +244,7 @@ the same as those under non-routed communication.
 \subsection{Trace Equivalence}
 \label{subsection:newtraceeq}
 
-The sequence of labels $l_1, l_2, \dots, l_n$
-that reduce the LTS is known as a trace.
+A sequence of transitions is known as a \textit{trace}.
 We want to prove that the set of traces
 that can be obtained from reducing a global type
 $G$ is the same as those that can be obtained
@@ -272,31 +271,224 @@ i.e. \textit{soundness})
 and configurations (to prove $\Longleftarrow$,
 i.e. \textit{completeness}). 
 
+\paragraph{Notation conventions} 
+We use the following notation for decomposing configurations
+and projected configurations.
+\[
+\def\arraystretch{1.6}
+\begin{array}{rcl}
+s &= & \{ T_\mrole{q} \}_{\mrole{q} \in \mathcal{P}},~
+	\{ w_{\mroles{q}{q'}} \}_{\qqinP} \\
+s' &= & \{ T'_\mrole{q} \}_{\mrole{q} \in \mathcal{P}},~
+	\{ w'_{\mroles{q}{q'}} \}_{\qqinP} \\
+\projconf{G} &= & \{ \hat{T_\mrole{q}} \}_{\mrole{q} \in \mathcal{P}},~
+	\{ \hat{w}_{\mroles{q}{q'}} \}_{\qqinP} \\
+\projconf{G'} &= & \{ \hat{T'_\mrole{q}} \}_{\mrole{q} \in \mathcal{P}},~
+	\{ \hat{w'}_{\mroles{q}{q'}} \}_{\qqinP} \\
+\end{array}
+\]
+
 \item \textbf{Soundness}
 
 By induction on the structure of LTS semantics
 over global types.
+
+For each transition $\treduce{G}{G'}{l}$, we
+take the configuration $s = \projconf{G}$,
+derive $\treduce{G}{G'}{l}$ and $\treduce{s}{s'}{l}$
+under the respective LTSs,
+and show that $s' \subtype \projconf{G'}$.
+
 The proofs for rules \rulename{Gr1-5} are
 the same as in \cite{characterisation}.
 We focus on the new rules introduced for routing.
 
 \begin{itemize}
 
-\item \rulename{Gr6}
+\item \rulename{Gr6}, 
+where $G = \groute{p}{p'}{s}{l_i: G_i}{i \in I}, 
+G' = \gtransroute{p}{p'}{s}{j}{l_i: G_i}{i \in I},
+l = \via{s}{\aout{p}{p'}{j}}$
 
-\hl{TODO}
+Then $s = \projconf{G}$ where
+	
+\[
+\def\arraystretch{1.6}
+\begin{array}{>{\displaystyle}r>{\displaystyle}l}
+T_\mrole{p} = & \tselproxy{p'}{s}{l_i: \proj{G_i}{p}}{i \in I} \\
+T_\mrole{p'} = & \tbraproxy{p}{s}{l_i: \proj{G_i}{p'}}{i \in I} \\
+T_\mrole{s} = & \router{p}{p'}{l_i: \proj{G_i}{s}}{i \in I}\\
+T_\mrole{r} = & \underset{i \in I}{\MERGEOP}\proj{G_i}{r} 
+	\text{ for } \mrole{r} \notin \{ \mrole{p},\mrole{p'},\mrole{s} \}\\
+\{ w_{\mroles{q}{q'}} \}_{\qqinP} = & \projconf{G_1}_{\{\vec\epsilon\}} \\
+\end{array}
+\]
+
+\paragraph{Global transition:} 
+We have 
+
+\[
+\def\arraystretch{1.6}
+\begin{array}{>{\displaystyle}r>{\displaystyle}l}
+\hat{T'_\mrole{p'}} = & \tbraproxy{p}{s}{l_i: \proj{G_i}{p'}}{i \in I} \\
+\hat{T'_\mrole{s}} = & \routertrans{p}{p'}{j}{l_i: \proj{G_i}{s}}{i \in I}
+\\
+\hat{T'_\mrole{r}} = & \proj{G_j}{r} 
+	\text{ for } \mrole{r} \notin \{ \mrole{p'},\mrole{s} \}\\
+\{ \hat{w'}_{\mroles{q}{q'}} \}_{\qqinP} = & \projconf{G_1}_
+	{\{ \vec\epsilon \}[w_{\mroles{p}{p'}} \mapsto w_{\mroles{p}{p'}} \cdot j]} \\
+\end{array}
+\]
+
+So, $\hat{w'}_{\mroles{q}{q'}} = w_{\mroles{q}{q'}}$ for
+$\mroles{q}{q'} \neq \mroles{p}{p'}$ and
+$\hat{w'}_{\mroles{p}{p'}} = w_{\mroles{p}{p'}} \cdot j$.
+
+\paragraph{Configuration transition:} 
+Take $T'_\mrole{r} = T_\mrole{r}$ 
+for $\mrole{r} \notin \{\mrole{p}, \mrole{s}\}$.
+
+By \rulename{Lr4}, $\treduce{T_\mrole{p}}{T'_\mrole{p}}{l}$
+where $T'_\mrole{p} = \proj{G_j}{p}$.
+
+By \rulename{Lr6}, $\treduce{T_\mrole{s}}{T'_\mrole{s}}{l}$
+where $T'_\mrole{s} = \routertrans{p}{p'}{j}{l_i: \proj{G_i}{s}}{i \in I}$.
+
+Also, ${w'}_{\mroles{q}{q'}} = w_{\mroles{q}{q'}}$ for
+$\mroles{q}{q'} \neq \mroles{p}{p'}$ and
+${w'}_{\mroles{p}{p'}} = w_{\mroles{p}{p'}} \cdot j$.
+
+\paragraph{Correspondence:}
+We have 
+${w'}_{\mroles{q}{q'}} = \hat{w}_{\mroles{q}{q'}}$
+for $\qqinP$ and
+$T'_\mrole{q} = \hat{T_\mrole{q}}$
+for $\mrole{q} \in \{ \mrole{p}, \mrole{p'}, \mrole{s} \}$.
+
+For $\mrole{q} \notin \{ \mrole{p}, \mrole{p'}, \mrole{s} \}$,
+we have
+
+\[
+T'_\mrole{q} = \underset{i \in I}{\MERGEOP}\proj{G_i}{q}
+	\subtype \proj{G_j}{q}
+	= \hat{T_\mrole{q}}
+\]
+
+So, $s' \subtype \projconf{G'}$.
 
 \item \rulename{Gr7}
+where $G = \gtransroute{p}{p'}{s}{j}{l_i: G_i}{i \in I}, 
+G' = G_j,
+l = \via{s}{\ain{p}{p'}{j}}$
 
-\hl{TODO}
+Then $s = \projconf{G}$ where
+	
+\[
+\def\arraystretch{1.6}
+\begin{array}{>{\displaystyle}r>{\displaystyle}l}
+T_\mrole{p'} = & \tbraproxy{p}{s}{l_i: \proj{G_i}{p'}}{i \in I} \\
+T_\mrole{s} = & \routertrans{p}{p'}{j}{l_i: \proj{G_i}{s}}{i \in I}\\
+T_\mrole{r} = & \proj{G_j}{r} 
+	\text{ for } \mrole{r} \notin \{ \mrole{p'},\mrole{s} \}\\
+\{ w_{\mroles{q}{q'}} \}_{\qqinP} = & \projconf{G_j}_
+	{\{ \vec\epsilon \}[w_{\mroles{p}{p'}} \mapsto w_{\mroles{p}{p'}} \cdot j]} \\
+\end{array}
+\]
+
+\paragraph{Global transition:} 
+We have 
+
+\[
+\def\arraystretch{1.6}
+\begin{array}{>{\displaystyle}r>{\displaystyle}l}
+\hat{T'_\mrole{r}} = & \proj{G_j}{r} 
+	\text{ for } \mrole{r} \in \mathcal{P} \\
+\{ \hat{w'}_{\mroles{q}{q'}} \}_{\qqinP} = & \projconf{G_j}_
+	{\{ \vec\epsilon \}} \\
+\end{array}
+\]
+
+So, $\hat{w'}_{\mroles{q}{q'}} = w_{\mroles{q}{q'}}$ for
+$\mroles{q}{q'} \neq \mroles{p}{p'}$ and
+$w_{\mroles{p}{p'}} = j \cdot \hat{w'}_{\mroles{p}{p'}}$.
+
+\paragraph{Configuration transition:} 
+Take $T'_\mrole{r} = T_\mrole{r}$ 
+for $\mrole{r} \notin \{\mrole{p'}, \mrole{s}\}$.
+
+By \rulename{Lr5}, $\treduce{T_\mrole{p}}{T'_\mrole{p}}{l}$
+where $T'_\mrole{p} = \proj{G_j}{p}$.
+
+By \rulename{Lr7}, $\treduce{T_\mrole{s}}{T'_\mrole{s}}{l}$
+where $T'_\mrole{s} = \proj{G_j}{s}$.
+
+Also, ${w'}_{\mroles{q}{q'}} = w_{\mroles{q}{q'}}$ for
+$\mroles{q}{q'} \neq \mroles{p}{p'}$ and
+$w_{\mroles{p}{p'}} = j \cdot {w'}_{\mroles{p}{p'}}$.
+
+\paragraph{Correspondence:}
+We have 
+${w'}_{\mroles{q}{q'}} = \hat{w}_{\mroles{q}{q'}}$
+for $\qqinP$ and
+$T'_\mrole{q} = \hat{T_\mrole{q}}$
+for $\mrole{q} \in \mathcal{P}$.
+
+So, $s' = \projconf{G'}$.
 
 \item \rulename{Gr8}
+where $G = \groute{p}{p'}{s}{l_i: G_i}{i \in I}, 
+G' = \groute{p}{p'}{s}{l_i: G'_i}{i \in I}$
 
-\hl{TODO}
+By hypothesis,
+$\forall i \in I. ~ \treduce{G_i}{G'_i}{l}$
+and $\subj{l} \notin \{ \mrole{p}, \mrole{p'} \}$.
+
+By induction,
+$\forall i \in I. ~ \treduce{\projconf{G_i}}{\projconf{G'_i}}{l}$.
+
+To show that $\treduce{\projconf{G}}{\projconf{G'}}{l}$,
+it is sufficient to show that
+$\treduce{\proj{G}{q}}{\proj{G'}{q}}{l}$
+for $\mrole{q} = \subj{l}$,
+since the projections for $\mrole{q'} \neq \subj{l}$ remain the same.
+
+We know $\proj{G}{q} = \underset{i \in I}{\proj{G_i}{q}}$
+and $\proj{G'}{q} = \underset{i \in I}{\proj{G'_i}{q}}$.
+
+By induction,
+$\treduce
+	{\underset{i \in I}{\proj{G_i}{q}}}
+	{\underset{i \in I}{\proj{G'_i}{q}}}
+	{l}$,
+so $\treduce{\proj{G}{q}}{\proj{G'}{q}}{l}$.
 
 \item \rulename{Gr9}
+where $G = \gtransroute{p}{p'}{s}{j}{l_i: G_i}{i \in I}, 
+G' = \gtransroute{p}{p'}{s}{j}{l_i: G'_i}{i \in I}$
 
-\hl{TODO}
+By hypothesis,
+$\treduce{G_j}{G'_j}{l}$,
+$\mrole{p'} \neq \subj{l}$,
+and $\forall i \in I \setminus \{j\}. ~ G'_i = G_i$.
+
+By induction,
+$\treduce{\projconf{G_j}}{\projconf{G'_j}}{l}$.
+
+To show that $\treduce{\projconf{G}}{\projconf{G'}}{l}$,
+it is sufficient to show that
+$\treduce{\proj{G}{q}}{\proj{G'}{q}}{l}$
+for $\mrole{q} = \subj{l}$,
+since the projections for $\mrole{q'} \neq \subj{l}$ remain the same.
+
+We know $\proj{G}{q} = \proj{G_j}{q}$
+and $\proj{G'}{q} = \proj{G'_j}{q}$.
+
+By induction,
+$\treduce
+	{\proj{G_j}{q}}
+	{\proj{G'_j}{q}}
+	{l}$,
+so $\treduce{\proj{G}{q}}{\proj{G'}{q}}{l}$.
 
 \end{itemize}
 
@@ -305,19 +497,163 @@ We focus on the new rules introduced for routing.
 By considering the possible transitions in the LTS
 over configurations, which is defined by
 case analysis on the possible labels $l$.
-The proof for $l = \aout{p}{q}{j}$ and $l = \ain{p}{q}{j}$
-is the same as in \cite{characterisation}.
+
+For each transition $\treduce{s}{s'}{l}$,
+we take the global type $G$ such that $s = \projconf{G}$,
+derive $\treduce{s}{s'}{l}$ and $\treduce{G}{G'}{l}$
+under the respective LTSs, 
+and show that $s' \subtype \projconf{G'}$.
+
+The proofs for $l = \aout{p}{q}{j}$ and $l = \ain{p}{q}{j}$
+are the same as in \cite{characterisation}.
 We focus on the new labels introduced for routing.
 
 \begin{itemize}
 
 \item $l = \via{s}{\aout{p}{q}{j}}$:
 
-\hl{TODO}
+Then $T_\mrole{p} = \tselproxy{q}{s}{l_i: \proj{G_i}{p}}{i \in I}$.
+
+Also, $T_\mrole{s}$ \textit{contains} 
+$\router{p}{q}{l_i: \proj{G_i}{s}}{i \in I}$ as subterm. 
+We denote this subterm $\tilde{T_\mrole{s}}$.
+
+By definition of projection, $G$ has
+$\groute{p}{q}{s}{l_i: G_i}{i \in I}$ as subterm. 
+We denote this subterm $\tilde{G}$.
+
+Also by definition of projection, no action in $G$
+will involve $\mrole{p}$ before $\tilde{G}$.
+
+\paragraph{Configuration transition:}
+
+By \rulename{Lr4}, 
+$\treduce{T_\mrole{p}}{T'_\mrole{p}}{l}$,
+where $T'_\mrole{p} = \proj{G_j}{p}$.
+
+By \rulename{Lr6}, 
+$\treduce{\tilde{T}_\mrole{s}}{\tilde{T'}_\mrole{s}}{l}$,
+where $\tilde{T}'_\mrole{s} = 
+	\routertrans{p}{q}{j}{l_i: \proj{G_i}{s}}{i \in I}$.
+
+We get $\treduce{T_\mrole{s}}{T'_\mrole{s}}{l}$
+by inversion lemma, as illustrated below.
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{Lr6}}
+\UnaryInfC{$\treduce{\tilde{T}_\mrole{s}}{\tilde{T'}_\mrole{s}}{l}$}
+\UnaryInfC{$\vdots$}
+\RightLabel{\rulename{Lr8,9,10,11} as needed}
+\UnaryInfC{$\qquad\treducelong{T_\mrole{s}}{T'_\mrole{s}}{l}\qquad$}
+\end{prooftree}
+
+\paragraph{Global transition:}
+
+By \rulename{Gr6}, 
+$\treduce{\tilde{G}}{\tilde{G}'}{l}$,
+where $\tilde{G}' = \gtransroute{p}{q}{s}{j}{l_i: G_i}{i \in I}$.
+
+We get $\treduce{G}{G'}{l}$ by inversion lemma,
+as illustrated below.
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{Gr6}}
+\UnaryInfC{$\treduce{\tilde{G}}{\tilde{G}'}{l}$}
+\UnaryInfC{$\vdots$}
+\RightLabel{\rulename{Gr4,5,8,9} as needed}
+\UnaryInfC{$\qquad\treducelong{G}{G'}{l}\qquad$}
+\end{prooftree}
+
+\paragraph{Correspondence:}
+Since the projections for 
+$\mrole{p'} \notin \{ \mrole{p}, \mrole{s} \}$
+are unchanged,
+it is sufficient to show that 
+$T'_\mrole{p} \subtype (\proj{\tilde{G'}}{p})$ and
+$\tilde{T'}_\mrole{s} \subtype (\proj{\tilde{G'}}{s})$.
+
+\begin{align*}
+\proj{\tilde{G'}}{p} 
+	&= \proj{G_j}{p} 
+	= T'_\mrole{p} \\
+\proj{\tilde{G'}}{s} 
+	&= \routertrans{p}{q}{j}{l_i: \proj{G_i}{s}}{i \in I}
+	= \tilde{T'}_\mrole{s}
+\end{align*}
 
 \item $l = \via{s}{\ain{p}{q}{j}}$:
 
-\hl{TODO}
+Then $T_\mrole{q} = \tbraproxy{p}{s}{l_i: \proj{G_i}{q}}{i \in I}$.
+
+Also, $T_\mrole{s}$ \textit{contains} 
+$\routertrans{p}{q}{j}{l_i: \proj{G_i}{s}}{i \in I}$ as subterm. 
+We denote this subterm $\tilde{T_\mrole{s}}$.
+
+By definition of projection, $G$ has
+$\gtransroute{p}{q}{s}{j}{l_i: G_i}{i \in I}$ as subterm. 
+We denote this subterm $\tilde{G}$.
+
+Also by definition of projection, no action in $G$
+will involve $\mrole{q}$ before $\tilde{G}$.
+
+\paragraph{Configuration transition:}
+
+By \rulename{Lr5}, 
+$\treduce{T_\mrole{q}}{T'_\mrole{q}}{l}$,
+where $T'_\mrole{q} = \proj{G_j}{q}$.
+
+By \rulename{Lr7}, 
+$\treduce{\tilde{T}_\mrole{s}}{\tilde{T'}_\mrole{s}}{l}$,
+where $\tilde{T}'_\mrole{s} = \proj{G_j}{s}$.
+
+We get $\treduce{T_\mrole{s}}{T'_\mrole{s}}{l}$
+by inversion lemma, as illustrated below.
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{Lr7}}
+\UnaryInfC{$\treduce{\tilde{T}_\mrole{s}}{\tilde{T'}_\mrole{s}}{l}$}
+\UnaryInfC{$\vdots$}
+\RightLabel{\rulename{Lr8,9,10,11} as needed}
+\UnaryInfC{$\qquad\treducelong{T_\mrole{s}}{T'_\mrole{s}}{l}\qquad$}
+\end{prooftree}
+
+\paragraph{Global transition:}
+
+By \rulename{Gr7}, 
+$\treduce{\tilde{G}}{\tilde{G}'}{l}$,
+where $\tilde{G}' = G_j$.
+
+We get $\treduce{G}{G'}{l}$ by inversion lemma,
+as illustrated below.
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{Gr7}}
+\UnaryInfC{$\treduce{\tilde{G}}{\tilde{G}'}{l}$}
+\UnaryInfC{$\vdots$}
+\RightLabel{\rulename{Gr4,5,8,9} as needed}
+\UnaryInfC{$\qquad\treducelong{G}{G'}{l}\qquad$}
+\end{prooftree}
+
+\paragraph{Correspondence:}
+Since the projections for 
+$\mrole{p'} \notin \{ \mrole{q}, \mrole{s} \}$
+are unchanged,
+it is sufficient to show that 
+$T'_\mrole{q} \subtype (\proj{\tilde{G'}}{q})$ and
+$\tilde{T'}_\mrole{s} \subtype (\proj{\tilde{G'}}{s})$.
+
+\begin{align*}
+\proj{\tilde{G'}}{q} 
+	&= \proj{G_j}{q} 
+	= T'_\mrole{q} \\
+\proj{\tilde{G'}}{s} 
+	&= \proj{G_j}{s}
+	= \tilde{T'}_\mrole{s}
+\end{align*}
 
 \end{itemize}
 
@@ -338,7 +674,7 @@ Direct consequence of \cref{lem:stepeq}.
 \subsection{Deadlock Freedom}
 \label{subsection:newdeadlockfreedom}
 
-\begin{theorem}[Preservation of Well-formedness]
+\begin{lemma}[Preservation of Well-formedness]
 Let $G$ be a global type.
 Suppose $G$ is well-formed with respect to some router $\mrole{s}$.
 
@@ -349,8 +685,8 @@ Suppose $G$ is well-formed with respect to some router $\mrole{s}$.
 \wfnew{G'}{s})
 \]
 
-\label{th:preservewf}
-\end{theorem}
+\label{lem:preservewf}
+\end{lemma}
 
 \begin{proof}
 By induction on the structure of $\treduce{G}{G'}{l}$.
@@ -395,7 +731,7 @@ By induction on the structure of $\treduce{G}{G'}{l}$.
 
 \end{proof}
 
-\begin{theorem}[Progress for Well-formed Global Types]
+\begin{lemma}[Progress for Well-formed Global Types]
 Let $G$ be a global type.
 Suppose $G$ is well-formed with respect to some router $\mrole{s}$.
 
@@ -411,8 +747,8 @@ The following is logically equivalent.
 \exists G', l. ~ (\treduce{G}{G'}{l})
 \]
 
-\label{th:progresswf}
-\end{theorem}
+\label{lem:progresswf}
+\end{lemma}
 
 \begin{proof}
 By induction on the structure of $G$.
@@ -456,5 +792,5 @@ G \to^* G'
 
 \begin{proof}
 Direct consequence of 
-\cref{th:preservewf,th:progresswf}.
+\cref{lem:preservewf,lem:progresswf}.
 \end{proof}
