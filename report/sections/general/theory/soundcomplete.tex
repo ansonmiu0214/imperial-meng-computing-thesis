@@ -1,0 +1,460 @@
+\section{LTS Soundness and Completeness with respect to Projection}
+\label{section:newtraceeq}
+
+We work towards proving the soundness and completeness
+of our LTS semantics with respect to projection.
+Our approach is motivated from \cite{characterisation}:
+
+\begin{enumerate}
+
+\item We first extend the LTS semantics to
+a collection of local types (hereafter referred to
+as a \textit{configuration} to be consistent with
+the literature)
+in \cref{subsection:newltsconfig};
+
+\item Then, we extend the definition of projection to
+obtain the configuration of a global type 
+(hereafter referred to as the \textit{projected configuration})
+in \cref{subsection:newltsprojection};
+
+\item Finally, we prove the trace equivalence between 
+the global type and its projected configuration 
+in \cref{subsection:newtraceeq}.
+
+\end{enumerate}
+
+We use the trace equivalence result to prove deadlock freedom
+in \cref{subsection:newdeadlockfreedom}.
+
+\subsection{LTS Semantics over Configurations}
+\label{subsection:newltsconfig}
+
+Let $\mathcal{P}$ denote the set of participants in
+the communication automaton.
+Also let $\lty{p}$ denote the local type of a participant
+$\pinP$.
+
+A \textit{configuration} describes the
+state of the communication automaton with respect to
+each participant $\pinP$.
+By definition of our LTS semantics, this includes
+\textit{intermediate} states, so a configuration
+would also need to express the state of messages
+in transit.
+
+We inherit the definition from \cite{characterisation},
+restated in \cref{def:newconfig}.
+
+\begin{definition}[Configuration]
+A configuration $s = (\vec T; ~ \vec w)$ of a system of
+local types $\{ \lty{p} \}_{\pinP}$
+is defined as a pair of:
+
+\begin{itemize}
+
+\item $\vec T = (\lty{p})_{\pinP}$
+is the collection of local types.
+$\lty{p}$ describes the communication structure
+from the local perspective of participant $\pinP$.
+
+\item $\vec w = (w_{\mroles{p}{q}})_{\mrole{p} \neq \mrole{q} \in \mathcal{P}}$
+is the collection of \textit{unbounded buffers}.
+The unbounded buffer $w_{\mrole{p}\mrole{q}}$ represents a (FIFO)
+queue of messages sent by $\role{p}$ but not yet
+received by $\role{q}$.
+
+\end{itemize}
+
+\label{def:newconfig}
+\end{definition}
+
+\begin{remark}
+
+The \textit{subtyping} relation defined on
+local types (see \cref{subsection:bgbst})
+can be extended to configurations:
+
+\begin{prooftree}
+\AxiomC{$\vec w = \vec w'$}
+\AxiomC{$
+\forall \mrole{p} \in \mathcal{P}. ~ 
+T_\mrole{p} \subtype T'_\mrole{p}
+$}
+\BinaryInfC{$
+(\vec T; \vec w) \subtype (\vec T'; \vec w')
+$}
+\end{prooftree}
+
+\end{remark}
+
+We proceed to define the LTS over configurations in 
+\cref{def:newltsconfig}, highlighting the extensions
+required for \newtheory.
+
+\begin{definition}[LTS Semantics over Configurations]
+The LTS semantics over configurations is defined by
+the relation $\treduce{s_T}{s'_T}{l}$.
+
+Let $s_T = (\vec T; ~ \vec w)$ and $s'_T = (\vec T'; ~ \vec w')$.
+We define the specific transitions on $\vec T$ and $\vec w$
+by case analysis on the label $l$.
+
+\begin{itemize}
+
+\item $l = \aout{p}{q}{j}$
+
+Then $\treduce{T_\mrole{p}}{T'_\mrole{p}}{l}$ 
+because $\role{p}$
+initiates the action, so
+$T'_\mrole{p'} = T_{\mrole{p'}}$ 
+for all $\mrole{p'} \neq \mrole{p}$.
+
+The message $j$ is in transit from $\role{p}$ to $\role{q}$, 
+so $w'_{\mroles{p}{q}} = w_{\mroles{p}{q}} \cdot j$
+($j$ is appended to the queue of in-transit messages
+sent from $\role{p}$ to $\role{q}$),
+and unrelated buffers $w'_{\mroles{p'}{q'}} = w_{\mroles{p}{q}}$ 
+are untouched for all $\mroles{p'}{q'} \neq \mroles{p}{q}$.
+
+\item $l = \ain{p}{q}{j}$
+
+Then $\treduce{T_\mrole{q}}{T'_\mrole{q}}{l}$ 
+because $\role{q}$
+initiates the action, so
+$T'_\mrole{p'} = T_{\mrole{p'}}$ 
+for all $\mrole{p'} \neq \mrole{q}$.
+
+The message $j$ is no longer in transit
+from $\role{p}$ to $\role{q}$ as it is received by $\role{q}$,
+so $w_{\mroles{p}{q}} = j \cdot w'_{\mroles{p}{q}}$ 
+($j$ is removed from the front of the queue of in-transit
+messages sent from $\role{p}$ to $\role{q}$),
+and unrelated buffers $w'_{\mroles{p'}{q'}} = w_{\mroles{p}{q}}$ 
+are untouched for all $\mroles{p'}{q'} \neq \mroles{p}{q}$.
+
+\item \hl{$l = \via{s}{\aout{p}{q}{j}}$}
+
+Then $\treduce{T_\mrole{p}}{T'_\mrole{p}}{l}$ 
+because $\role{p}$
+initiates the action.
+Because the send action is routed, we also need 
+$\treduce{T_\mrole{s}}{T'_\mrole{s}}{l}$.
+This means
+$T'_\mrole{p'} = T_{\mrole{p'}}$ 
+for all $\mrole{p'} \notin \{\mrole{p} , \mrole{s} \}$.
+
+The message $j$ is in transit from $\role{p}$ to $\role{q}$, 
+so $w'_{\mroles{p}{q}} = w_{\mroles{p}{q}} \cdot j$
+and unrelated buffers $w'_{\mroles{p'}{q'}} = w_{\mroles{p}{q}}$ 
+are untouched for all $\mroles{p'}{q'} \neq \mroles{p}{q}$.
+
+\item \hl{$l = \via{s}{\ain{p}{q}{j}}$}
+
+Then $\treduce{T_\mrole{q}}{T'_\mrole{q}}{l}$ 
+because $\role{q}$
+initiates the action.
+Because the receive action is routed, we also need
+$\treduce{T_\mrole{s}}{T'_\mrole{s}}{l}$.
+This means
+$T'_\mrole{p'} = T_{\mrole{p'}}$ 
+for all $\mrole{p'} \notin \{\mrole{q} , \mrole{s} \}$.
+
+The message $j$ is no longer in transit
+from $\role{p}$ to $\role{q}$ as it is received by $\role{q}$,
+so $w_{\mroles{p}{q}} = j \cdot w'_{\mroles{p}{q}}$,
+and unrelated buffers $w'_{\mroles{p'}{q'}} = w_{\mroles{p}{q}}$ 
+are untouched for all $\mroles{p'}{q'} \neq \mroles{p}{q}$.
+
+\end{itemize}
+
+\label{def:newltsconfig}
+\end{definition}
+
+Routed actions are carried out by the router,
+so it makes sense for the local type of the router 
+to also makes a step.
+The semantics of the message buffers for routed actions
+are the same as their non-routed counterparts; the
+only difference is that these message buffers are ``managed''
+by the router, but this is a change of interpretation
+which isn't reflected in the theory.
+
+\subsection{Extending Projection for Configurations}
+\label{subsection:newltsprojection}
+
+When considering the grammar of global types $G$
+extended to include intermediate states,
+we can obtain the \textit{projected configuration}
+from a global type $G$ with participants $\mathcal{P}$:
+
+\[
+\projconf{G} = 
+\left(
+	\{ \proj{G}{p} \}_{\pinP} ~ ; ~
+	\projconf{G}_{\{ \epsilon \}_{\qqinP}}
+\right)
+\]
+
+The collection of local types is obtained by
+projecting $G$ onto each participant $\pinP$.
+The contents of the buffers is defined as
+$\projconf{G}_{\{ w_{\mroles{q}{q'}} \}_{\qqinP}}$.
+We inherit the definitions presented in \cite{characterisation},
+and introduce additional rules in
+\cref{fig:buffer}.
+
+\begin{figure}[!h]
+\doublespacing
+\[
+\begin{array}{>{\displaystyle}rc>{\displaystyle}l}
+
+\projconf{
+\gtransroute{p}{p'}{s}{j}{l_i: G_i}{i \in I}
+}_{\{ w_{\mroles{q}{q'}} \}_{\qqinP}} 
+	& = & \projconf{G_j}_{
+	\{ w_{\mroles{q}{q'}} \}_{\qqinP}
+	[w_{\mroles{p}{p'}} \mapsto w_{\mroles{p}{p'}} \cdot j]
+	} \\
+	
+\projconf{
+\groute{p}{p'}{s}{l_i: G_i}{i \in I}
+}_{\{ w_{\mroles{q}{q'}} \}_{\qqinP}} 
+	& = & \projconf{G_1}_{
+	\{ w_{\mroles{q}{q'}} \}_{\qqinP}
+	} \\
+	
+\end{array}
+\]
+\singlespacing
+
+\captionof{figure}{Projection of Buffer Contents from Global Type in
+\newtheory}
+\label{fig:buffer}
+\end{figure}
+
+As explained in \cref{subsection:newltsconfig},
+the semantics of the message buffers
+for routed actions are the same as their
+non-routed counterparts,
+so the projected contents of the buffers
+for routed communication are
+the same as those under non-routed communication.
+
+\subsection{Trace Equivalence}
+\label{subsection:newtraceeq}
+
+The sequence of labels $l_1, l_2, \dots, l_n$
+that reduce the LTS is known as a trace.
+We want to prove that the set of traces
+that can be obtained from reducing a global type
+$G$ is the same as those that can be obtained
+from reducing its projected configuration $\projconf{G}$.
+
+Our approach is based on \cite{characterisation} --
+namely, proving that this is the case for a single
+transition (i.e. \textit{step equivalence}) is sufficient,
+as we can obtain trace equivalence as a direct consequence.
+
+\begin{lemma}[Step Equivalence]
+For all global types $G$ and configurations $s$,
+if $\projconf{G} \subtype s$,
+then $\treduce{G}{G'}{l} \Longleftrightarrow \treduce{s}{s'}{l}$ 
+such that $\projconf{G'} \subtype s'$.
+
+\label{lem:stepeq}
+\end{lemma}
+
+\begin{proof}
+By induction on the possible transitions in the LTSs
+over global types (to prove $\Longrightarrow$,
+i.e. \textit{soundness}) 
+and configurations (to prove $\Longleftarrow$,
+i.e. \textit{completeness}). 
+
+\item \textbf{Soundness}
+
+By induction on the structure of LTS semantics
+over global types.
+The proofs for rules \rulename{Gr1-5} are
+the same as in \cite{characterisation}.
+We focus on the new rules introduced for routing.
+
+\begin{itemize}
+
+\item \rulename{Gr6}
+
+\hl{TODO}
+
+\item \rulename{Gr7}
+
+\hl{TODO}
+
+\item \rulename{Gr8}
+
+\hl{TODO}
+
+\item \rulename{Gr9}
+
+\hl{TODO}
+
+\end{itemize}
+
+\item \textbf{Completeness}
+
+By considering the possible transitions in the LTS
+over configurations, which is defined by
+case analysis on the possible labels $l$.
+The proof for $l = \aout{p}{q}{j}$ and $l = \ain{p}{q}{j}$
+is the same as in \cite{characterisation}.
+We focus on the new labels introduced for routing.
+
+\begin{itemize}
+
+\item $l = \via{s}{\aout{p}{q}{j}}$:
+
+\hl{TODO}
+
+\item $l = \via{s}{\ain{p}{q}{j}}$:
+
+\hl{TODO}
+
+\end{itemize}
+
+\end{proof}
+
+\begin{theorem}[Trace Equivalence]
+Let $G$ be a global type with participants 
+$\mathcal{P} = \pt{G}$.
+Then $G \approx (\vec T, \vec \epsilon)$.
+
+\label{th:traceeq}
+\end{theorem}
+
+\begin{proof}
+Direct consequence of \cref{lem:stepeq}.
+\end{proof}
+
+\subsection{Deadlock Freedom}
+\label{subsection:newdeadlockfreedom}
+
+\begin{theorem}[Preservation of Well-formedness]
+Let $G$ be a global type.
+Suppose $G$ is well-formed with respect to some router $\mrole{s}$.
+
+\[
+\forall G', l. ~
+(\treduce{G}{G'}{l}
+	\Longrightarrow
+\wfnew{G'}{s})
+\]
+
+\label{th:preservewf}
+\end{theorem}
+
+\begin{proof}
+By induction on the structure of $\treduce{G}{G'}{l}$.
+
+\begin{itemize}
+\item \rulename{Gr1}, where \dots
+
+\hl{TODO}
+
+\item \rulename{Gr2}, where \dots
+
+\hl{TODO}
+
+\item \rulename{Gr3}, where \dots
+
+\hl{TODO}
+
+\item \rulename{Gr4}, where \dots
+
+\hl{TODO}
+
+\item \rulename{Gr5}, where \dots
+
+\hl{TODO}
+
+\item \rulename{Gr6}, where \dots
+
+\hl{TODO}
+
+\item \rulename{Gr7}, where \dots
+
+\hl{TODO}
+
+\item \rulename{Gr8}, where \dots
+
+\hl{TODO}
+
+\item \rulename{Gr9}, where \dots
+
+\hl{TODO}
+\end{itemize}
+
+\end{proof}
+
+\begin{theorem}[Progress for Well-formed Global Types]
+Let $G$ be a global type.
+Suppose $G$ is well-formed with respect to some router $\mrole{s}$.
+
+\[
+(G = \tend) \vee \exists G', l. ~ (\treduce{G}{G'}{l})
+\]
+
+The following is logically equivalent.
+
+\[
+(G \neq \tend)
+	\Longrightarrow 
+\exists G', l. ~ (\treduce{G}{G'}{l})
+\]
+
+\label{th:progresswf}
+\end{theorem}
+
+\begin{proof}
+By induction on the structure of $G$.
+
+We do not consider $G = \tend$ by assumption.
+
+We also do not consider $G = \trecvar$ as the type variable is not guarded.
+
+\begin{enumerate}
+
+\item $G = \trec{G''}$
+
+\hl{TODO}
+
+\item $G = \gcomm{p}{q}{l_i: G_i}{i \in I}$
+
+\hl{TODO}
+
+\item $G = \groute{p}{q}{r}{l_i: G_i}{i \in I}$
+
+$\wfnew{G}{s}$ holds by assumption, so $\mrole{r} = \mrole{s}$.
+
+\hl{TODO}
+
+\end{enumerate}
+
+\end{proof}
+
+\begin{theorem}[Deadlock Freedom]
+Let $G$ be a global type.
+Suppose $G$ is well-formed with respect to some router $\mrole{s}$.
+
+\[
+G \to^* G'
+	\Longrightarrow
+(G' = \tend) \vee \exists G'', l. ~ 
+	(\treduce{G'}{G''}{l})
+\]
+
+\end{theorem}
+
+\begin{proof}
+Direct consequence of 
+\cref{th:preservewf,th:progresswf}.
+\end{proof}

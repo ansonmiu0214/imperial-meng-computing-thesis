@@ -2,7 +2,7 @@
 \label{section:lts}
 
 We define labelled transition system (LTS) semantics
-on global types (\cref{subsection:newltsglobal}) 
+over global types (\cref{subsection:newltsglobal}) 
 and local types (\cref{subsection:newltslocal})
 for \newtheory,
 building upon the work of Deni\'elou and Yoshida in
@@ -24,6 +24,7 @@ the \textit{direct} sending (and reception) of a message
 from the sending (and reception) of a message
 \textit{via} an intermediate routing endpoint.
 Labels range over $l, l', \dots$
+We highlight and explain the new labels.
 
 \begin{figure}[!h]
 \doublespacing
@@ -35,9 +36,9 @@ l ::= & & \text{Labels} \\
 	\mid & \ain{p}{q}{j} & 
 		\text{Direct Receive} \\
 	\mid & \via{s}{\aout{p}{q}{j}} & 
-		\text{Routed Send} \\
+		\text{\hl{Routed Send}} \\
 	\mid & \via{s}{\ain{p}{q}{j}} & 
-		\text{Routed Receive} \\
+		\text{\hl{Routed Receive}} \\
 \end{array}
 \]
 \singlespacing
@@ -76,7 +77,7 @@ we extend the definition
 of subjects in \cref{def:newsubj} to reflect this.
 
 \begin{definition}[Subject]
-\textit{The subject of a LTS label, or $\subj{l}$, is defined as:}
+The subject of a LTS label, or $\subj{l}$, is defined as:
 
 \doublespacing
 \[
@@ -91,7 +92,7 @@ of subjects in \cref{def:newsubj} to reflect this.
 \label{def:newsubj}
 \end{definition}
 
-\subsection{LTS over Global Types}
+\subsection{LTS Semantics over Global Types}
 \label{subsection:newltsglobal}
 
 The LTS semantics presented in \cite{characterisation}
@@ -124,12 +125,76 @@ We define the LTS semantics
 over global types,
 defined by $\treduce{G}{G'}{l}$,
 in \cref{fig:newglobal}.
+We highlight and explain the new rules.
 
 \begin{figure}[!h]
 
 \begin{prooftree}
 \AxiomC{}
-\RightLabel{\rulename{Gr6}}
+\RightLabel{\rulename{Gr1}}
+\UnaryInfC{$
+\treducelong
+	{\gcomm{p}{q}{l_i: G_i}{i \in I}}
+	{\gtrans{p}{q}{j}{l_i: G_i}{i \in I}}
+	{\aout{p}{q}{j}}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{Gr2}}
+\UnaryInfC{$
+\treducelong
+	{\gtrans{p}{q}{j}{l_i: G_i}{i \in I}}
+	{G_j}
+	{\ain{p}{q}{j}}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$
+\treduce
+	{G[\trec{G} / \trecvar]}
+	{G'}
+	{l}
+$}
+\RightLabel{\rulename{Gr3}}
+\UnaryInfC{$
+\treduce
+	{\trec{G}}
+	{G'}
+	{l}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$\forall i \in I. ~ \treduce{G_i}{G'_i}{l}$}
+\AxiomC{$\subj{l} \notin \{\mrole{p}, \mrole{q}\}$}
+\RightLabel{\rulename{Gr4}}
+\BinaryInfC{$
+\treducelong
+	{\gcomm{p}{q}{l_i: G_i}{i \in I}}
+	{\gcomm{p}{q}{l_i: G'_i}{i \in I}}
+	{l}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$\treduce{G_j}{G'_j}{l}$}
+\AxiomC{$\subj{l} \neq \mrole{q}$}
+\AxiomC{$\forall i \in I \setminus \{ j \}. ~ G'_i = G_i$}
+\RightLabel{\rulename{Gr5}}
+\TrinaryInfC{$
+\treducelong
+	{\gtrans{p}{q}{j}{l_i: G_i}{i \in I}}
+	{\gtrans{p}{q}{j}{l_i: G'_i}{i \in I}}
+	{l}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\hlrulename{Gr6}}
 \UnaryInfC{$
 \treducelong
 	{\groute{p}{q}{s}{l_i: G_i}{i \in I}}
@@ -140,7 +205,7 @@ $}
 
 \begin{prooftree}
 \AxiomC{}
-\RightLabel{\rulename{Gr7}}
+\RightLabel{\hlrulename{Gr7}}
 \UnaryInfC{$
 \treducelong
 	{\gtransroute{p}{q}{s}{j}{l_i: G_i}{i \in I}}
@@ -152,7 +217,7 @@ $}
 \begin{prooftree}
 \AxiomC{$\forall i \in I. ~ \treduce{G_i}{G'_i}{l}$}
 \AxiomC{$\subj{l} \notin \{\mrole{p}, \mrole{q}\}$}
-\RightLabel{\rulename{Gr8}}
+\RightLabel{\hlrulename{Gr8}}
 \BinaryInfC{$
 \treducelong
 	{\groute{p}{q}{s}{l_i: G_i}{i \in I}}
@@ -165,7 +230,7 @@ $}
 \AxiomC{$\treduce{G_j}{G'_j}{l}$}
 \AxiomC{$\subj{l} \neq \mrole{q}$}
 \AxiomC{$\forall i \in I \setminus \{ j \}. ~ G'_i = G_i$}
-\RightLabel{\rulename{Gr9}}
+\RightLabel{\hlrulename{Gr9}}
 \TrinaryInfC{$
 \treducelong
 	{\gtransroute{p}{q}{s}{j}{l_i: G_i}{i \in I}}
@@ -181,36 +246,73 @@ $}
 \begin{itemize}
 
 \item \rulename{Gr6}: 
-TODO
+\hl{TODO}
 %The emission of a routed message $j$
 %results in the message
 
 \item \rulename{Gr7}:
-TODO
+\hl{TODO}
 
 \item \rulename{Gr8}:
-TODO
+\hl{TODO}
 
 \item \rulename{Gr9}:
-TODO
+\hl{TODO}
 
 \end{itemize}
 
-\subsection{LTS over Local Types}
+\subsection{LTS Semantics over Local Types}
 \label{subsection:newltslocal}
 
 We define the LTS semantics 
 over local types,
 defined by $\treduce{T}{T'}{l}$,
 in \cref{fig:newlocal}.
-
-%TODO: LR1-3?
+We highlight and explain the new rules.
 
 \begin{figure}[!h]
 
 \begin{prooftree}
 \AxiomC{}
-\RightLabel{\rulename{Lr4}}
+\RightLabel{\rulename{Lr1}}
+\UnaryInfC{$
+\treducelong
+	{\tsel{q}{l_i: T_i}{i \in I}}
+	{T_j}
+	{\aout{p}{q}{j}}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{Lr2}}
+\UnaryInfC{$
+\treducelong
+	{\tbra{q}{l_i: T_i}{i \in I}}
+	{T_j}
+	{\ain{q}{p}{j}}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$
+\treduce
+	{T[\trec{T} / \trecvar]}
+	{T'}
+	{l}
+$}
+\RightLabel{\rulename{Lr3}}
+\UnaryInfC{$
+\treduce
+	{\trec{T}}
+	{T'}
+	{l}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\hlrulename{Lr4}}
 \UnaryInfC{$
 \treducelong
 	{\tselproxy{q}{s}{l_i: T_i}{i \in I}}
@@ -221,7 +323,7 @@ $}
 
 \begin{prooftree}
 \AxiomC{}
-\RightLabel{\rulename{Lr5}}
+\RightLabel{\hlrulename{Lr5}}
 \UnaryInfC{$
 \treducelong
 	{\tbraproxy{q}{s}{l_i: T_i}{i \in I}}
@@ -232,7 +334,7 @@ $}
 
 \begin{prooftree}
 \AxiomC{}
-\RightLabel{\rulename{Lr6}}
+\RightLabel{\hlrulename{Lr6}}
 \UnaryInfC{$
 \treducelong
 	{\router{p}{q}{l_i: T_i}{i \in I}}
@@ -243,7 +345,7 @@ $}
 
 \begin{prooftree}
 \AxiomC{}
-\RightLabel{\rulename{Lr7}}
+\RightLabel{\hlrulename{Lr7}}
 \UnaryInfC{$
 \treducelong
 	{\routertrans{p}{q}{j}{l_i: T_i}{i \in I}}
@@ -255,7 +357,7 @@ $}
 \begin{prooftree}
 \AxiomC{$\forall i \in I. ~ \treduce{T_i}{T'_i}{l}$}
 \AxiomC{$\subj{l} \notin \{\mrole{p}, \mrole{q}\}$}
-\RightLabel{\rulename{Lr8}}
+\RightLabel{\hlrulename{Lr8}}
 \BinaryInfC{$
 \treducelong
 	{\router{p}{q}{l_i: T_i}{i \in I}}
@@ -268,7 +370,7 @@ $}
 \AxiomC{$\treduce{T_j}{T'_j}{l}$}
 \AxiomC{$\subj{l} \neq \mrole{q}$}
 \AxiomC{$\forall i \in I \setminus \{ j \}. ~ T'_i = T_i$}
-\RightLabel{\rulename{Lr9}}
+\RightLabel{\hlrulename{Lr9}}
 \TrinaryInfC{$
 \treducelong
 	{\routertrans{p}{q}{j}{l_i: T_i}{i \in I}}
@@ -281,7 +383,7 @@ $}
 \AxiomC{$l = \via{s}{\cdot}$}
 \AxiomC{$\subj{l} \neq \mrole{q}$}
 \AxiomC{$\forall i \in I. ~ \treduce{T_i}{T'_i}{l}$}
-\RightLabel{\rulename{Lr10}}
+\RightLabel{\hlrulename{Lr10}}
 \TrinaryInfC{$
 \treducelong
 	{\tsel{q}{l_i: T_i}{i \in I}}
@@ -294,7 +396,7 @@ $}
 \AxiomC{$l = \via{s}{\cdot}$}
 \AxiomC{$\subj{l} \neq \mrole{q}$}
 \AxiomC{$\forall i \in I. ~ \treduce{T_i}{T'_i}{l}$}
-\RightLabel{\rulename{Lr11}}
+\RightLabel{\hlrulename{Lr11}}
 \TrinaryInfC{$
 \treducelong
 	{\tbra{q}{l_i: T_i}{i \in I}}
@@ -303,8 +405,8 @@ $}
 $}
 \end{prooftree}
 
-\label{fig:newlocal}
 \captionof{figure}{LTS over Local Types in \newtheory}
+\label{fig:newlocal}
 \end{figure}
 
 We explain rules \rulename{Lr4} and \rulename{Lr5}
@@ -313,10 +415,10 @@ from the perspective of role $\role{p}$.
 \begin{itemize}
 
 \item \rulename{Lr4}: 
-TODO
+\hl{TODO}
 
 \item \rulename{Lr5}:
-TODO
+\hl{TODO}
 
 \end{itemize}
 
@@ -327,16 +429,16 @@ from the perspective of role $\role{s}$.
 \begin{itemize}
 
 \item \rulename{Lr6}:
-TODO
+\hl{TODO}
 
 \item \rulename{Lr7}:
-TODO
+\hl{TODO}
 
 \item \rulename{Lr10}:
-TODO
+\hl{TODO}
 
 \item \rulename{Lr11}:
-TODO
+\hl{TODO}
 
 \end{itemize}
 
@@ -345,48 +447,9 @@ We explain the remaining inductively defined rules.
 \begin{itemize}
 
 \item \rulename{Lr8}:
-TODO
+\hl{TODO}
 
 \item \rulename{Lr9}:
-TODO
+\hl{TODO}
 
 \end{itemize}
-
-%\subsection{LTS over Collections of Local Types}
-%\label{subsection:newltssystem}
-
-\subsection{Soundness and Completeness w.r.t. Projection}
-\label{subsection:newtraceeq}
-
-We work towards proving the soundness and completeness
-of our LTS semantics with respect to projection.
-Our approach is motivated from \cite{characterisation}:
-
-\begin{enumerate}
-
-\item We first extend the LTS semantics to
-a collection of local types (hereafter referred to
-as a \textit{configuration} to be consistent with
-the literature);
-
-\item Then, we extend the definition of projection to
-obtain the configuration of a global type 
-(hereafter referred to as the \textit{projected configuration});
-
-\item Finally, we prove the trace equivalence between 
-the global type and its projected configuration.
-
-\end{enumerate}
-
-\begin{theorem}[Trace Equivalence]
-Let $G$ be a global type with participants 
-$\mathcal{P} = \mathrm{\pt{G}}$.
-Then $G \approx (\vec T, \vec \epsilon)$.
-\end{theorem}
-
-\begin{proof}
-\dots
-\end{proof}
-
-\subsection{Deadlock Freedom}
-\label{subsection:newdeadlockfreedom}

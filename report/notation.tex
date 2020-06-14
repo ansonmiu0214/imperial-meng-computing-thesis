@@ -89,11 +89,23 @@
 \newcommand{\mrole}[1]{
 {\mathtt{#1}}
 }
+\newcommand{\mroles}[2]{
+{\mrole{#1}\mrole{#2}}
+}
 \newcommand{\pt}[1]{
-\texttt{pt}\left({#1}\right)
+{\textnormal{\texttt{pt}}\left({#1}\right)}
 }
 \newcommand{\rulename}[1]{
 [\textsc{#1}]
+}
+\newcommand{\hlrulename}[1]{
+\hl{[\textsc{#1}]}
+}
+\newcommand{\projconf}[1]{
+{\left\langle{#1}\right\rangle}
+}
+\newcommand{\subtype}{
+\prec
 }
 
 % NEW GENERAL
@@ -103,8 +115,8 @@
 }
 
 % GLOBAL TYPES
-\newcommand{\tend}{\texttt{end}}
-\newcommand{\trecvar}{\texttt{t}}
+\newcommand{\tend}{\textnormal{\texttt{end}}}
+\newcommand{\trecvar}{\textnormal{\texttt{t}}}
 \newcommand{\trec}[1]{\mu\trecvar.{#1}}
 \newcommand{\gcomm}[4]{
 \mrole{#1} \to \mrole{#2} : \left\{ {#3} \right\}_{#4}
@@ -113,7 +125,7 @@
 \mrole{#1} \rightsquigarrow \mrole{#2}. ~ {#3} : \left\{ {#4} \right\}_{#5}
 }
 \newcommand{\wf}[1]{
-\texttt{wellFormed}\left(#1\right)
+\textnormal{\texttt{wellFormed}}\left(#1\right)
 }
 \newcommand{\proj}[2]{
 {#1} \projop \mrole{#2}
@@ -137,7 +149,7 @@
 \mrole{#1} \underset{\mrole{#3}}{\rightsquigarrow} \mrole{#2}. ~ {#4} : \left\{ {#5} \right\}_{#6}
 }
 \newcommand{\wfnew}[2]{
-\texttt{wellFormed}\left(#1, \mrole{#2}\right)
+\textnormal{\texttt{wellFormed}}\left(#1, \mrole{#2}\right)
 }
 
 % LOCAL TYPES
@@ -146,6 +158,15 @@
 }
 \newcommand{\tsel}[3]{
 \mrole{#1} \oplus \left\{ {#2} \right\}_{#3}
+}
+\newcommand{\lty}[1]{
+T_{\mrole{#1}}
+}
+\newcommand{\pinP}{
+{\mrole{p} \in \mathcal{P}}
+}
+\newcommand{\qqinP}{
+{\mroles{q}{q'} \in \mathcal{P}}
 }
 
 % NEW LOCAL TYPES
