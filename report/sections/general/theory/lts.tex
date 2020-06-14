@@ -245,21 +245,30 @@ $}
 
 \begin{itemize}
 
-\item \rulename{Gr6}: 
-\hl{TODO}
-%The emission of a routed message $j$
-%results in the message
+\item \rulename{Gr6} and \rulename{Gr7}
+are analogue to \rulename{Gr1} and \rulename{Gr2}
+for describing the emission and reception of
+messages in routed communication, but uses
+the ``routed in-transit'' construct instead.
 
-\item \rulename{Gr7}:
-\hl{TODO}
-
-\item \rulename{Gr8}:
-\hl{TODO}
-
-\item \rulename{Gr9}:
-\hl{TODO}
+\item \rulename{Gr8} and \rulename{Gr9}
+are analogue to \rulename{Gr4} and \rulename{Gr5}
+in the sense that we only enforce the
+syntactic order of messages for the participants
+involved in the action $l$.
 
 \end{itemize}
+
+An important observation from
+\rulename{Gr8} and \rulename{Gr9} is that,
+for the router,
+the syntactic order of routed communication
+can be freely interleaved between
+the syntactic order of direct communication.
+This is a crucial result for proving
+that the router does not over-serialise
+communication -- 
+we show this in \cref{subsection:encodepreservecomm}.
 
 \subsection{LTS Semantics over Local Types}
 \label{subsection:newltslocal}
@@ -409,47 +418,64 @@ $}
 \label{fig:newlocal}
 \end{figure}
 
-We explain rules \rulename{Lr4} and \rulename{Lr5}
+We walk through rules \rulename{Lr4} and \rulename{Lr5}
 from the perspective of role $\role{p}$.
 
 \begin{itemize}
 
-\item \rulename{Lr4}: 
-\hl{TODO}
-
-\item \rulename{Lr5}:
-\hl{TODO}
+\item \rulename{Lr4} and \rulename{Lr5} are
+analogue to \rulename{Lr1} and \rulename{Lr2}
+for sending and receiving messages respectively.
+The exception is that the new rules pattern-match
+on the proxy role $\role{s}$ on the local type
+and the routed label.
 
 \end{itemize}
 
-We explain rules \rulename{Lr6}, \rulename{Lr7},
+We walk through rules \rulename{Lr6}, \rulename{Lr7},
 \rulename{Lr10} and \rulename{Lr11}
 from the perspective of role $\role{s}$.
 
 \begin{itemize}
 
-\item \rulename{Lr6}:
-\hl{TODO}
+\item \rulename{Lr6} and \rulename{Lr7} are
+analogue to \rulename{Gr1} and \rulename{Gr2}.
+Intuitively, the router $\role{s}$ holds a
+``global'' perspective on the interaction
+between $\role{p}$ and $\role{q}$, which explains
+the correspondence with the LTS semantics over global
+types.
 
-\item \rulename{Lr7}:
-\hl{TODO}
+\item \rulename{Lr10} and \rulename{Lr11} allow
+the router to perform routing actions before handling
+their own direct communication. The syntax $l = \via{s}{\cdot}$
+means that the label $l$ is ``of the form'' of a routing
+action, i.e. there exists some $\role{p}, \role{q}, j$
+such that $l = \via{s}{\aout{p}{q}{j}}$ or 
+$l = \via{s}{\ain{p}{q}{j}}$.
+The constraint of $\subj{l} \neq \mrole{q}$
+prevents the violation of the syntactic order of messages
+sent and received by $\mrole{q}$.
 
-\item \rulename{Lr10}:
-\hl{TODO}
+Curious readers can consider the examples 
+$\proj{G_1}{s}$ and $\proj{G_2}{s}$
+to see why this constraint is needed.
 
-\item \rulename{Lr11}:
-\hl{TODO}
+\begin{align*}
+G_1 &= \gcommone{s}{r}{\tmsg{M1}} \grouteone{r}{q}{s}{\tmsg{M2}} \tend \\
+\proj{G_1}{s} &= \tselone{r}{\tmsg{M1}}. ~ 
+	\routerone{r}{q}{\tmsg{M2}}{\tend} \\~\\
+G_2 &= \gcommone{s}{r}{\tmsg{M1}} \grouteone{p}{r}{s}{\tmsg{M2}} \tend \\
+\proj{G_2}{s} &= \tselone{r}{\tmsg{M1}}. ~ 
+	\routerone{p}{r}{\tmsg{M2}}{\tend} \\
+\end{align*}
 
 \end{itemize}
 
-We explain the remaining inductively defined rules.
-
-\begin{itemize}
-
-\item \rulename{Lr8}:
-\hl{TODO}
-
-\item \rulename{Lr9}:
-\hl{TODO}
-
-\end{itemize}
+As for the remaining rules,
+\rulename{Lr8} and \rulename{Lr9} are analogue to
+\rulename{Gr4} and \rulename{Gr5} because the router
+holds a ``global'' perspective on the communication,
+so transitions that do not violate the syntactic order
+of messages between roles $\mrole{p}$ and $\mrole{q}$
+are allowed.

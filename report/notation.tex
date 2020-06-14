@@ -118,6 +118,9 @@
 \newcommand{\tend}{\textnormal{\texttt{end}}}
 \newcommand{\trecvar}{\textnormal{\texttt{t}}}
 \newcommand{\trec}[1]{\mu\trecvar.{#1}}
+\newcommand{\gcommone}[3]{
+\mrole{#1} \to \mrole{#2}. ~ {#3} :
+}
 \newcommand{\gcomm}[4]{
 \mrole{#1} \to \mrole{#2} : \left\{ {#3} \right\}_{#4}
 }
@@ -142,6 +145,9 @@
 }
 
 % NEW GLOBAL TYPES
+\newcommand{\grouteone}[4]{
+\mrole{#1} \xrightarrow[\mrole{#3}]{} \mrole{#2}. ~ {#4} :
+}
 \newcommand{\groute}[5]{
 \mrole{#1} \xrightarrow[\mrole{#3}]{} \mrole{#2} : \left\{ {#4} \right\}_{#5}
 }
@@ -159,6 +165,9 @@
 \newcommand{\tsel}[3]{
 \mrole{#1} \oplus \left\{ {#2} \right\}_{#3}
 }
+\newcommand{\tselone}[2]{
+\mrole{#1} \oplus {#2}
+}
 \newcommand{\lty}[1]{
 T_{\mrole{#1}}
 }
@@ -172,6 +181,9 @@ T_{\mrole{#1}}
 % NEW LOCAL TYPES
 \newcommand{\router}[4]{
 \texttt{route}\left(\mrole{#1} \to \mrole{#2}: \left\{{#3}\right\}_{#4}\right)
+}
+\newcommand{\routerone}[4]{
+\texttt{route}\left(\mrole{#1} \to \mrole{#2}: {#3}.~{#4}\right)
 }
 \newcommand{\routertrans}[5]{
 \texttt{route}\left(\mrole{#1} \rightsquigarrow \mrole{#2}. ~ {#3} : \left\{{#4}\right\}_{#5}\right)
