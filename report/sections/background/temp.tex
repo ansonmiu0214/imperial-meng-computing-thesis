@@ -1,0 +1,600 @@
+\section{Session Types}
+
+%\subsection{Overview}
+% Motivate different ways of modelling concurrency, narrow the focus to message passing
+Web applications are one of many examples of distributed systems in practice. Distributed systems are built upon the interaction between concurrent processes, which can be implemented using the two main communication abstractions in {shared memory} and {message passing}. 
+
+Shared memory provides processes with the impression of a logical single large monolithic memory but requires programmers to understand consistency models in order to correctly reason about the consistency of shared state.
+
+Message passing interprets the interaction between processes as the exchange of messages, and best describes the communication transports found in web applications, ranging from the stateless request-response client-server interactions via HTTP to full-duplex communication channels via the WebSocket protocol \cite{WebSocketRFC}.
+
+% Outline relevance of process algebra and session types as the relevant typing discipline
+The process algebra $\pi$-calculus introduced by Milner in \cite{Milner1999} provides a formalism of the message passing abstraction in terms of the basic building blocks of sending and receiving processes, along with inductively defined continuation processes. The composition of these primitives allow us to describe more complex communication sessions.
+Session types define the typing discipline for the $\pi$-calculus and provide reliability guarantees for communication sessions; the latter addresses a key challenge when reasoning about the correctness of distributed systems. 
+
+% Outline existing implementations of session types in practice
+Many studies are done on the practical applications of session types, from developing languages providing native session type support \cite{ATS2016} to implementing session types in existing programming languages across different paradigms.
+Implementations of the latter approach differ by how they leverage the design philosophy and features provided by the programming language. For example, King et al. leveraged the expressive type system of PureScript to perform static session type checking in \cite{PureScript2019}, whilst Neykova and Yoshida introduced dynamic approaches to check the conformance of Python programs with respect to session types in \cite{Python2017}.
+
+\subsection{Asynchronous $\pi$-calculus}\label{section_async}
+
+% Introduce pi-calculus, monadic asynchronous pi-calculus.
+The $\pi$-calculus models concurrent computation, where processes can execute in parallel and communicate via shared names.
+We first consider the asynchronous $\pi$-calculus introduced by Honda and Tokoro in \cite{AsyncHonda}.
+Among the many flavours of the calculus which vary depending on the application domain, we outline the variant as presented in \cite{C406Lecture}. 
+
+Figure \ref{fig:async} defines the syntax of processes in asynchronous $\pi$-calculus; the asynchrony comes from the lack of continuation in the output process.
+
+\begin{itemize}
+\item $\mathbf{0}$ is the nil process and represents inactivity.
+\item $\pout{u}{v}$ is the output process that will send value $v$ on $u$.
+\item $\pin{u}{x}.P$ is the input process that, upon receiving a message on $u$, will bind the message to $x$ and carry on executing $P$ under this binding.
+\item $P\mid Q$ represents the parallel composition of processes executing simultaneously.
+\item $!P$ represents the parallel composition of infinite instances of $P$; more specifically, $!P \equiv P \mid {!P}$.
+\item $(\nu a)~P$ represents a name restriction where any occurrence of $a$ in $P$ is local and will not interfere with other names outside the scope of $P$.
+\end{itemize}
+
+
+\begin{figure}[!hb]
+\doublespacing
+\[
+\begin{array}{rlr}
+
+P,Q ::= & & \text{Processes} \\
+     & \mathbf{0} & \text{Nil Process} \\
+\mid & \pout{u}{v} & \text{Output} \\
+\mid & \pin{u}{x}.P & \text{Input} \\     
+\mid & P \mid Q & \text{Parallel Composition} \\
+\mid & !P & \text{Replication} \\
+\mid & (\nu a)~P & \text{Restriction} \\
+
+u,v ::= & & \text{Identifiers} \\
+     & a, b, c,~\dots & \text{Names} \\
+\mid & x, y, z,~\dots & \text{Variables} \\
+
+\end{array}
+\]
+\singlespacing
+\caption{Syntax of Asynchronous $\pi$-calculus}
+\label{fig:async}
+\end{figure}
+
+% Motivate how this models interactions between concurrent processes through the reduction rule in operational semantics.
+The operational semantics model the interaction between parallel processes. Whilst \cite{C406Lecture} presents the full operational semantics, we highlight the \rulename{Comm} reduction rule which specifically models message passing:
+if the parallel composition of an input process and output process share the same name, the composition reduces to the continuation of the input process, substituting the variable $x$ with the message received $v$. We omit the definitions of substitution, free variables and free names, $\alpha$-equivalence and structural congruence; the interested reader may refer to \cite{C406Lecture}.
+
+%\[
+%\infer[\mbox{\rulename{Comm}}]{\pout{a}{v} \mid \pin{a}{x}.P ~\longrightarrow ~ P[v/x] }{}
+%\]
+
+We additionally define a process $P$ to be {stuck} if $P$ is not the nil process and $P$ cannot be reduced any further. For example, the process $P = \pin{a}{x}.\mathbf{0} \mid \pout{b}{v}$ is stuck as the parallel composition of an input process and an output process that do not share the same name cannot be reduced using \rulename{Comm}. In practice, a stuck process contains communications that will never be executed.
+
+\subsection{Binary Session Types}\label{section_bst}
+% Introduce synchronous pi calculus with branching and selection
+A {binary session} is a parallel composition of two processes, each representing a distinct participant.
+In the context of web applications, a binary session would describe the interactions between client and server.
+Without loss of generality, a {session} represents the sequence of send and receive actions of a single participant.
+
+We introduce a {synchronous} session calculus inspired by \cite{MPST}. Figure \ref{fig:sync} defines the syntax formally; we briefly discuss the main components and how it differs from the variant introduced in \cite{C406Lecture}:
+
+% polyadic synchronous
+% communication must come with label
+% equi-recursive recursion, assume guarded
+\begin{itemize}
+\item \textbf{Synchronous communication}: Processes that send a message will have a continuation which will be executed upon a successful send. 
+\item \textbf{Polyadic communication}: A vector of values can be communicated at once.
+\item \textbf{Branching and selection}: A branching process can offer a set of branches, each defined by its own label identifier and continuation process. A selection process can select a branch by sending the corresponding label identifier alongside the payload to the branching process.
+
+\item \textbf{Labelled messages}: a label identifier is attached to all messages; the input process in {\ref{section_async}} is generalised as a branching process that offers one branch.
+\end{itemize}
+
+The \rulename{Comm} rule in the operational semantics for this calculus exemplifies these new additions: given a binary session between distinct participants $\role{p}$ and $\role{q}$ where $\role{q}$ offers a set of labelled branches, if $\role{p}$ selects a label offered by $\role{q}$ and sends a vector of expressions $e_1, \dots, e_n$ that evaluate\footnote{We adopt the operational semantics for expression evaluation $e \downarrow v$ as defined in \cite{C406Lecture}.} to the corresponding vector of values $v_1, \dots, v_n$, the session reduces to a session with the continuation from the selection process composed with the continuation from the selected branch of the branching process, the latter having the variables $x_1, \dots, x_n$ substituted with the vector of values $v_1, \dots, v_n$ received.
+
+%\[
+%\infer[\mbox{\rulename{Comm}}]{
+%	\role{p} :: \sel{\role{q}}{l}{e_1 \dots e_n}.~P \mid 
+%	\role{q} :: \bra{\role{p}}{l_i(x_1 \dots x_n):Q_i}_{i\in I} ~\longrightarrow~ \role{p} :: P \mid \role{q} ::Q_j[v_k/x_k]^n_{k=1}
+%}{
+%	\begin{array}{cccccc}
+%	\exists	j \in I. l_j = l
+%	&
+%	e_1 \downarrow v_1 
+%	& \dots 
+%	& e_n \downarrow v_n
+%	&
+%	& \role{p} \neq \role{q}
+%	\end{array}
+%}
+%\]
+
+\begin{figure}[!hb]
+\doublespacing
+\[
+\begin{array}{rlr}
+
+%v ::= & \underline{n}~\mid~\texttt{true}~\mid~\texttt{false} & \text{Values} \\
+%e, e' ::= & & \text{Expressions} \\
+%	 & v & \text{Values} \\
+%\mid	 & x & \text{Variables} \\
+%\mid & e + e'~\mid~e - e' & \text{Arithmetic Operators} \\
+%\mid & e = e'~\mid~e < e' ~\mid~e > e' & \text{Relational Operators} \\
+%\mid & e \wedge e'~\mid~e \vee e' ~\mid~\neg e & \text{Logical Operators} \\
+%\mid & e \oplus e' & \text{Non-Determinism} \\
+%
+%\role{p} ::= & \role{Client},~\role{Server}& \text{Participant} \\
+%
+%P,Q ::= & & \text{Processes} \\
+%     & \mathbf{0} & \text{Nil Process} \\
+%\mid & \bra{\role{p}}{l_i(x_1 \dots x_n):P_i}_{i\in I} & \text{Branching} \\
+%\mid & \sel{\role{p}}{l}{e_1 \dots e_n}.~P & \text{Selection} \\
+%\mid & \texttt{if}~e~\texttt{then}~P~\texttt{else}~Q & \text{Conditional} \\
+%\mid & \mu X.~P & \text{Recursive Process} \\
+%\mid & X & \text{Process Variable} \\
+%
+%l, l' ::= & {\tt{``str''}} & \text{Label Identifiers} \\
+%
+%\mathcal{M} ::= & \role{p} :: P~\mid~\role{q} :: Q & \text{Binary Session} \\
+\end{array}
+\]
+
+\singlespacing
+\caption{Syntax of Session Calculus with Branching, Selection and Recursion}
+\label{fig:sync}
+\end{figure}
+
+
+Additionally, the calculus introduces:
+
+\begin{itemize}
+\item \textbf{Conditionals}: If $e \downarrow \texttt{true}$, the process $\texttt{if}~e~\texttt{then}~P~\texttt{else}~Q$ reduces to $P$; if $e \downarrow \texttt{false}$, the process $\texttt{if}~e~\texttt{then}~P~\texttt{else}~Q$ reduces to $Q$.
+\item \textbf{Recursion}: Following the equirecursive approach, the occurrence of the process variable $X$ in the recursive process can be expanded into the process transparently; more specifically, $\mu X. P \equiv P[(\mu X. P)/X]$.
+\end{itemize}
+
+
+% Introduce binary session types
+{Session types} represent the type theory for our session calculus. We define the syntax of session types for binary sessions in figure \ref{fig:bst}. 
+
+\begin{figure}[!hb]
+\doublespacing
+\[
+\begin{array}{rlr}
+
+U ::= & \text{\tt{int}}~\mid~\text{\tt{bool}} & \text{Sorts} \\
+
+S ::= & & \text{Session Types} \\
+     & \mathbf{end} & \text{Termination} \\
+\mid & \tbra{\role{p}}{l_i(U_1 \dots U_n):S_i}{i\in I} & \text{Branching} \\
+\mid & \tsel{\role{p}}{l_i(U_1 \dots U_n):S_i}{i\in I} & \text{Selection} \\
+\mid & \mu \mathbf{t}.~S & \text{Recursive Type} \\
+\mid & \mathbf{t} & \text{Type Variable} \\
+\end{array}
+\]
+
+\singlespacing
+\caption{Syntax of Session Types}
+\label{fig:bst}
+\end{figure}
+
+We derive the type of a process with a {typing judgement} of the form $\Gamma \vdash P: S$, which reads, \textit{under the typing context $\Gamma$, process $P$ has session type $S$}. 
+
+The {typing context} records typing assumptions used as part of the derivation: in the case of binary session types, the context maps expressions to sorts, and process variables to session types. A typing judgement is constructed in terms of inference rules defined inductively on the structure of processes and expressions.
+
+We present the rules for \rulename{Ty-Sel} and \rulename{Ty-Bra}, the remaining rules follow from \cite{C406Lecture} and can be trivially defined as they leverage the syntactic similarities between session types and our session calculus.
+
+%\[
+%\infer[\mbox{\rulename{Ty-Bra}}]{
+%	\Gamma \vdash \bra{\role{p}}{l_i(x_1 \dots x_n):P_i}_{i\in I} : \tybra{\role{p}}{l_i(U_1 \dots U_n):S_i}_{i\in I}
+%	}{
+%	\begin{array}{ccc}
+%	\forall i \in I.
+%	&
+%	&
+%    \Gamma, x_1: U_1, \dots, x_n: U_n \vdash P_i : S_i		
+%	\end{array}
+%}
+%\]
+%
+%\[
+%\infer[\mbox{\rulename{Ty-Sel}}]{
+%	\Gamma \vdash \sel{\role{p}}{l}{e_1 \dots e_n}.P : \tysel{\role{p}}{l(U_1 \dots U_n): S}
+%	}{
+%	\begin{array}{cccc}
+%	\Gamma \vdash e_1 : U_1
+%	&
+%	\dots
+%	&
+%	\Gamma \vdash e_n : U_n
+%	&
+%    \Gamma \vdash P : S
+%	\end{array}
+%}
+%\]
+
+% Guarantees for well-typed sessions expressed through duality, also notion of subtyping.
+The definition of stuck processes from {\ref{section_async}} motivate the discussion of communication errors that may occur during interactions among participants. We outline two of the main classes of errors:
+
+\begin{itemize}
+\item \textbf{Deadlock}: Progress cannot be made when the two participants expect to be receiving a message from each other at the same time.
+\item \textbf{Communication mismatch}: Progress cannot be made when the selection process sends a message with a label identifier not offered by the branching process; likewise, the payload sent must be compatible with the sort expected by the branching process for the selected branch.
+\end{itemize}
+
+Session types ensure that well-typed binary sessions are guaranteed to be free from these communication errors through the concept of {duality}. Duality defines a notion of {compatibility} between processes: two session types are dual with respect to each other if the communication between them (i.e. pairs of sending and receiving actions) always match (i.e. with respect to the selected label and message payload type). We define $\overline{S}$ as the dual type of $S$ in Table \ref{table:dual}.
+
+% Row height in tables
+\renewcommand{\arraystretch}{1.2}
+\begin{center}
+\begin{tabular}{rcl}
+%$\overline{\mathbf{end}}$ & = & $\mathbf{end}$ \\
+%$\overline{\tybra{\role{p}}{l_i(U_1 \dots U_n):S_i}_{i\in I}}$ & = & $\tysel{\role{q}}{l_i(U_1 \dots U_n):\overline{S_i}}_{i\in I}$ \\
+%$\overline{\tysel{\role{p}}{l_i(U_1 \dots U_n):S_i}_{i\in I}}$ & = & $\tybra{\role{q}}{l_i(U_1 \dots U_n):\overline{S_i}}_{i\in I}$ \\
+%$\overline{\mu \mathbf{t}. S}$ & = & $\mu t. \overline{S}$ \\
+%$\overline{\mathbf{t}}$ & = & $\mathbf{t}$ \\ 
+\end{tabular}
+\captionof{table}{Duality of Binary Session Types involving participants $\role{p}$ and $\role{q}$}
+\label{table:dual}
+\end{center}
+\renewcommand{\arraystretch}{1}
+
+
+Consequently, a binary session is well-typed if the participating processes are typed to be dual with respect to each other: we illustrate this in \rulename{MTy}.
+
+%\[
+%\infer[\mbox{\rulename{MTy}}]{
+%	\vdash \role{p} :: P \mid 
+%	\role{q} :: Q
+%}{
+%	\begin{array}{lr}
+%	\cdot \vdash P: S
+%	&
+%	\cdot \vdash Q: \overline{S}
+%	\end{array}
+%}
+%\]
+
+The definition of duality alone restricts the definition of well-typed binary sessions to those where the two processes are derived to be \textit{exactly} dual types of one another. Consider the pair of session types below:
+
+%\[
+%\begin{array}{rl}
+%S_{\text{Client}} &= \tysel{\role{Server}}{\text{Succ}(\texttt{int}): \tybra{\role{Server}}{\text{Res}(\texttt{int}): \mathbf{end}}} \\
+%S_{\text{Server}} &= \tybra{\role{Client}}{\text{Succ}(\texttt{int}): \tysel{\role{Client}}{\text{Res}(\texttt{int}): \mathbf{end}},~\text{Quit}(): \mathbf{end}}
+%\end{array}
+%\]
+
+Whilst $\overline{S_{\text{Client}}} \neq S_{\text{Server}}$, this pair of session types is intuitively compatible as the client is selecting a branch offered by the server, where the session types for the continuations of this branch for both participants are indeed dual.
+
+This motivates the concept of {subtypes}, which allows a process to be typed by its ``supertype'' when required. $\leqslant$\footnote{The $\leqslant$ operator is also an overloaded relation on sorts to express subsorting.} defines the subtyping relation: $S \leqslant S'$ reads \textit{$S$ is a subtype of $S'$}, and is defined coinductively on the structure of session types.
+
+We present the inference rules for \rulename{Sub-Bra} and \rulename{Sub-Sel} inspired by \cite{MPST} but adapted for polyadic communication; the intuition behind subtyping and subsorting is outlined below:
+
+\begin{itemize}
+\item \textbf{Branching}: The supertype of a branching process offers a subset of the branches and expects more specific types of payload; intuitively, if a process expects to receive an \texttt{int}, it can handle a \texttt{nat} payload.
+\item \textbf{Selection}: The supertype of a selection process offers a superset of the internal choices and can send more generic types of payload; intuitively, if a process sends a \texttt{nat}, the payload is compatible with receivers expecting a more generic \texttt{int} payload.
+\end{itemize}
+
+\begin{prooftree}
+\AxiomC{$\forall i \in I.$}
+\AxiomC{$U'_1 \leqslant U_1 \dots U'_n \leqslant U_n$}
+\AxiomC{$S_i \leqslant S'_i$}
+\RightLabel{\mbox{\rulename{Sub-Bra}}}
+\doubleLine
+\TrinaryInfC{$
+	\tbra{\role{p}}{l_i(U_1 \dots U_n):S_i}{i\in I \cup J}
+	\leqslant
+	\tbra{\role{p}}{l_i(U'_1 \dots U'_n):S'_i}{i\in I}
+$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$\forall i \in I.$}
+\AxiomC{$U_1 \leqslant U'_1 \dots U_n \leqslant U'_n$}
+\AxiomC{$S_i \leqslant S'_i$}
+\RightLabel{\mbox{\rulename{Sub-Sel}}}
+\doubleLine
+\TrinaryInfC{$
+	\tsel{\role{p}}{l_i(U_1 \dots U_n):S_i}{i\in I}
+	\leqslant
+	\tsel{\role{p}}{l_i(U'_1 \dots U'_n):S'_i}{i\in I \cup J}
+$}
+\end{prooftree}
+
+
+We also introduce subsumption in \rulename{Ty-Sub} to incorporate the subtyping relation into the typing judgement.
+
+%\[
+%\infer[\mbox{\rulename{Ty-Sub}}]{
+%	\Gamma \vdash P : S'
+%}{
+%	\begin{array}{lr}
+%	\Gamma \vdash P: S
+%	&
+%	S \leqslant S'
+%	\end{array}
+%}
+%\]
+
+This allows us to construct a derivation to show that the binary session 
+
+\[
+\mathcal{M} = \role{Client} :: P_\text{Client}~\mid~\role{Server} :: P_\text{Server}
+\]
+
+is well-typed, assuming $P_\text{Client}$ and $P_\text{Server}$ are typed $S_\text{Client}$ and $S_\text{Server}$ respectively.
+
+\begin{prooftree}
+\AxiomC{\vdots}
+\UnaryInfC{$\cdot \vdash P_\text{Client}: S_\text{Client}$}
+\AxiomC{\vdots}
+\UnaryInfC{$\cdot \vdash P_\text{Server}: S_\text{Server}$}
+\AxiomC{\vdots}
+\doubleLine
+\UnaryInfC{$S_\text{Server} \leqslant \overline{S_\text{Client}}$}
+
+%\AxiomC{$\cdot \vdash P_\text{Client}: S_\text{Client}$}
+%\AxiomC{$\cdot \vdash P_\text{Server}: S_\text{Server}$}
+%\AxiomC{$S_\text{Server} \leqslant \overline{S_\text{Client}}$}
+\RightLabel{\rulename{Ty-Sub}}
+\BinaryInfC{$\cdot \vdash P_\text{Server}: \overline{S_\text{Client}}$}
+\RightLabel{\rulename{MTy}}
+\BinaryInfC{$
+	\vdash \role{Client} :: P_\text{Client} \mid 
+	\role{Server} :: P_\text{Server}
+$}
+\end{prooftree}
+
+\subsection{Multiparty Session Types}
+
+% Motivate the extension from BST to MPST (example of battleship game, existing distributed protocols that involve multiple participants?)
+Whilst binary session types provide communication guarantees between exactly 2 participants, distributed systems generally involve more parties in practice. This is equally relevant in interactive web applications, as motivated by the \textit{Battleships} game example in \cite{PureScript2019} where the server coordinates interactions between two players. 
+
+Whilst there is a natural syntactical extension to our session calculus for describing multiparty sessions\footnote{We also adopt the shorthand $\mathcal{M} ::= \prod^n_{i=1} \role{p_i} :: P_i$ as used in the literature.} as
+
+\[
+\begin{array}{rl}
+\mathcal{M} ::= & \role{p_1} :: P_1~\mid~\role{p_2} :: P_2~\mid~\dots~\mid \role{p_n} :: P_n
+\end{array}
+\]
+
+the same cannot be said for the binary session typing discipline, particularly with respect to duality. The same notion of duality does not extend to the decomposition of multiparty interactions into multiple binary sessions:  \cite{C406Lecture} and \cite{MPST} both present counterexamples of well-typed binary sessions that, when composed to represent a multiparty session, results in communication errors thus violating guarantees of well-typed sessions.
+
+Honda et al. presents {multiparty session types} in \cite{MPAST} to extend the binary session typing discipline for sessions involving more than 2 participants, whilst redefining the notion of compatibility in this multiparty context. Multiparty session types are defined in terms a {global type}, which provides a bird's eye view of the communication protocol describing the interactions between pairs of participants. Figure \ref{fig:mpst} defines the syntax of global types inspired by \cite{MPST} and adapted to be compatible with our session calculus presented in {\ref{section_bst}}.
+
+% Introduce global type, projection
+\begin{figure}[!hb]
+\doublespacing
+\[
+\begin{array}{rlr}
+
+G ::= & & \text{Global Types} \\
+     & \mathbf{end} & \text{Termination} \\
+\mid & \role{p} \to \role{q}:\left\{l_i(U_1 \dots U_n).~G_i\right\}_{i \in I} & \text{Message Exchange} \\
+\mid & \mu \mathbf{t}.~G & \text{Recursive Type} \\
+\mid & \mathbf{t} & \text{Type Variable} \\
+\end{array}
+\]
+
+\singlespacing
+\caption{Syntax of Global Types}
+\label{fig:mpst}
+\end{figure}
+
+To check the conformance of a participant's process against the protocol specification described by the global type, we {project} the global type onto the participant to obtain a session type that only preserves the interactions described by the global type that pertain to the participant. Projection is defined by the $\upharpoonright$ operator, more commonly seen in literature in its infix form as $G \upharpoonright \role{p}$ describing the projection of global type $G$ for participant $\role{p}$. Intuitively, the projected local type of a participant describes the protocol from the viewpoint of the participant.
+
+More formally, projection can be interpreted as a \textit{partial function} ${\upharpoonright} :: G \times \role{p} \rightharpoonup S$, as the projection for a participant may be undefined for an ill-formed global type; \cite{C406Lecture} presents examples of where this is the case, and \cite{MPST} presents the formal definition of projection.
+
+% How does the notion of compatibility (which used to be duality) adapt to MPST?
+The notion of compatibility in multiparty session types is still captured by \rulename{MTy}, but adapted to consider the local projections for all participants as supposed to dual types in the binary case. 
+
+%\[
+%\infer[\mbox{\rulename{MTy}}]{
+%	{\displaystyle \vdash \prod^{}_{i \in I} \role{p_i} :: P_i ~: G} 
+%}{
+%	\begin{array}{llll}
+%	\forall i \in I. 
+%	&
+%	\cdot \vdash P_i: G \upharpoonright \role{p_i}
+%	&
+%	&
+%	\text{pt}(G) \subseteq \left\{\role{p_i} \mid i \in I \right\}
+%	\end{array}
+%}
+%\]
+
+
+For a multiparty session $\mathcal{M} = \prod_{i \in I}\role{p_i} :: P_i$ to be well-typed by a global type $G$, we require: 
+
+\begin{enumerate}
+\item All participant processes $\role{p_i} :: P_i$ to be well-typed with respect to their corresponding well-defined projection $G \upharpoonright \role{p_i}$, and 
+\item $G$ does not describe interactions with participants not defined in $\mathcal{M}$ 
+\end{enumerate}
+
+Well-typed multiparty session enjoys the following communication guarantees as outlined in \cite{GentleMPST}:
+
+\begin{itemize}
+\item \textbf{Communication safety}: The types of sent and expected messages will always match.
+\item \textbf{Protocol fidelity}: The exchange of messages between processes will abide by the global protocol.
+\item \textbf{Progress}: Messages sent by a process will be eventually received, and a process waiting for a message will eventually receive one; this also means there will not be any sent but unreceived messages.
+\end{itemize}
+
+This motivates an elegant, decentralised solution for checking protocol conformance in practice: once the global type for the protocol is defined, local processes can verify their implementation against their corresponding projection in isolation, independent of each other. 
+
+%Figure \ref{fig:mpst_workflow}\todo{Create figure} illustrates this diagrammatically.
+%
+%\begin{figure}[!h]
+%\caption{Type checking with Multiparty Session Types}
+%\label{fig:mpst_workflow}
+%\end{figure}
+
+
+
+\section{The Scribble Protocol Language}
+
+%\subsection{Overview}
+% Introduce Scribble as an implementation of MPST
+Whilst session type theory represents the type language for concurrent processes, it also forms the theoretical basis of proposals introduced to implement session types for real-world application development: the Scribble language is one such proposal.
+
+Scribble \cite{Scribble} is a platform-independent description language for the specification of message-passing protocols. The language describes the behaviour of communicating processes at a high level of abstraction: more importantly, the description is independent from implementation details in the same way that the type signature of a function declaration is decoupled from the corresponding function definition.
+
+% Protocol specification: show parallels between Scribble protocol and MPST global type
+A Scribble protocol specification describes an agreement of how participating systems, referred to as {roles}, interact. The protocol stipulates the sequence of structured messages exchanged between roles; each message is labelled with a name and the type of payload carried by the message.
+
+We present an example of a Scribble protocol in Figure \ref{fig:adder_scr} adapted from \cite{Hybrid2016}. The protocol specifies an arithmetic web service offered by a server to a client, represented by roles $S$ and $C$ respectively. The client is permitted to either:
+
+\begin{itemize}
+\item Send two \texttt{int}s attached to an \texttt{Add} message, where the server will respond with an \texttt{int} in a message labelled \texttt{Res}, and the protocol recurses; or,
+\item Send a \texttt{Quit} message, where the server will respond with a \texttt{Terminate} message and the protocol ends.
+\end{itemize}
+
+The platform-independent nature of Scribble can be observed from the \texttt{type} declaration on Line 1: the developer has the freedom to specify message payload formats and data types from the target language of the implementation - in this case, aliasing the built-in Java integer as \texttt{int} throughout the protocol.
+
+\begin{figure}[!h]
+\begin{lstlisting}[language=Scribble]
+type <java> "java.lang.Integer" from "rt.jar" as int;
+
+global protocol Adder(role C, role S) {
+	choice at C {
+		Add(int, int)	from C to S;
+		Res(int)		from S to C;
+		do Adder(C, S);
+	} or {
+		Quit()		from C to S;
+		Terminate()	from S to C;	
+	}
+}
+\end{lstlisting}
+\caption{Adder Protocol in Scribble}
+\label{fig:adder_scr}
+\end{figure}
+
+The simplicity of the protocol specification language reflects the design goals for Scribble, as outlined in \cite{Scribble}, to be easy to read, write and maintain, even for developers who are not accustomed to the formalities in protocol specification. Moreover, we clearly observe the parallels between the Scribble language and multiparty session type (MPST) theory, from the homomorphic mapping between Scribble roles and MPST participants to the syntactic similarities between the specification in Figure \ref{fig:adder_scr} and the global type below written in the calculus.
+
+\[
+\begin{array}{rl}
+G = \mu\mathbf{t}.\role{C}\to\role{S}:\{
+& \text{Add}(\texttt{int}, \texttt{int}): \role{S}\to\role{C}: \{\text{Res}(\texttt{int}): \mathbf{t}\}, \\
+& \text{Quit}(): \role{S}\to\role{C}: \{\text{Terminate}(): \mathbf{end}\}\\
+\} &
+\end{array}
+\]
+
+\subsection{Endpoint Finite State Machines}
+% Show parallels between Scribble protocol-to-EFSM and MPST global-to-local projections
+The protocol specification language is a component of the broader Scribble project in \cite{Scribble}; through the project, Honda et al. also aims to facilitate the development of endpoint applications that conform to user-specified protocols.
+
+A Scribble global protocol can be projected to a role to obtain the local specification of said protocol from the role's viewpoint. This is analogous to the standard algorithmic projections in multiparty session type theory: the projected local specification, or local protocol, only preserves the interactions in which the target role is involved. Any user-defined type declarations in the global protocol will also be preserved. This allows local roles, also referred to as {endpoints}, to verify their implementation against their local protocol for conformance, independent of other endpoints. The communication safety guarantees from MPST theory also apply here: if the implementation for each endpoint is verified against its local protocol, the multiparty system as a whole will conform to the global protocol.
+
+% Formalise syntax and properties of EFSM derived from well-formed protocols
+To facilitate the verification process, a local protocol is converted into 
+an {endpoint finite state machine} (EFSM). An EFSM encodes the control flow of the local protocol, where an initial state is defined and each transition from some state to a successor state corresponds to a valid IO action (i.e. sending to or receiving from another role) permitted at the endpoint at that state. Figure \ref{fig:efsmsyntax} presents the EFSM formalism adopted from \cite{Hybrid2016}.
+
+\begin{figure}[!hb]
+\doublespacing
+\[
+\begin{array}{rlr}
+
+\text{EFSM} ::= & \mathbb{R} \times \mathbb{L} \times \mathbb{T} \times \Sigma \times \mathbb{S} \times \delta & \text{Endpoint FSM} \\
+
+\mathbb{R} ::= & r,~r',~\dots & \text{Role Identifiers} \\
+
+\mathbb{L} ::= & l,~l',~\dots & \text{Message Label Identifiers} \\
+
+\mathbb{T} ::= & \texttt{int},~\texttt{bool},~T,~T',~\dots & \text{Payload Format Types} \\
+
+\Sigma ::= & & \text{Actions} \\
+     & r!l(\tilde{T}) \quad \text{where } \tilde{T} \subseteq \mathbb{T} & \text{Output} \\
+\mid & r?l(\tilde{T}) \quad \text{where } \tilde{T} \subseteq \mathbb{T} & \text{Input} \\
+
+\mathbb{S} ::= & S,~S',\dots & \text{State Identifiers} \\
+
+\delta ::= & \mathbb{S} \times \Sigma \rightharpoonup \mathbb{S} & \text{State Transition Function} \\
+
+\end{array}
+\]
+\singlespacing
+\captionof{figure}{Syntax for Endpoint FSM}
+\label{fig:efsmsyntax}
+\end{figure}
+
+We highlight the semantics of the {state transition function}. Its domain defines the set of permitted actions for each state, and the range defines the successor state. Crucially, this is a {partial function} because the EFSM restricts what can be done (in terms of send and receive actions, and what label/payload types can be sent and received). 
+
+\begin{figure}[!h]
+\doublespacing
+\[
+\begin{array}{rl}
+
+\texttt{initial}_{EFSM}(S) \iff & \nexists S' \in \mathbb{S},\alpha \in \Sigma.~\delta(S',\alpha) = S \\
+\texttt{terminal}_{EFSM}(S) \iff & \delta(S) = \emptyset \\
+\texttt{output}_{EFSM}(S) \iff & \delta(S) = \{\,\alpha \in \Sigma \mid \exists l \in \mathbb{L}, \tilde{T} \subseteq{\mathbb{T}}.~\alpha = r!l(\tilde{T})\,\}~\text{for some}~r \in \mathbb{R} \\
+\texttt{input}_{EFSM}(S) \iff & \delta(S) = \{\,\alpha \in \Sigma \mid \exists l \in \mathbb{L}, \tilde{T} \subseteq{\mathbb{T}}.~\alpha = r?l(\tilde{T})\,\}~\text{for some}~r \in \mathbb{R}
+\end{array}
+\]
+\singlespacing
+\captionof{figure}{Types of EFSM States}
+\label{fig:efsmstates}
+\end{figure}
+
+We adopt the properties of EFSMs for well-formed protocol specifications from \cite{Hybrid2016} \textbf{(1)} there is exactly one initial state, \textbf{(2)} there is at most one terminal state, and \textbf{(3)} every non-terminal state is either an input state or output state. There are further restrictions on input and output states, namely these states must only send to or receive from the same role. We formalise these properties in Figure \ref{fig:efsmstates}.
+
+
+
+
+
+
+
+
+\section{Code Generation}
+The EFSM describes the local session type and provides guidance to developers for verifying that their endpoint implementation conforms to the communication protocol. However, a direct encoding of the local session type into the target language of the implementation is usually not feasible as the EFSM assumes IO objects as first-class citizens and communication channels are linear resources, features that are left to be desired in mainstream programming languages (such as Java and Python) used by the developers' implementations. We note that languages with native session type support (e.g. ATS \cite{ATS2016}) exist, but their usage largely remains for research purposes as supposed to real-world application development.
+
+Code generation is a common approach for verifying implementations written in the aforementioned mainstream languages against the EFSM. Approaches in the literature differ by how they leverage features in the target language (such as the type system), but generally define some interpretation of the EFSM in the target language and generate APIs which the developer can use to implement a target application that guarantees the following two properties:
+
+\begin{itemize}
+\item \textbf{Behavioural typing}: The execution trace of messages sent and received by the application is accepted by the EFSM.
+\item \textbf{Channel linearity}: Each transition in the EFSM represents a channel resource. When the application transitions from some state $S$ to some successor state $S'$, it must no longer be able to access a reference (e.g. have an alias) to $S$.
+\end{itemize}
+
+We outline the different existing approaches and summarise how they verify the aforementioned properties in {\ref{section:codegencompare}}.
+
+\subsection{Runtime Monitors}
+% What
+Neykova and Yoshida targeted the MPST methodology for Python programs in \cite{Python2017} and proposed to generate {runtime monitors} from the EFSM. These monitors expose APIs for sending and receiving messages, which is used by the developer in their implementation. The runtime monitor is an abstraction between the developer's implementation and the actual communication channel, and ``executes'' the EFSM internally to ensure protocol conformance. When the developer sends a message (with some label and payload) using the API, the runtime monitor checks whether this send action conforms to the current EFSM state, and if so, performs the send and advances to the successor state. Likewise, when the developer invokes a receive, the runtime monitor verifies that this is permitted at the current EFSM state before returning the received payload.
+
+We observe that this approach complements the dynamic typing nature of the Python language, which makes it sensible to perform behavioural typing at runtime. As the send and receive IO primitives are made available to the developer, there are no ``instances'' of channel resources created, so the developer cannot explicitly hold a reference to some state in the EFSM (let alone keep aliases), so channel linearity is trivially guaranteed here.
+
+\subsection{Type-Level Encoding}
+King et al. presented an approach in \cite{PureScript2019} for integrating session types into web development using the PureScript language, which takes advantage of its expressive type system to provide static guarantees on implementation conformance with respect to the protocol. We outline the main components of their EFSM encoding:
+
+\paragraph{Actions as type classes} The semantics of the state transition function in the EFSM formalism express that a tuple of state-action \textit{uniquely defines} a successor state. These semantics can be expressed by \textit{multi-parameter type classes (MPTC) with functional dependencies}: \texttt{class Send r s t a | s -> t r a} defines \texttt{Send} as a MPTC parameterised by recipient \texttt{r}, current state \texttt{s}, successor state \texttt{t} and payload type \texttt{a}, and \texttt{s -> t r a} expresses the functional dependency that, for an instance of this type class, the current state uniquely determines the successor state, the recipient and payload type. These type classes are independent of the EFSM.
+
+\paragraph{Transitions as instances of type classes} By encoding states as data types, valid EFSM transitions are encoded as \textit{instances} of the type classes. If \texttt{S1} is an output state, sending an \texttt{Int} to \texttt{Svr} with successor \texttt{S2}, we would encode \texttt{instance SendS1 :: Send Svr S1 S2 Int}. Because of the functional dependency, the developer cannot instantiate an invalid transition (e.g. \texttt{Send Svr S1 S3 Bool}, since \texttt{S1} uniquely determines the other type parameters. 
+
+This proposal is relevant to the problem we are tackling, and we appreciate that the intricacy of the library design in the communication combinators to conceal the channel resources is something we can build upon in our solution. We also observe the challenges of applying session types to the front-end environment, as shown by the careful choice made in \cite{PureScript2019} to use the \textit{Concur UI} framework which builds UI elements sequentially to model sequential sessions; not doing so would require binding channel resources into event listeners on UI elements, which makes linearity violation possible (e.g. by binding a send transition to a button click event, the user might click the button twice, thus reusing the channel).
+
+\subsection{Hybrid Session Verification}
+Whilst runtime monitors and type-level encoding achieve communication safety guarantees via dynamic and static approaches respectively, Hu and Yoshida implemented a workflow in \cite{Hybrid2016} that performs hybrid verification of communication protocol conformance for Java applications. We highlight the two main components below:
+
+\paragraph{Static session typing} States are represented as classes; supported transitions on each state are represented as instance methods, parameterised by the role, label and payload involved in the message exchange. A send method takes the payload to send as a parameter, whilst a receive method is a blocking call that requires the caller to allocate a \texttt{Buf<T>} wrapper on the stack (where \texttt{T} is the expected payload type), then the receive method populates the payload into the wrapper and returns upon receiving from the channel. These instance methods return a new instance of the successor state class.
+
+\paragraph{Runtime linear channel usage checks} Each state keeps track of its usage in a private boolean flag and throws an exception when the instance method is called twice, which signifies channel reuse and a linearity violation. Similarly, the \texttt{SessionEndpoint} class keeps track of whether the connection is open or close, and throws an exception when program execution exits the scope of the session endpoint and a terminal state has yet to be reached, signifying a protocol violation as the session hasn't completed yet but is now out of scope.
+
+We find that this proposal strikes a good balance between maximising static communication safety guarantees whilst providing an intuitive set of APIs for developers to efficiently write their applications. For example, the encoding of transitions as instance methods that return new instances of the successor state exposes the channel resource, and since Java does not build support for linear resources and does not monitor aliasing of variables, linear channel usage is monitored dynamically. However, this complements the imperative style of application code written in Java, and takes advantage of the type system to statically enforce valid transitions in the code.
+
+\subsection{Comparison}
+\label{section:codegencompare}
+
+We compare how these existing code generation approaches provide communication safety guarantees in Table \ref{table:comparison}.
+
+
+\begin{figure}[!h]
+\centering
+\begin{tabular}{l || p{0.35\textwidth} | p{0.35\textwidth}}
+%\begin{tabular}{l||l|l}
+Language & Behavioural typing & Channel linearity \\
+\hline\hline
+Python \cite{Python2017} & Dynamically enforced - runtime monitor represent the EFSM and only execute supported transitions. & Trivially guaranteed - channel resources not exposed, developer uses \texttt{send()} and \texttt{receive()} primitives. \\
+\hline
+PureScript \cite{PureScript2019} & Type-level encoding - EFSM states are encoded as types, IO actions are encoded as multi-parameter type classes (to express the semantics of the state transition function) and EFSM transitions are encoded as instances of said type classes. & Statically guaranteed - channels are not exposed in the provided combinators to prevent reuse, and session constructor requires a \texttt{Session} continuation parameterised by initial and terminal state to prevent incomplete sessions.  \\
+\hline
+Java \cite{Hybrid2016} & Statically guaranteed - states are encoded as classes; transitions are encoded as instance methods on the state class and return a new instance of the successor state class. & Checked at runtime - states keep \texttt{used} boolean flag to detect and prevent reuse, Session API implements \texttt{AutoCloseable} interface to be used in resource try-catch block to prevent unused.
+\end{tabular}
+\captionof{table}{Comparison between existing MPST code generation approaches.}
+\label{table:comparison}
+\end{figure}
