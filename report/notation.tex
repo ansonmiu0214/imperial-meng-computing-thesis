@@ -89,6 +89,22 @@
 \newcommand{\pin}[2]{
 {{#1}({#2})}
 }
+\newcommand{\sel}[3]{
+{\mrole{#1} \rhd {#2} \langle {#3} \rangle }
+}
+\newcommand{\bra}[3]{
+{\mrole{#1} \lhd \left\{ {#2} \right\}_{#3}}
+}
+\newcommand{\ptprocess}[2]{
+{\mrole{#1} :: {#2}}
+}
+\newcommand{\precvar}{X}
+\newcommand{\precursion}[1]{
+\mu\precvar . {#1}
+}
+\newcommand{\pcond}[3]{
+\texttt{if }{#1}\texttt{ then }{#2}\texttt{ else }{#3}
+}
 
 
 % GENERAL
@@ -115,6 +131,9 @@
 }
 \newcommand{\subtype}{
 \prec
+}
+\newcommand{\dual}[1]{
+\overline{#1}
 }
 
 % NEW GENERAL
@@ -173,6 +192,9 @@
 }
 \newcommand{\tsel}[3]{
 \mrole{#1} \oplus \left\{ {#2} \right\}_{#3}
+}
+\newcommand{\tbraone}[2]{
+\mrole{#1} \with {#2}
 }
 \newcommand{\tselone}[2]{
 \mrole{#1} \oplus {#2}
