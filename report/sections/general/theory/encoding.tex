@@ -1,22 +1,631 @@
-\section{Router-Parameterised Encoding}
+\section{From Canonical MPST to \newtheory}
 \label{section:encoding}
 
-\begin{itemize}
-\item define encoding on global types
-\item define encoding on local types
-\item define encoding on LTS actions
-\item motivate with twobuyer example
-\end{itemize}
+We present an encoding from canonical MPST theory
+to \newtheory.
+This encoding is \textit{parameterised} by the router role 
+(conventionally denoted as $\mrole{s}$);
+the intuition is that we encode all communication interactions
+to involve $\mrole{s}$.
+For example, as motivated in \cref{chap:p2p},
+we can encode the \tprotocol{Two Buyer} protocol
+into routed multiparty session types with respect to the
+\trole{S}eller role as the router.
+When we extend \codegen to implement \newtheory in \cref{chap:impl},
+the developer can implement the \tprotocol{Two Buyer} protocol
+as an interactive web application over WebSocket transport.
 
-\subsection{Correspondence between Global and Local Type Encodings}
-\label{subsection:encodelink}
-\begin{itemize}
-\item prove proposition
-\item state corollary for subsequent proof
-\end{itemize}
+We define the encoding in \cref{subsection:encoding}.
+More importantly, we prove that the encoded routed communications
+preserve the communication safety
+properties (\cref{subsection:encodepreservewf}) 
+and communication structure (\cref{subsection:encodepreservecomm}) 
+of the original 
+communication. 
+This directly addresses the challenges discussed in
+\cref{section:routerchallenges}
+
+
+\subsection{Router-Parameterised Encoding}
+\label{subsection:encoding}
+
+We define the router-parameterised encoding
+on global types, local types and LTS labels in
+the canonical MPST theory.
+
+We start with global types, 
+as presented in \cref{def:encglobal}.
+The main rule is \rulename{Enc-G-Comm}:
+if the communication did not go through $\role{s}$,
+then the encoded communication involves $\role{s}$ as the router.
+The remaining rules are self-explanatory.
+
+\begin{definition}[Encoding on Global Types]
+
+\doublespacing
+\[
+\begin{array}{rclr}
+\enc{\tend}{s} &= & \tend & \rulename{Enc-G-End} \\
+\enc{\trecvar}{s} &= & 
+	\trecvar & \rulename{Enc-G-RecVar} \\
+\enc{\trec{G}}{s} &= & 
+	\trec{\enc{G}{s}} & \rulename{Enc-G-Rec} \\
+\enc{\gcomm{p}{q}{l_i: G_i}{i \in I}}{s} &= & 
+	\begin{cases}
+	\gcomm{p}{q}{l_i: \enc{G_i}{s}}{i \in I} 
+		& \text{if } \mrole{s} \in \{ \mrole{p}, \mrole{q} \} \\
+	\groute{p}{q}{s}{l_i: \enc{G_i}{s}}{i \in I} 
+		& \text{otherwise} \\	
+	\end{cases} & \rulename{Enc-G-Comm} \\
+\end{array}
+\]
+\singlespacing
+
+\label{def:encglobal}
+\end{definition}
+
+Readers may observe striking similarities between
+the encoding on global types and the definition of a
+centroid in routed communication (\cref{def:centroid}).
+In fact, the two are the same -- the encoding on global
+types simply expresses the centroid predicate as a function.
+We arrive at \cref{lem:enccenter} -- the proof is straightforward
+by induction on global types and left as an exercise to the reader.
+
+\begin{lemma}[Encoding Defines Centroid]
+Given an encoding of global type $G$ with respect to the
+router role $\mrole{s}$,
+the router role is the centroid of the encoded communication.
+
+\[
+\centroid{\enc{G}{s}}{s}
+\]
+
+\label{lem:enccenter}
+\end{lemma}
+
+We now define the encoding on local types in \cref{def:enclocal}.
+Local types express communication from the perspective of a 
+particular role, say $\role{q}$. 
+We need to capture this information in the encoding
+to accurately encode into the routed communication,
+so the encoding on local types is parameterised by
+\textit{two} roles.
+
+\begin{definition}[Encoding on Local Types]
+The encoding of interpreting local type $T$ (from the
+perspective of role $\mrole{q}$) with respect to
+the router role $\mrole{s}$, or $\enclocal{T}{q}{s}$, is defined as:
+
+\doublespacing
+\[
+\begin{array}{rclr}
+\enclocal{\tend}{q}{s} &= & \tend & \rulename{Enc-L-End} \\
+\enclocal{\trecvar}{q}{s} &= & \trecvar & \rulename{Enc-L-RecVar} \\
+\enclocal{\trec{T}}{q}{s} &= & \trec{\enclocal{T}{q}{s}} 
+	& \rulename{Enc-L-Rec} \\
+\enclocal{\tsel{p}{l_i: T_i}{i\in I}}{q}{s} &= 
+	& \begin{cases}
+	\tsel{p}{l_i: \enclocal{T_i}{q}{s}}{i\in I}
+		& \text{if } \mrole{s} \in \{ \mrole{p}, \mrole{q} \} \\
+	\tselproxy{p}{s}{l_i: \enclocal{T_i}{q}{s}}{i\in I}
+		& \text{otherwise} \\	
+	\end{cases}
+	& \rulename{Enc-L-Sel} \\
+\enclocal{\tbra{p}{l_i: T_i}{i\in I}}{q}{s} &= 
+	& \begin{cases}
+	\tbra{p}{l_i: \enclocal{T_i}{q}{s}}{i\in I}
+		& \text{if } \mrole{s} \in \{ \mrole{p}, \mrole{q} \} \\
+	\tbraproxy{p}{s}{l_i: \enclocal{T_i}{q}{s}}{i\in I}
+		& \text{otherwise} \\	
+	\end{cases}
+	& \rulename{Enc-L-Bra} \\
+\end{array}
+\]
+\singlespacing
+
+\label{def:enclocal}
+\end{definition}
+
+Similarly, if the original communication does not involve
+the router from a local perspective, the local endpoint
+will carry out the communication through the router
+$\trole{s}$ as a proxy in the encoded local type.
+This is expressed in both \rulename{Enc-L-Sel}
+and \rulename{Enc-L-Bra}.
+
+We establish a correspondence between the encodings for
+global types and local types.
+
+\[
+\forall \mrole{r}, \mrole{s}, G. ~ \left(
+\mrole{r} \neq \mrole{s} 
+	\Longrightarrow
+\proj{\enc{G}{s}}{r} = \enclocal{\proj{G}{r}}{r}{s}
+\right)
+\]
+
+We formalise this as \cref{lem:enclink}.
+The constraint $\mrole{r} \neq \mrole{s}$ is necessary
+because we would otherwise lose information on the right-hand
+side of the equality:
+the projection of $\mrole{s}$ in the original
+communication will not contain the routed interactions,
+so applying the local type encoding cannot recover this 
+information.
+We prove \cref{lem:enclink} by induction on the structure of $G$;
+the proof is mechanical and is left in \cref{section:proofs}
+for the interested reader.
+
+This correspondence lets us prove a more useful 
+lemma about how our encoding preserves the equality of projections,
+as presented in \cref{lem:encprojeq}.
+
+\begin{lemma}
+\[
+\forall G_1, G_2, \mrole{r}, \mrole{s}. ~ \left(
+(\proj{G_1}{r}) = (\proj{G_2}{r}) \wedge \mrole{r} \neq \mrole{s}
+	\Longrightarrow
+\proj{\enc{G_1}{s}}{r} = \proj{\enc{G_2}{s}}{r}
+\right)
+\]
+
+\label{lem:encprojeq}
+\end{lemma}
+
+\begin{proof} By consequence from \cref{lem:enclink}.
+
+Take $G_1, G_2, \mrole{r}, \mrole{s}$ arbitrarily. 
+Assume $(\proj{G_1}{r}) = (\proj{G_2}{r})$ and $\mrole{r} \neq \mrole{s}$.
+
+We need to show $\proj{\enc{G_1}{s}}{r} = \proj{\enc{G_2}{s}}{r}$,
+but by \cref{lem:enclink}, it is sufficient to show
+\[
+\enclocal{\proj{G_1}{r}}{r}{s} = \enclocal{\proj{G_2}{r}}{r}{s}
+\]
+
+Define an ``inner'' function $f(z) = \enclocal{z}{r}{s}$.
+
+By definition, $\forall x, y. (x = y \Longrightarrow f(x) = f(y))$.
+
+We have $(\proj{G_1}{r}) = (\proj{G_2}{r})$ by assumption,
+so we can conclude.
+
+\begin{align*}
+(\proj{G_1}{r}) = (\proj{G_2}{r}) 
+&\Longrightarrow f(\proj{G_1}{r}) = f(\proj{G_2}{r})  \\
+&\Longrightarrow
+\enclocal{\proj{G_1}{r}}{r}{s} = \enclocal{\proj{G_2}{r}}{r}{s}
+\end{align*}
+
+%\[
+%(\proj{G_1}{r}) = (\proj{G_2}{r}) 
+%\Longrightarrow
+%f(\proj{G_1}{r}) = f(\proj{G_2}{r}) 
+%\Longrightarrow
+%\enclocal{\proj{G_1}{r}}{r}{s} = \enclocal{\proj{G_2}{r}}{r}{s}
+%\]
+
+\end{proof}
+
+We also encode LTS actions using the same idea. 
+This is presented in \cref{def:enclts}, and is required for
+proofs in \cref{subsection:encodepreservecomm}.
+
+\begin{definition}[Encoding on LTS Actions]
+
+\doublespacing
+\[
+\begin{array}{rclr}
+\enc{\aout{p}{q}{j}}{s} &= & \begin{cases}
+\aout{p}{q}{j}
+	& \text{if } \mrole{s} \in \{ \mrole{p}, \mrole{q} \} \\
+\via{s}{\aout{p}{q}{j}}
+	& \text{otherwise} \\
+\end{cases} & \rulename{Enc-L-Out} \\
+\enc{\ain{p}{q}{j}}{s} &= & \begin{cases}
+\ain{p}{q}{j}
+	& \text{if } \mrole{s} \in \{ \mrole{p}, \mrole{q} \} \\
+\via{s}{\ain{p}{q}{j}}
+	& \text{otherwise} \\
+\end{cases} & \rulename{Enc-L-In} \\
+\end{array}
+\]
+\singlespacing
+
+\label{def:enclts}
+\end{definition}
 
 \subsection{Preserving Well-formedness}
 \label{subsection:encodepreservewf}
 
+We show that our encoding preserves the well-formedness
+of global types in \cref{th:encwf}.
+Well-formedness in \newtheory defines a constraint
+on the centroid of the routed communication.
+As this directly follows from \cref{lem:enccenter},
+it is sufficient to prove that our encoding preserves
+projection (\cref{lem:encproj}), then arrive at \cref{th:encwf}
+by consequence.
+
+\begin{lemma}[Encoding Preserves Projection]
+Let $G$ be a global type.
+Take arbitrary roles $\mrole{r}, \mrole{s}$.
+
+\[
+\proj{G}{r} \text{ exists } 
+	\Longrightarrow 
+\proj{ \enc{G}{s} }{r} \text{ exists }
+\]
+
+\label{lem:encproj}
+\end{lemma}
+
+\begin{proof}
+By induction on the structure of $G$.
+
+\begin{enumerate}
+
+\item $G = \tend$, $G = \trecvar$
+
+As $\enc{G}{s} = G$, if $\proj{G}{r}$ exists, 
+so does $\proj{ \enc{G}{s} }{r}$.
+
+\item $G = \trec{G'}$
+
+By assumption, $\proj{\trec{G'}}{r}$ exists.
+Note that $\proj{G'}{r}$ exists regardless of $\mrole{r}$'s
+participation in $G'$.
+
+By induction, $\proj{\enc{G'}{s}}{r}$ exists.
+
+To show $\proj{\enc{\trec{G'}}{s}}{r}$ exists,
+consider $\mrole{r}$ by case:
+
+\begin{itemize}
+\item $\mrole{r} \in \pt{\enc{G'}{s}}$:
+
+\[
+\proj{\enc{\trec{G'}}{s}}{r}
+= \proj{\trec{\enc{G'}{s}}}{r}
+= \trec{\proj{\enc{G'}{s}}{r}}
+\]
+
+As $\proj{\enc{G'}{s}}{r}$ exists,
+so does $\proj{\enc{\trec{G'}}{s}}{r}$.
+
+\item $\mrole{r} \notin \pt{\enc{G'}{s}}$:
+
+\[
+\proj{\enc{\trec{G'}}{s}}{r}
+= \proj{\trec{\enc{G'}{s}}}{r}
+= \tend
+\]
+
+\end{itemize}
+
+\item $G = \gcomm{p}{q}{l_i: G_i}{i \in I}$
+
+To determine $\enc{G}{s}$, consider $\mrole{s}$ by case:
+
+\begin{itemize}
+
+\item $\mrole{s} \in \{ \mrole{p}, \mrole{q} \}$:
+
+Then $\enc{G}{s} = \gcomm{p}{q}{l_i: \enc{G_i}{s}}{i \in I}$.
+
+To show $\proj{\enc{G}{s}}{r}$ exists,
+consider $\mrole{r}$ by case:
+
+\begin{itemize}
+\item $\mrole{r} = \mrole{p}$:
+Then $\proj{G}{p} = \tsel{q}{l_i: \proj{G_i}{p}}{i \in I}$.
+
+By induction, $\proj{\enc{G_i}{s}}{p}$ exists for $i \in I$.
+
+$\proj{\enc{G}{s}}{p} = \tsel{q}{l_i: \proj{\enc{G_i}{s}}{p}}{i \in I}$.
+
+As projections of the encoded continuations exist, 
+so does $\proj{\enc{G}{s}}{p}$.
+
+\item $\mrole{r} = \mrole{q}$: Follows similarly from above.
+
+\item $\mrole{r} \notin \{\mrole{p},\mrole{q}\}$:
+Then $\proj{G}{r} = \underset{i \in I}{\MERGEOP}\proj{G_i}{r}$,
+so the merge exists.
+
+By induction, $\proj{\enc{G_i}{s}}{r}$ exists for $i \in I$.
+
+$\proj{\enc{G}{s}}{r} = 
+	\underset{i \in I}{\MERGEOP}\proj{\enc{G_i}{s}}{r}$,
+and this merge exists by \cref{lem:encglobalpreservemerge}.
+
+\end{itemize}
+
+\item $\mrole{s} \notin \{ \mrole{p}, \mrole{q} \}$:
+
+Then $\enc{G}{s} = \groute{p}{q}{s}{l_i: \enc{G_i}{s}}{i \in I}$.
+
+To show $\proj{\enc{G}{s}}{r}$ exists,
+consider $\mrole{r}$ by case:
+
+\begin{itemize}
+\item $\mrole{r} = \mrole{p}$:
+Then $\proj{G}{p} = \tsel{q}{l_i: \proj{G_i}{p}}{i \in I}$.
+
+By induction, $\proj{\enc{G_i}{s}}{p}$ exists for $i \in I$.
+
+$\proj{\enc{G}{s}}{p} = 
+	\tselproxy{q}{s}{l_i: \proj{\enc{G_i}{s}}{p}}{i \in I}$.
+
+As projections of the encoded continuations exist, 
+so does $\proj{\enc{G}{s}}{p}$.
+
+\item $\mrole{r} = \mrole{q}$: Follows similarly from above.
+\item $\mrole{r} = \mrole{s}$:
+Then $\proj{G}{s} = \underset{i \in I}{\MERGEOP}\proj{G_i}{s}$.
+
+By induction, $\proj{\enc{G_i}{s}}{p}$ exists for $i \in I$.
+
+$\proj{\enc{G}{s}}{s} = 
+	\router{p}{q}{l_i: \proj{\enc{G_i}{s}}{s}}{i \in I}$.
+
+As projections of the encoded continuations exist, 
+so does $\proj{\enc{G}{s}}{s}$.
+
+\item $\mrole{r} \notin \{\mrole{p},\mrole{q},\mrole{s}\}$:
+Then $\proj{G}{r} = \underset{i \in I}{\MERGEOP}\proj{G_i}{r}$,
+so the merge exists.
+
+By induction, $\proj{\enc{G_i}{s}}{r}$ exists for $i \in I$.
+
+$\proj{\enc{G}{s}}{r} = 
+	\underset{i \in I}{\MERGEOP}\proj{\enc{G_i}{s}}{r}$,
+and this merge exists by \cref{lem:encglobalpreservemerge}.
+
+\end{itemize} % participation of r
+
+\end{itemize} % participation of s
+
+\end{enumerate} % structure of G
+
+\end{proof}
+
+\begin{theorem}[Encoding Preserves Well-Formedness]
+Let $G$ be a global type, and $\mrole{s}$ be a role.
+
+\[
+\wf{G} \Longrightarrow \wfnew{\enc{G}{s}}{s}
+\]
+
+\label{th:encwf}
+\end{theorem}
+
+\begin{proof}
+Direct consequence of \cref{lem:encproj,lem:enccenter,def:newwf}.
+\end{proof}
+
 \subsection{Preserving Communication}
 \label{subsection:encodepreservecomm}
+
+We present a crucial result that directly addresses 
+the pitfalls discussed in \cref{section:routerchallenges} --
+namely, that our encoding does not over-serialise the
+original communication.
+We show this through proving that our encoding preserves
+the LTS semantics over global types -- or more precisely,
+we can use the encodings over global types and LTS actions
+to encode all possible transitions in the LTS for
+global types in the canonical MPST theory.
+
+\begin{theorem}[Encoding Preserves Semantics]
+Let $G, G'$ be global types
+such that $\treduce{G}{G'}{l}$.
+Also take arbitrary role $\mrole{s}$.
+
+\[
+\treduce{G}{G'}{l}
+	\Longrightarrow
+\treducelong{\enc{G}{s}}{\enc{G'}{s}}{\enc{l}{s}}
+\]
+
+\end{theorem}
+
+\begin{proof}
+By induction on the structure of $\treduce{G}{G'}{l}$.
+
+\begin{itemize}
+
+\item \rulename{Gr1},
+where $G = \gcomm{p}{q}{l_i: G_i}{i \in I},
+G' = \gtrans{p}{q}{j}{l_i: G_i}{i \in I},
+l = \aout{p}{q}{j}$.
+
+To show $\treducelong
+{\enc{G}{s}}{\enc{G'}{s}}{\enc{l}{s}}$,
+consider $\mrole{s}$ by case:
+
+\begin{itemize}
+
+\item $\mrole{s} \in \{ \mrole{p}, \mrole{q} \}$:
+Then we have
+
+\begin{align*}
+\enc{G}{s} &= \gcomm{p}{q}{l_i: \enc{G_i}{s}}{i \in I} \\
+\enc{G'}{s} &= \gtrans{p}{q}{j}{l_i: \enc{G_i}{s}}{i \in I} \\
+\enc{l}{s} &= \aout{p}{q}{j} \\
+\end{align*}
+
+The encoded transition is possible using \rulename{Gr1}.
+
+\item $\mrole{s} \notin \{ \mrole{p}, \mrole{q} \}$:
+Then we have
+
+\begin{align*}
+\enc{G}{s} &= \groute{p}{q}{s}{l_i: \enc{G_i}{s}}{i \in I} \\
+\enc{G'}{s} &= \gtransroute{p}{q}{s}{j}{l_i: \enc{G_i}{s}}{i \in I} \\
+\enc{l}{s} &= \via{s}{\aout{p}{q}{j}} \\
+\end{align*}
+
+The encoded transition is possible using \rulename{Gr6}.
+
+\end{itemize}
+
+\item \rulename{Gr2},
+where $G = \gtrans{p}{q}{j}{l_i: G_i}{i \in I},
+G' = G_j,
+l = \ain{p}{q}{j}$.
+
+We know $\enc{G'}{s} = \enc{G_j}{s}$
+
+To show $\treducelong
+{\enc{G}{s}}{\enc{G'}{s}}{\enc{l}{s}}$,
+consider $\mrole{s}$ by case:
+
+\begin{itemize}
+
+\item $\mrole{s} \in \{ \mrole{p}, \mrole{q} \}$:
+Then we have
+
+\begin{align*}
+\enc{G}{s} &= \gtrans{p}{q}{j}{l_i: \enc{G_i}{s}}{i \in I} \\
+\enc{l}{s} &= \ain{p}{q}{j} \\
+\end{align*}
+
+The encoded transition is possible using \rulename{Gr2}.
+
+\item $\mrole{s} \notin \{ \mrole{p}, \mrole{q} \}$:
+Then we have
+
+\begin{align*}
+\enc{G}{s} &= \gtransroute{p}{q}{s}{j}{l_i: \enc{G_i}{s}}{i \in I} \\
+\enc{l}{s} &= \via{s}{\ain{p}{q}{j}} \\
+\end{align*}
+
+The encoded transition is possible using \rulename{Gr7}.
+
+\end{itemize}
+
+\item \rulename{Gr3},
+where $G = \trec{G''}$.
+
+By hypothesis, $\treduce{G''[\trec{G''} / \trecvar]}{G'}{l}$.
+
+By induction, $
+\treducelong
+	{\enc{G''[\trec{G''} / \trecvar]}{s}}
+	{\enc{G'}{s}}
+	{\enc{l}{s}}
+$.
+
+By \cref{lem:encsub}, 
+$\enc{G''[\trec{G''} / \trecvar]}{s} 
+= \enc{G''}{s}\left[ \trec{\enc{G''}{s}} / \trecvar \right]$.
+
+We know $\enc{G}{s} = \enc{\trec{G''}}{s} = \trec{\enc{G''}{s}}$.
+
+The encoded transition is possible using \rulename{Gr3} as shown:
+
+\begin{prooftree}
+\AxiomC{$
+\treducelong
+	{\enc{G''}{s}\left[ \trec{\enc{G''}{s}} / \trecvar \right]}
+	{\enc{G'}{s}}
+	{\enc{l}{s}}
+$}
+\RightLabel{\rulename{Gr3}}
+\UnaryInfC{$
+\treducelong{\trec{\enc{G''}{s}}}{\enc{G'}{s}}{\enc{l}{s}}
+$}
+\end{prooftree}
+
+\item \rulename{Gr4},
+where $G = \gcomm{p}{q}{l_i: G_i}{i \in I},
+G' = \gcomm{p}{q}{l_i: G'_i}{i \in I}$.
+
+By hypothesis,
+$\forall i \in I. ~ \treduce{G_i}{G'_i}{l}$
+and $\subj{l} \notin \{ \mrole{p}, \mrole{q} \}$.
+
+By induction, 
+$\forall i \in I. ~ \left(
+\treducelong{\enc{G_i}{s}}{\enc{G'_i}{s}}{\enc{l}{s}}
+\right)$.
+
+By \cref{def:newsubj}, 
+$\subj{\enc{l}{s}} \notin \{ \mrole{p}, \mrole{q} \}$.
+
+To show $\treducelong
+{\enc{G}{s}}{\enc{G'}{s}}{\enc{l}{s}}$,
+consider $\mrole{s}$ by case:
+
+\begin{itemize}
+
+\item $\mrole{s} \in \{ \mrole{p}, \mrole{q} \}$:
+Then we have
+
+\begin{align*}
+\enc{G}{s} &= \gcomm{p}{q}{l_i: \enc{G_i}{s}}{i \in I} \\
+\enc{G'}{s} &= \gcomm{p}{q}{l_i: \enc{G'_i}{s}}{i \in I} \\
+\end{align*}
+
+The encoded transition is possible using \rulename{Gr4}.
+
+\item $\mrole{s} \notin \{ \mrole{p}, \mrole{q} \}$:
+Then we have
+
+\begin{align*}
+\enc{G}{s} &= \groute{p}{q}{s}{l_i: \enc{G_i}{s}}{i \in I} \\
+\enc{G'}{s} &= \groute{p}{q}{s}{l_i: \enc{G'_i}{s}}{i \in I} \\
+\end{align*}
+
+The encoded transition is possible using \rulename{Gr8}.
+
+\end{itemize}
+
+\item \rulename{Gr5},
+where $G = \gtrans{p}{q}{j}{l_i: G_i}{i \in I},
+G' = \gtrans{p}{q}{j}{l_i: G'_i}{i \in I}$.
+
+By hypothesis,
+$\treduce{G_j}{G'_j}{l}$,
+$\mrole{p'} \neq \subj{l}$,
+and $\forall i \in I \setminus \{j\}. ~ G'_i = G_i$.
+
+By induction, 
+$\treducelong{\enc{G_j}{s}}{\enc{G'_j}{s}}{\enc{l}{s}}$.
+
+By \cref{def:newsubj}, 
+$\subj{\enc{l}{s}} \neq \mrole{q}$.
+
+To show $\treducelong
+{\enc{G}{s}}{\enc{G'}{s}}{\enc{l}{s}}$,
+consider $\mrole{s}$ by case:
+
+\begin{itemize}
+
+\item $\mrole{s} \in \{ \mrole{p}, \mrole{q} \}$:
+Then we have
+
+\begin{align*}
+\enc{G}{s} &= \gtrans{p}{q}{j}{l_i: \enc{G_i}{s}}{i \in I} \\
+\enc{G'}{s} &= \gtrans{p}{q}{j}{l_i: \enc{G'_i}{s}}{i \in I} \\
+\end{align*}
+
+The encoded transition is possible using \rulename{Gr5}.
+
+\item $\mrole{s} \notin \{ \mrole{p}, \mrole{q} \}$:
+Then we have
+
+\begin{align*}
+\enc{G}{s} &= \gtransroute{p}{q}{s}{j}{l_i: \enc{G_i}{s}}{i \in I} \\
+\enc{G'}{s} &= \gtransroute{p}{q}{s}{j}{l_i: \enc{G'_i}{s}}{i \in I} \\
+\end{align*}
+
+The encoded transition is possible using \rulename{Gr9}.
+
+\end{itemize}
+
+\end{itemize}
+
+\end{proof}

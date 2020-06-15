@@ -3,12 +3,79 @@
 \section{Lemmas and Proofs for \cref{chap:theory}}
 \label{section:proofs}
 
-\begin{lemma}[\dots]
-???
+\begin{lemma}[Local LTS Preserves Merge]
+
+\[
+(\treduce{T_1}{T'_1}{l}) \wedge (\treduce{T_2}{T'_2}{l})
+	\Longrightarrow
+(\tmerge{T'_1}{T'_2}) \text{ exists}
+\]
 
 \label{lem:localltspreservemerge}
 \end{lemma}
 
 \begin{proof}
-Trivial :)
+TODO
+\end{proof}
+
+\begin{lemma}[Encoding on Global Types Preserves Merge]
+
+\dots
+
+\label{lem:encglobalpreservemerge}
+\end{lemma}
+
+\begin{proof}
+TODO
+\end{proof}
+
+\begin{lemma}[Projection and Participation]
+
+\[
+\proj{G}{p} = \tend \Longleftrightarrow \mrole{p} \notin \pt{G}
+\]
+
+\label{lem:projpt}
+\end{lemma}
+
+\begin{proof} 
+Prove $(\Longrightarrow)$ by induction on the structure of $G$.
+Prove $(\Longleftarrow)$ using the contrapositive (stated below)
+by induction on the derivation of $\pt{G}$.
+
+\[
+\mrole{p} \in \pt{G} \Longrightarrow \proj{G}{p} \neq \tend
+\]
+\end{proof}
+
+\begin{lemma}[Commutativity between Encoding and Substitution]
+Performing a type variable substitution and applying the
+encoding are commutative operations.
+
+\[ \dots \]
+
+\label{lem:encsub}
+\end{lemma}
+
+\begin{proof}
+By induction on the structure of $G$.
+\end{proof}
+
+\begin{lemma}[Correspondence between Encodings on Global Types
+and Local Types]
+
+\[
+\forall \mrole{r}, \mrole{s}, G. ~ \left(
+\mrole{r} \neq \mrole{s} 
+	\Longrightarrow
+\proj{\enc{G}{s}}{r} = \enclocal{\proj{G}{r}}{r}{s}
+\right)
+\]
+
+\label{lem:enclink}
+\end{lemma}
+
+\begin{proof}
+By induction on the structure of $G$.
+
 \end{proof}

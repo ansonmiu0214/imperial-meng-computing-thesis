@@ -452,13 +452,13 @@ $\treduce{\proj{G}{q}}{\proj{G'}{q}}{l}$
 for $\mrole{q} = \subj{l}$,
 since the projections for $\mrole{q'} \neq \subj{l}$ remain the same.
 
-We know $\proj{G}{q} = \underset{i \in I}{\proj{G_i}{q}}$
-and $\proj{G'}{q} = \underset{i \in I}{\proj{G'_i}{q}}$.
+We know $\proj{G}{q} = \underset{i \in I}{\MERGEOP}\proj{G_i}{q}$
+and $\proj{G'}{q} = \underset{i \in I}{\MERGEOP}\proj{G'_i}{q}$.
 
 By induction,
 $\treduce
-	{\underset{i \in I}{\proj{G_i}{q}}}
-	{\underset{i \in I}{\proj{G'_i}{q}}}
+	{\underset{i \in I}{\MERGEOP}\proj{G_i}{q}}
+	{\underset{i \in I}{\MERGEOP}\proj{G'_i}{q}}
 	{l}$,
 so $\treduce{\proj{G}{q}}{\proj{G'}{q}}{l}$.
 
