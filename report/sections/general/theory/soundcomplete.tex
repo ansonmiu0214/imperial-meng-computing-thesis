@@ -676,13 +676,14 @@ Direct consequence of \cref{lem:stepeq}.
 
 \begin{lemma}[Preservation of Well-formedness]
 Let $G$ be a global type.
-Suppose $G$ is well-formed with respect to some router $\mrole{s}$.
+Suppose $G$ is well-formed with respect to some router $\mrole{s}$,
+i.e. $\wfnew{G}{s}$.
 
 \[
 \forall G', l. ~
-(\treduce{G}{G'}{l}
+\left(\treduce{G}{G'}{l}
 	\Longrightarrow
-\wfnew{G'}{s})
+\wfnew{G'}{s}\right)
 \]
 
 \label{lem:preservewf}
@@ -691,49 +692,426 @@ Suppose $G$ is well-formed with respect to some router $\mrole{s}$.
 \begin{proof}
 By induction on the structure of $\treduce{G}{G'}{l}$.
 
+For each transition, we show the two conjuncts for $\wfnew{G'}{s}$: 
+\textbf{(1)} $\proj{G'}{r}$ exists for $\mrole{r}$ 
+	such that $\proj{G}{r}$ exists;
+and, \textbf{(2)} $\centroid{G'}{s}$.
+
 \begin{itemize}
-\item \rulename{Gr1}, where \dots
+\item \rulename{Gr1}, 
+where 
+$G = \gcomm{p}{q}{l_i: G_i}{i \in I}$,
+$G' = \gtrans{p}{q}{j}{l_i: G_i}{i \in I}$,
+$l = \aout{p}{q}{j}$.
 
-\hl{TODO}
+\paragraph{(1)}
+We know $\proj{G}{r}$ by assumption.
+To show $\proj{G'}{r}$, consider $\mrole{r}$ by case:
 
-\item \rulename{Gr2}, where \dots
+\begin{itemize}
+\item $\mrole{r} = \mrole{p}$:
+Then $\proj{G}{p} = \tsel{q}{l_i: \proj{G_i}{p}}{i \in I}$,
+so $\forall i \in I. ~ \proj{G_i}{p}$ exists.
 
-\hl{TODO}
+$\proj{G'}{p} = \proj{G_j}{p}$, which exists as $j \in I$. 
 
-\item \rulename{Gr3}, where \dots
+\item $\mrole{r} = \mrole{q}$:
+Then $\proj{G'}{q} = \tbra{p}{l_i: \proj{G_i}{q}}{i \in I} \proj{G}{q}$, 
+which exists.
 
-\hl{TODO}
+\item $\mrole{r} \notin \{ \mrole{p}, \mrole{q} \}$:
+Then $\proj{G}{r} = \underset{i \in I}{\MERGEOP}\proj{G_i}{r}$,
+so $\forall i \in I. ~ \proj{G_i}{r}$ exists.
 
-\item \rulename{Gr4}, where \dots
+$\proj{G'}{r} = \proj{G_j}{r}$, which exists as $j \in I$. 
+\end{itemize}
 
-\hl{TODO}
+\paragraph{(2)}
+We know $\centroid{G}{s}$ by assumption.
+We deduce $\centroid{G'}{s}$ by consequence.
 
-\item \rulename{Gr5}, where \dots
+\[
+\centroid{G}{s} 
+\Longrightarrow 
+	\mrole{s} \in \{ \mrole{p}, \mrole{q} \} 
+		\wedge 
+	\underset{i \in I}{\bigwedge}\centroid{G_i}{s}
+\Longrightarrow	
+	\mrole{s} \in \{ \mrole{p}, \mrole{q} \} 
+		\wedge 
+	\centroid{G_j}{s}
+\Longrightarrow \centroid{G'}{s}
+\]
 
-\hl{TODO}
+\item \rulename{Gr2}, 
+where
+$G = \gtrans{p}{q}{j}{l_i: G_i}{i \in I}$,
+$G' = G_j$,
+$l = \ain{p}{q}{j}$.
 
-\item \rulename{Gr6}, where \dots
+\paragraph{(1)}
+We know $\proj{G}{r}$ by assumption.
+To show $\proj{G'}{r}$, consider $\mrole{r}$ by case:
 
-\hl{TODO}
+\begin{itemize}
+\item $\mrole{r} = \mrole{p}$:
+Then $\proj{G'}{p} = \proj{G_j}{p} = \proj{G}{p}$, which exists.
 
-\item \rulename{Gr7}, where \dots
+\item $\mrole{r} = \mrole{q}$:
+Then $\proj{G}{q} = \tbra{p}{l_i: \proj{G_i}{q}}{i \in I}$,
+so $\forall i \in I. ~ \proj{G_i}{q}$ exists.
 
-\hl{TODO}
+$\proj{G'}{q} = \proj{G_j}{q}$, which exists as $j \in I$. 
 
-\item \rulename{Gr8}, where \dots
+\item $\mrole{r} \notin \{ \mrole{p}, \mrole{q} \}$:
+Then $\proj{G'}{r} = \proj{G_j}{r} = \proj{G}{r}$,
+which exists.
 
-\hl{TODO}
+\end{itemize}
 
-\item \rulename{Gr9}, where \dots
+\paragraph{(2)}
+We know $\centroid{G}{s}$ by assumption.
+We deduce $\centroid{G'}{s}$ by consequence.
 
-\hl{TODO}
+\[
+\centroid{G}{s} 
+	\Longrightarrow 
+		\mrole{s} \in \{ \mrole{p}, \mrole{q} \} 
+			\wedge 
+		\centroid{G_j}{s}
+	\Longrightarrow
+		\centroid{G'}{s}
+\]
+
+\item \rulename{Gr3}, 
+where $\treduce{\trec{G}}{G'}{l}$.
+By hypothesis, $\treduce{G[\trec{G} / \trecvar]}{G'}{l}$.
+
+We first show that $\wfnew{G[\trec{G} / \trecvar]}{s}$.
+
+\subparagraph{(1)}
+$\proj{\trec{G}}{r}$ exists for some $\mrole{r}$.
+
+Note that $\proj{G}{r}$ exists regardless of $\mrole{r}$'s 
+participation in $G$.
+
+\begin{itemize}
+\item 
+If $\mrole{r} \in \pt{G}$, 
+then $\proj{\trec{G}}{r} = \trec{\proj{G}{r}}$,
+so $\proj{G}{r}$ exists.
+
+\item 
+Otherwise, $\proj{G}{r} = \tend$, which exists.
+\end{itemize}
+
+Projection is homomorphic under recursion, so 
+$\proj{G[\trec{G}/\trecvar]}{r}$ exists.
+
+\subparagraph{(2)} 
+By assumption, $\centroid{(\trec{G})}{s}$,
+so $\centroid{G}{s}$.
+
+The $\centroid{}{}$ relation is also homomorphic under recursion,
+so we get $\centroid{G[\trec{G}/\trecvar]}{s}$.
+
+We conclude by induction to obtain $\wfnew{G'}{s}$.
+
+\item \rulename{Gr4},
+where
+$G = \gcomm{p}{q}{l_i: G_i}{i \in I}$,
+$G' = \gcomm{p}{q}{l_i: G'_i}{i \in I}$.
+
+By hypothesis,
+$\forall i \in I. ~ (\treduce{G_i}{G'_i}{l})$
+and $\mrole{p} \neq \mrole{q} \neq \subj{l}$.
+
+If $\proj{G}{r}$ exists, so does $\proj{G_i}{r}$ for $i \in I$.
+
+By assumption, $\centroid{G}{s}$, 
+so $\mrole{s} \in \{ \mrole{p}, \mrole{q} \} \wedge 
+\underset{i \in I}{\bigwedge}\centroid{G_i}{s}$.
+
+By induction, $\forall i \in I. ~ 
+(\proj{G'_i}{r} \text{ exists } \wedge
+\centroid{G'_i}{s})$.
+
+\paragraph{(1)}
+To show $\proj{G'}{r}$, consider $\mrole{r}$ by case:
+
+\begin{itemize}
+\item $\mrole{r} = \mrole{p}$:
+Then $\proj{G'}{p} = \tsel{q}{l_i: \proj{G'}{p}}{i \in I}$.
+
+\item $\mrole{r} = \mrole{q}$:
+Then $\proj{G'}{q} = \tbra{p}{l_i: \proj{G'_i}{q}}{i \in I}$.
+
+\item $\mrole{r} \notin \{ \mrole{p}, \mrole{q} \}$:
+Then $\proj{G'}{r} = \underset{i \in I}{\MERGEOP} \proj{G'_i}{r}$.
+We know that $\proj{G}{r} = \underset{i \in I}{\MERGEOP} \proj{G_i}{r}$
+exists. 
+By \cref{lem:localltspreservemerge}, 
+$\underset{i \in I}{\MERGEOP} \proj{G'_i}{r}$ exists too.
+
+\end{itemize}
+
+\paragraph{(2)}
+We have $\mrole{s} \in \{ \mrole{p}, \mrole{q} \}$
+from assumption and
+$\underset{i \in I}{\bigwedge}\centroid{G'_i}{s}$ from induction, 
+so $\centroid{G'}{s}$.
+
+\item \rulename{Gr5},
+where
+$G = \gtrans{p}{q}{j}{l_i: G_i}{i \in I}$,
+$G' = \gtrans{p}{q}{j}{l_i: G'_i}{i \in I}$.
+
+By hypothesis,
+$\treduce{G_j}{G'_j}{l}$,
+$\forall i \in I \setminus \{ j \}. ~ G'_i = G_i$,
+and $\mrole{q} \neq \subj{l}$.
+
+If $\proj{G}{r}$ exists, so does $\proj{G_i}{r}$ for $i \in I$.
+
+By assumption, $\centroid{G}{s}$, 
+so $\mrole{s} \in \{ \mrole{p}, \mrole{q} \} \wedge 
+\centroid{G_j}{s}$.
+
+By induction on $\treduce{G_j}{G'_j}{l}$
+and hypothesis $\forall i \in I \setminus \{ j \}. ~ G'_i = G_i$,
+we get
+$\forall i \in I. ~ 
+(\proj{G'_i}{r} \text{ exists } \wedge
+\centroid{G'_i}{s})$.
+
+\paragraph{(1)}
+To show $\proj{G'}{r}$, consider $\mrole{r}$ by case:
+
+\begin{itemize}
+\item $\mrole{r} = \mrole{p}$:
+Then $\proj{G'}{p} = \proj{G'_j}{p}$.
+
+\item $\mrole{r} = \mrole{q}$:
+Then $\proj{G'}{q} = \tbra{p}{l_i: \proj{G'_i}{q}}{i \in I}$.
+
+\item $\mrole{r} \notin \{ \mrole{p}, \mrole{q} \}$:
+Then $\proj{G'}{r} = \proj{G'_j}{r}$.
+
+\end{itemize}
+
+\paragraph{(2)}
+We have $\mrole{s} \in \{ \mrole{p}, \mrole{q} \}$
+from assumption and
+$\centroid{G'_j}{s}$ from induction, so $\centroid{G'}{s}$.
+
+\item \rulename{Gr6},
+where
+$G = \groute{p}{q}{t}{l_i: G_i}{i \in I}$,
+$G' = \gtransroute{p}{q}{t}{j}{l_i: G_i}{i \in I}$,
+$l = \via{s}{\aout{p}{q}{j}}$.
+
+By assumption, $\wfnew{G}{s}$, so $\mrole{t} = \mrole{s}$.
+
+\paragraph{(1)}
+We know $\proj{G}{r}$ by assumption.
+To show $\proj{G'}{r}$, consider $\mrole{r}$ by case:
+
+\begin{itemize}
+\item $\mrole{r} = \mrole{p}$:
+Then $\proj{G}{p} = \tselproxy{q}{s}{l_i: \proj{G_i}{p}}{i \in I}$,
+so $\forall i \in I. ~ \proj{G_i}{p}$ exists.
+
+$\proj{G'}{p} = \proj{G_j}{p}$, which exists as $j \in I$. 
+
+\item $\mrole{r} = \mrole{q}$:
+Then $\proj{G'}{q} = \tbraproxy{p}{s}{l_i: \proj{G_i}{q}}{i \in I} 
+= \proj{G}{q}$, 
+which exists.
+
+\item $\mrole{r} = \mrole{s}$:
+Then $\proj{G}{s} = \router{p}{q}{l_i: \proj{G_i}{s}}{i \in I}$,
+so $\forall i \in I. ~ \proj{G_i}{s}$ exists.
+
+$\proj{G'}{s} = \routertrans{p}{q}{j}{l_i: \proj{G_i}{s}}{i \in I}$, 
+which exists.
+
+\item $\mrole{r} \notin \{ \mrole{p}, \mrole{q}, \mrole{s} \}$:
+Then $\proj{G}{r} = \underset{i \in I}{\MERGEOP}\proj{G_i}{r}$,
+so $\forall i \in I. ~ \proj{G_i}{r}$ exists.
+
+$\proj{G'}{r} = \proj{G_j}{r}$, which exists as $j \in I$. 
+\end{itemize}
+
+\paragraph{(2)}
+We know $\centroid{G}{s}$ by assumption.
+We deduce $\centroid{G'}{s}$ by consequence.
+
+\[
+\centroid{G}{s} 
+\Longrightarrow 
+	\mrole{t} = \mrole{s} 
+		\wedge 
+	\underset{i \in I}{\bigwedge}\centroid{G_i}{s}
+\Longrightarrow	
+	\mrole{t} = \mrole{s}
+		\wedge 
+	\centroid{G_j}{s}
+\Longrightarrow \centroid{G'}{s}
+\]
+
+\item \rulename{Gr7},
+where
+$G = \gtransroute{p}{q}{t}{j}{l_i: G_i}{i \in I}$,
+$G' = G_j$,
+$l = \via{s}{\ain{p}{q}{j}}$.
+
+\paragraph{(1)}
+We know $\proj{G}{r}$ by assumption.
+To show $\proj{G'}{r}$, consider $\mrole{r}$ by case:
+
+By assumption, $\wfnew{G}{s}$, so $\mrole{t} = \mrole{s}$.
+
+\begin{itemize}
+\item $\mrole{r} = \mrole{p}$:
+Then $\proj{G'}{p} = \proj{G_j}{p} = \proj{G}{p}$, which exists.
+
+\item $\mrole{r} = \mrole{q}$:
+Then $\proj{G}{q} = \tbraproxy{p}{s}{l_i: \proj{G_i}{q}}{i \in I}$,
+so $\forall i \in I. ~ \proj{G_i}{q}$ exists.
+
+$\proj{G'}{q} = \proj{G_j}{q}$, which exists as $j \in I$. 
+
+\item $\mrole{r} = \mrole{s}$:
+Then $\proj{G}{s} = \routertrans{p}{q}{j}{l_i: \proj{G_i}{s}}{i \in I}$,
+so $\forall i \in I. ~ \proj{G_i}{s}$ exists.
+
+$\proj{G'}{s} = \proj{G_j}{s}$, 
+which exists as $j \in I$.
+
+\item $\mrole{r} \notin \{ \mrole{p}, \mrole{q}, \mrole{s} \}$:
+Then $\proj{G}{r} = \underset{i \in I}{\MERGEOP}\proj{G_i}{r}$,
+so $\forall i \in I. ~ \proj{G_i}{r}$ exists.
+
+$\proj{G'}{r} = \proj{G_j}{r}$,
+which exists as $j \in I$.
+
+\end{itemize}
+
+\paragraph{(2)}
+We know $\centroid{G}{s}$ by assumption.
+We deduce $\centroid{G'}{s}$ by consequence.
+
+\[
+\centroid{G}{s} 
+	\Longrightarrow 
+		\mrole{s} \in \{ \mrole{p}, \mrole{q} \} 
+			\wedge 
+		\centroid{G_j}{s}
+	\Longrightarrow
+		\centroid{G'}{s}
+\]
+
+\item \rulename{Gr8},
+where
+$G = \groute{p}{q}{t}{l_i: G_i}{i \in I}$,
+$G' = \groute{p}{q}{t}{l_i: G'_i}{i \in I}$.
+
+By hypothesis,
+$\forall i \in I. ~ (\treduce{G_i}{G'_i}{l})$
+and $\mrole{p} \neq \mrole{q} \neq \subj{l}$.
+
+If $\proj{G}{r}$ exists, so does $\proj{G_i}{r}$ for $i \in I$.
+
+By assumption, $\centroid{G}{s}$, 
+so $\mrole{t} = \mrole{s} \wedge 
+\underset{i \in I}{\bigwedge}\centroid{G_i}{s}$.
+
+By induction, $\forall i \in I. ~ 
+(\proj{G'_i}{r} \text{ exists } \wedge
+\centroid{G'_i}{s})$.
+
+\paragraph{(1)}
+To show $\proj{G'}{r}$, consider $\mrole{r}$ by case:
+
+\begin{itemize}
+\item $\mrole{r} = \mrole{p}$:
+Then $\proj{G'}{p} = \tselproxy{q}{s}{l_i: \proj{G'}{p}}{i \in I}$.
+
+\item $\mrole{r} = \mrole{q}$:
+Then $\proj{G'}{q} = \tbraproxy{p}{s}{l_i: \proj{G'_i}{q}}{i \in I}$.
+
+\item $\mrole{r} = \mrole{s}$:
+Then $\proj{G'}{s} = \router{p}{q}{l_i: \proj{G'_i}{s}}{i \in I}$.
+
+\item $\mrole{r} \notin \{ \mrole{p}, \mrole{q}, \mrole{s} \}$:
+Then $\proj{G'}{r} = \underset{i \in I}{\MERGEOP} \proj{G'_i}{r}$.
+We know that $\proj{G}{r} = \underset{i \in I}{\MERGEOP} \proj{G_i}{r}$
+exists. 
+By \cref{lem:localltspreservemerge}, 
+$\underset{i \in I}{\MERGEOP} \proj{G'_i}{r}$ exists too.
+
+\end{itemize}
+
+\paragraph{(2)}
+We have $\mrole{t} = \mrole{s}$
+from assumption and
+$\underset{i \in I}{\bigwedge}\centroid{G'_i}{s}$ from induction, 
+so $\centroid{G'}{s}$.
+
+\item \rulename{Gr9},
+where
+$G = \gtransroute{p}{q}{t}{j}{l_i: G_i}{i \in I}$,
+$G' = \gtransroute{p}{q}{t}{j}{l_i: G'_i}{i \in I}$.
+
+By hypothesis,
+$\treduce{G_j}{G'_j}{l}$,
+$\forall i \in I \setminus \{ j \}. ~ G'_i = G_i$,
+and $\mrole{q} \neq \subj{l}$.
+
+If $\proj{G}{r}$ exists, so does $\proj{G_i}{r}$ for $i \in I$.
+
+By assumption, $\centroid{G}{s}$, 
+so $\mrole{t} = \mrole{s} \wedge 
+\centroid{G_j}{s}$.
+
+By induction on $\treduce{G_j}{G'_j}{l}$
+and hypothesis $\forall i \in I \setminus \{ j \}. ~ G'_i = G_i$,
+we get
+$\forall i \in I. ~ 
+(\proj{G'_i}{r} \text{ exists } \wedge
+\centroid{G'_i}{s})$.
+
+\paragraph{(1)}
+To show $\proj{G'}{r}$, consider $\mrole{r}$ by case:
+
+\begin{itemize}
+\item $\mrole{r} = \mrole{p}$:
+Then $\proj{G'}{p} = \proj{G'_j}{p}$.
+
+\item $\mrole{r} = \mrole{q}$:
+Then $\proj{G'}{q} = \tbraproxy{p}{s}{l_i: \proj{G'_i}{q}}{i \in I}$.
+
+\item $\mrole{r} = \mrole{s}$:
+Then $\proj{G'}{s} = \routertrans{p}{q}{j}{l_i: \proj{G'_i}{s}}{i \in I}$.
+
+\item $\mrole{r} \notin \{ \mrole{p}, \mrole{q}, \mrole{s} \}$:
+Then $\proj{G'}{r} = \proj{G'_j}{r}$.
+
+\end{itemize}
+
+\paragraph{(2)}
+We have $\mrole{t} = \mrole{s}$
+from assumption and
+$\centroid{G'_j}{s}$ from induction, so $\centroid{G'}{s}$.
+
 \end{itemize}
 
 \end{proof}
 
 \begin{lemma}[Progress for Well-formed Global Types]
 Let $G$ be a global type.
-Suppose $G$ is well-formed with respect to some router $\mrole{s}$.
+Suppose $G$ is well-formed with respect to some router $\mrole{s}$,
+i.e. $\wfnew{G}{s}$.
 
 \[
 (G = \tend) \vee \exists G', l. ~ (\treduce{G}{G'}{l})
@@ -761,17 +1139,49 @@ We also do not consider $G = \trecvar$ as the type variable is not guarded.
 
 \item $G = \trec{G''}$
 
-\hl{TODO}
+$\trecvar$ must occur in $G$, so $G[\trec{G} / \trecvar] \neq \tend$.
+
+By induction, 
+$\exists G', l. ~ (\treduce{G[\trec{G} / \trecvar]}{G'}{l})$.
+
+Apply \rulename{Gr3} to get 
+$\exists G', l. ~ (\treduce{\trec{G}}{G'}{l})$.
 
 \item $G = \gcomm{p}{q}{l_i: G_i}{i \in I}$
 
-\hl{TODO}
+Apply \rulename{Gr1} to get 
+$\treducelong
+	{G}
+	{\gtrans{p}{q}{j}{l_i: G_i}{i \in I}}
+	{\aout{p}{q}{j}}$.
 
 \item $G = \groute{p}{q}{r}{l_i: G_i}{i \in I}$
 
-$\wfnew{G}{s}$ holds by assumption, so $\mrole{r} = \mrole{s}$.
+By assumption, $\wfnew{G}{s}$, so $\mrole{r} = \mrole{s}$.
 
-\hl{TODO}
+Apply \rulename{Gr6} to get
+$\treducelong
+	{G}
+	{\gtransroute{p}{q}{s}{j}{l_i: G_i}{i \in I}}
+	{\via{s}{\aout{p}{q}{j}}}$.
+
+\item $G = \gtrans{p}{q}{j}{l_i: G_i}{i \in I}$
+
+Apply \rulename{Gr2} to get 
+$\treducelong
+	{G}
+	{G_j}
+	{\ain{p}{q}{j}}$.
+
+\item $G = \gtransroute{p}{q}{r}{j}{l_i: G_i}{i \in I}$
+
+By assumption, $\wfnew{G}{s}$, so $\mrole{r} = \mrole{s}$.
+
+Apply \rulename{Gr7} to get
+$\treducelong
+	{G}
+	{G_j}
+	{\via{s}{\ain{p}{q}{j}}}$.
 
 \end{enumerate}
 
@@ -779,7 +1189,8 @@ $\wfnew{G}{s}$ holds by assumption, so $\mrole{r} = \mrole{s}$.
 
 \begin{theorem}[Deadlock Freedom]
 Let $G$ be a global type.
-Suppose $G$ is well-formed with respect to some router $\mrole{s}$.
+Suppose $G$ is well-formed with respect to some router $\mrole{s}$,
+i.e. $\wfnew{G}{s}$.
 
 \[
 G \to^* G'
