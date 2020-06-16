@@ -9,53 +9,64 @@ We tackle the limitations of the current
 state-of-the-art with a two-step strategy:
 
 \subparagraph{S1}
-\dots
-
-\subparagraph{S2}
-\dots
-
-By step \textbf{S1}, we address challenge \textbf{C1}.
-
-In step \textbf{S2}, we \dots
-
-%an end-to-end framework for writing full-stack 
-%applications that \textbf{statically}
-%conform to a communication protocol, 
-%
-%With respect to the end goal of 
-%offering developers a development workflow
-%that provides communication safety guarantees in modern
-%web programming through multiparty session types,
-%we observe two main limitations from the state-of-the-art:
-
-The objective of this project is to provide an end-to-end
-framework for writing full-stack web applications that
+We implement \codegen, an end-to-end framework
+for writing full-stack \textit{TypeScript} applications that
 \textbf{statically} conform to a communication protocol.
+
 Developers specify their communication protocol using
 the Scribble protocol description language \cite{Scribble}
 which is based on multiparty session type (MPST) theory \cite{MPST}.
 The Scribble protocol is used as a basis for generating
 TypeScript APIs targeted for the Node.js server-side runtime
-and React.js browser-side framework. 
+and React.js browser-side framework.
 By implementing the generated APIs in their full-stack applications,
-developers can enjoy \textbf{static} guarantees with respect 
-to communication safety: there will not be any communication mismatches,
+developers can enjoy static guarantees with respect 
+to communication safety: 
+there will not be any communication mismatches,
 and channel linearity will be respected.
-Finally, we extend our framework to support communication
-protocols that cannot be natively implemented over
-a server-centric network topology using WebSockets.
-This involves defining a theory of routed multiparty session types
-to formalise the preservation of communication safety properties.
 
-%Among the many languages that compile to JavaScript,
-%TypeScript stands out as the most intuitive to use as it is defined
-%to be a \textit{superset} of JavaScript. It provides developers
-%with type-safety through its gradual, structural type system.
-%Whilst some \cite{MVU2020} point out this limits its usability for
-%encoding multiparty session types, we believe that the language
-%offers sufficient features that we can use to provide developers with
-%communication safety guarantees whilst preserving a flexible, natural
-%and idiomatic workflow. By building our work upon TypeScript, we
-%work towards incorporating MPST into mainstream web development,
-%which reduces development time by programmatically verifying 
-%implementations for communication correctness.
+\subparagraph{S2}
+We present \newtheory, an extension of the canonical MPST
+theory that supports \textit{routed communication}.
+
+Through \newtheory, we can express interactions to be
+routed via an intermediate endpoint.
+By defining an encoding from canonical MPST theory
+to \newtheory, we show that we do not lose expressiveness
+using routed communication.
+We also extend \codegen to implement \newtheory.
+\\
+
+By step \textbf{S1}, we address the limitation \textbf{L1}.
+Our work provides the same communication safety guarantees
+as the current state-of-the-art, but 
+is compatible with modern web programming tools and idioms.
+Among the languages that compile to JavaScript,
+we select TypeScript as it is arguably the most intuitive
+to use, given it is a \textit{superset} of JavaScript 
+\cite{UnderstandingTypeScript}.
+It provides developers
+with type-safety through its gradual, structural type system,
+and is also interoperable with existing JavaScript libraries
+that the developer may incorporate into their application.
+Whilst some \cite{MVU2020} point out this limits its usability for
+encoding multiparty session types, we believe that the language
+offers sufficient features that we can use to provide developers with
+communication safety guarantees whilst preserving a flexible, natural
+and idiomatic workflow.
+The TypeScript APIs we generate also support idioms commonly
+found in modern web development (such as callbacks and
+asynchronous operations), and provides an error handling
+mechanism tailored to the dynamic web-based environment
+(where roles can disconnect prematurely).
+
+In step \textbf{S2},
+we show that routing communication interactions through an intermediate
+role, such as a web server, preserves the communication
+safety properties and the semantics from the original
+interactions.
+By extending \codegen to implement \newtheory,
+our workflow can implement protocols of
+arbitrary communication structures over a server-centric
+network topology using WebSockets; 
+this tackles limitation \textbf{L2}.
