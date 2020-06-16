@@ -1,8 +1,115 @@
 \section{Related Work}
 \label{section:bgrelated}
 
+Whilst session type theory represents 
+the type language for concurrent processes,
+it also forms the theoretical basis for proposals
+introduced to implement session types for 
+real-world application development:
+the \textit{Scribble} project is one such proposal.
+We discuss related work that 
+implement session types for software
+engineering using the Scribble project
+in \cref{subsection:bgscribble},
+and focus on existing work for
+session-typed web development
+in \cref{subsection:sessiontypewebdev}.
+
 \subsection{Scribble and Endpoint API Generation}
 \label{subsection:bgscribble}
 
+% Introduce Scribble as an implementation of MPST
+Scribble \cite{Scribble} is a
+platform-independent description language 
+for the specification of message-passing protocols.
+The language describes the behaviour of 
+communicating processes at a high level of abstraction:
+more importantly, the description is independent from 
+implementation details in the same way that 
+the type signature of a function declaration is decoupled 
+from the corresponding function definition.
+
+A Scribble \textit{protocol specification} 
+describes an agreement of how participating systems, 
+referred to as \text{roles}, interact. 
+The protocol stipulates the sequence of structured messages 
+exchanged between roles; 
+each message is labelled with a name and the
+type of payload carried by the message.
+
+We present an example of a Scribble protocol in 
+\cref{fig:adder} adapted from \cite{Hybrid2016}.
+The protocol specifies an arithmetic web service 
+offered by a \trole{S}erver to a \trole{C}lient.
+The \trole{C}lient is permitted to either:
+
+\begin{itemize}
+\item 
+Send two \texttt{int}s attached to an \tmsg{Add} message, 
+where the server will respond with an \texttt{int} in a 
+message labelled \tmsg{Res}, and the protocol restarts; or,
+\item
+Send a \tmsg{Quit} message, where the server will 
+respond with a \tmsg{Terminate} message and the protocol ends.
+\end{itemize}
+
+\begin{figure}[!ht]
+\begin{lstlisting}[language=Scribble]
+type <java> "java.lang.Integer" from "rt.jar" as int; (*@\label{line:typedecl}@*)
+
+global protocol Adder(role C, role S) {
+	choice at C {
+		Add(int, int)	from C to S;
+		Res(int)		from S to C;
+		do Adder(C, S);
+	} or {
+		Quit()		from C to S;
+		Terminate()	from S to C;	
+	}
+}
+\end{lstlisting}
+\caption{Adder Protocol in Scribble}
+\label{fig:adder}
+\end{figure}
+
+The platform-independent nature of Scribble 
+can be observed from the \texttt{type} declaration 
+on \cref{line:typedecl}: 
+the developer has the freedom to specify message payload formats 
+and data types from the target language of the implementation 
+-- in this case, aliasing the built-in Java integer as 
+\texttt{int} throughout the protocol.
+
+To observe the parallels between MPST theory
+and the Scribble language,
+we present the corresponding global type for
+the \tprotocol{Adder} protocol below.
+
+\[
+G_\text{Adder} = \trec{
+\gcommone{C}{S}{
+	\begin{cases}
+		\tmsg{Add(int, int)} & :
+			\gcommone{S}{C}{\tmsg{Res(int)}}. \trecvar \\
+		\tmsg{Quit()} & : 
+			\gcommone{S}{C}{\tmsg{Terminate()}}. \tend \\		
+	\end{cases}
+}} 
+\]
+
+The protocol specification language is a component of the broader 
+\textit{Scribble project} initiated by Honda et al. in \cite{Scribble}, 
+through which the project also facilitates the development of 
+\textit{endpoint applications} that conform to user-specified protocols.
+
 \subsection{Session Types in Web Development}
 \label{subsection:sessiontypewebdev}
+
+We discuss the current state-of-the-art proposals
+for integrating session types in web development.
+
+\subsubsection{API Generation in PureScript}
+\dots
+
+\subsubsection{MVU using Links}
+\dots
