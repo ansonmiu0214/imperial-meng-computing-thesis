@@ -1,13 +1,20 @@
 \section{Contributions}
 
 We present an implementation of the MPST framework for developing
-interactive web applications over WebSocket transport. 
-Related work \citep{PureScript2019, MVU2020, LINKS, Exceptional} requires the 
+interactive web applications over WebSocket transport.
+We also present a theory of routed multiparty session types,
+which forms the basis for supporting arbitrary communication structures
+over a server-centric WebSocket-based network topology.
+Related work \citep{PureScript2019, MVU2020, LINKS, Exceptional} 
+requires the 
 developer to implement their application using tools that are 
-unconventional for web development.
+unconventional for web development, 
+and only support communication protocols that adhere to the
+WebSocket network structure.
 To the best of our knowledge, this is the first work on multiparty session
 type-safe web development that provides the same communication safety 
-guarantees using familiar industry tools in TypeScript and React.
+guarantees using familiar industry tools in TypeScript and React,
+and supports peer-to-peer browser interactions over WebSocket transport.
 
 In \textbf{\cref{chap:background}}, 
 we introduce the core session type theory
@@ -22,20 +29,21 @@ We present an end-to-end workflow for generating TypeScript APIs for
 server-centric communication protocols over WebSockets. 
 
 In \textbf{\cref{chap:codegen}}, 
-we introduce the system architecture for our
-code generator, \fancyname{SessionTS}. 
+we introduce the system architecture for
+\codegen. 
 The implementation integrates with the Scribble
 toolchain to generate handler style APIs that the developer can use to write 
 their web applications to guarantee protocol conformance by construction.
 
 We present two code generation strategies for back-end and front-end
-TypeScript web development as \fancyname{NodeMPST} and \fancyname{ReactMPST}
+TypeScript web development as \nodecodegen and \reactcodegen
 in \textbf{\cref{chap:node}} and \textbf{\cref{chap:react}} respectively.
 
 In \textbf{\cref{chap:ext}},
-we extend \fancyname{SessionTS} to support advanced
+we extend \codegen to support advanced
 practices commonly found in full-stack web development in a way that
-preserves communication safety. We modify the API generation strategies
+preserves communication safety. 
+We modify the API generation strategies
 to support \textit{asynchronous implementations} 
 and introduce how to 
 gracefully handle errors and \textit{session cancellation} 
@@ -76,8 +84,11 @@ implemented as webservices. Through examples of
 multiparty sessions and routed multiparty sessions, 
 we demonstrate how the
 developer may implement the generated APIs and 
-consider the impact of our work
-on developer productivity.
+consider the compatibility of our work with respect to
+modern web programming practices.
+We perform benchmarks on a web application built using our
+generated APIs against a baseline implementation to evaluate
+the overhead of our work.
 
 Finally, we summarise our work in \textbf{\cref{chap:concl}} 
 and propose potential
@@ -88,6 +99,9 @@ This project was published as \emph{Generating Interactive WebSocket
 Applications in TypeScript} in Volume 314 of the Electronic Proceedings
 in Theoretical Computer Science (EPTCS) \cite{PLACES2020},
 in which I am the first and lead author.
+
+The materials in \cref{chap:codegen,chap:node,chap:react}
+are revised from \cite{PLACES2020}.
 The materials in 
 \cref{chap:ext,chap:p2p,chap:theory,chap:impl,chap:eval}
 are developed exclusively in this project by myself.
