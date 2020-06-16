@@ -726,15 +726,21 @@ $\proj{G}{p_i}$, and
 $G$ does not describe interactions with participants 
 not defined in $\mathcal{M}$.
 $\pt{G}$ denotes the set of participants in the global type $G$,
-defined inductively on $G$.
+defined inductively on $G$ as shown on \cref{table:pt}.
 
-\begin{align*}
-\pt{\tend} &= \emptyset \\
-\pt{\trecvar} &= \emptyset \\
-\pt{\trec{G}} &= \pt{G} \\
-\pt{\gcomm{p}{q}{l_i: G_i}{i \in I}} &= 
-	\{ \mrole{p}, \mrole{q} \} \cup \underset{i \in I}{\bigcup}~\pt{G_i} \\
-\end{align*}
+\begin{table}[!h]
+\centering
+\begin{tabular}{rcl}
+$\pt{\tend}$ &=& $\emptyset$ \\
+$\pt{\trecvar}$ &=& $\emptyset$ \\
+$\pt{\trec{G}}$ &=& $\pt{G}$ \\
+$\pt{\gcomm{p}{q}{l_i: G_i}{i \in I}}$ &=& 
+	$\{ \mrole{p}, \mrole{q} \} \cup \underset{i \in I}{\bigcup}~\pt{G_i}$
+	\\
+\end{tabular}
+\captionof{table}{Definition of Participants in Global Types}
+\label{table:pt}
+\end{table}
 
 \end{enumerate}
 
@@ -742,13 +748,22 @@ Well-typed multiparty session enjoys the following
 guarantees as outlined in \cite{GentleMPST}:
 
 \begin{itemize}
-\item \textbf{Communication safety}: The types of sent and expected messages will always match.
-\item \textbf{Protocol fidelity}: The exchange of messages between processes will abide by the global protocol.
-\item \textbf{Progress}: Messages sent by a process will be eventually received, and a process waiting for a message will eventually receive one; this also means there will not be any sent but unreceived messages.
+\item \textbf{Communication safety}: 
+The types of sent and expected messages will always match.
+\item \textbf{Protocol fidelity}: 
+The exchange of messages between processes will abide by the global protocol.
+\item \textbf{Progress}: 
+Messages sent by a process will be eventually received, 
+and a process waiting for a message will eventually receive one; 
+this also means there will not be any sent but unreceived messages.
 \end{itemize}
 
-
-This motivates an elegant, decentralised solution for checking protocol conformance in practice: once the global type for the protocol is defined, local processes can verify their implementation against their corresponding projection in isolation, independent of each other. 
+This motivates an elegant, decentralised solution for 
+checking protocol conformance in practice: 
+once the global type for the protocol is defined, 
+local processes can verify their implementation 
+against their corresponding projection in isolation, 
+independent of each other. 
 We illustrate this in \cref{fig:mpstworkflow}.
 
 \begin{figure}[!ht]
