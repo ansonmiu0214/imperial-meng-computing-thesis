@@ -160,8 +160,8 @@ Output processes have a continuation that will be executed upon
 a successful send.
 
 \item \textbf{Polyadic communication}: 
-More than one values can be communicated at once.
-We refer to these as a \textit{vector} of values.
+More than one value can be communicated at once.
+We refer to these as a \textit{vector} of values, $\vec v$.
 
 \item \textbf{Branching and selection}: 
 A branching process can offer a set of branches, 
@@ -198,12 +198,13 @@ $v_1, \dots, v_n$ to the variables $x_1, \dots, x_n$.
 
 \begin{prooftree}
 \AxiomC{$\exists	j \in I. l_j = l$}
+\AxiomC{$\vec x_j = x_1, \dots, x_n$}
 \AxiomC{$e_1 \downarrow v_1 \dots e_n \downarrow v_n$}
 \AxiomC{$\mrole{p} \neq \mrole{q}$}
 \RightLabel{\rulename{Comm}}
-\TrinaryInfC{$
+\QuaternaryInfC{$
 \mrole{p} :: \sel{q}{l}{e_1 \dots e_n}.~P \mid 
-\mrole{q} :: \bra{p}{l_i(x_1 \dots x_n): Q_i}{i\in I} 
+\mrole{q} :: \bra{p}{l_i(\vec x_i): Q_i}{i\in I} 
 ~\longrightarrow~ 
 \ptprocess{p}{P} \mid \ptprocess{q}{Q_j[v_k/x_k]^n_{k=1}}
 $}
@@ -227,8 +228,8 @@ e, e' ::= & & \text{Expressions} \\
 
 P,Q ::= & & \text{Processes} \\
      & \mathbf{0} & \text{Nil Process} \\
-\mid & \sel{p}{l}{e_1 \dots e_n}.~P & \text{Selection} \\
-\mid & \bra{p}{l_i(x_1 \dots x_n): P_i}{i\in I} & \text{Branching} \\
+\mid & \sel{p}{l}{\vec e}.~P & \text{Selection} \\
+\mid & \bra{p}{l_i(\vec x_i): P_i}{i\in I} & \text{Branching} \\
 \mid & \pcond{e}{P}{Q} & \text{Conditional} \\
 \mid & \precursion{P} & \text{Recursive Process} \\
 \mid & \precvar & \text{Process Variable} \\
@@ -264,7 +265,7 @@ more specifically, $\precursion{P} \equiv P[(\precursion{P})/X]$.
 
 {Session types} represent the type theory for our session calculus.
 We define the syntax of session types for binary sessions in
-\cref{fig:bst}. 
+\cref{fig:bst}. $\vec U$ denotes a vector of sorts.
 
 \begin{figure}[!hb]
 \doublespacing
@@ -274,9 +275,9 @@ We define the syntax of session types for binary sessions in
 U ::= & \text{\tt{int}}~\mid~\text{\tt{bool}} & \text{Sorts} \\
 
 T ::= & & \text{Session Types} \\
-     & \mathbf{end} & \text{Termination} \\
-\mid & \tbra{\role{p}}{l_i(U_1 \dots U_n):T_i}{i\in I} & \text{Branching} \\
-\mid & \tsel{\role{p}}{l_i(U_1 \dots U_n):T_i}{i\in I} & \text{Selection} \\
+     & \tend & \text{Termination} \\
+\mid & \tbra{p}{l_i(\vec U_i):T_i}{i\in I} & \text{Branching} \\
+\mid & \tsel{p}{l_i(\vec U_i):T_i}{i\in I} & \text{Selection} \\
 \mid & \trec{T} & \text{Recursive Type} \\
 \mid & \trecvar & \text{Type Variable} \\
 \end{array}
@@ -308,26 +309,29 @@ session types and our session calculus.
 
 \begin{prooftree}
 \AxiomC{$
-\Gamma \vdash e_1 : U_1 \dots \Gamma \vdash e_n : U_n
+\Gamma \vdash e_1 : U_1 ~ \dots ~ \Gamma \vdash e_n : U_n
 $}
 \AxiomC{$\Gamma \vdash P : T$}
 \RightLabel{\rulename{Ty-Sel}}
 \BinaryInfC{$
 \Gamma \vdash \sel{p}{l}{e_1 \dots e_n}.~P : 
-\tselone{p}{l(U_1 \dots U_n)}: T
+\tselone{p}{l(U_1, \dots, U_n)}: T
 $}
 \end{prooftree}
 
 \begin{prooftree}
 \AxiomC{$
-\forall i \in I. ~ \left(
+\forall i \in I \left(
+\vec x_i = x_1, \dots, x_n
+\qquad
+\vec U_i = U_1, \dots, U_n
+\qquad
 \Gamma, x_1: U_1, \dots, x_n: U_n \vdash P_i : T_i
-\right)
-$}
+\right)$}
 \RightLabel{\rulename{Ty-Bra}}
 \UnaryInfC{$
-\Gamma \vdash \bra{p}{l_i(x_1 \dots x_n): P_i}{i\in I} : 
-\tbra{p}{l_i(U_1 \dots U_n):S_i}{i\in I}
+\Gamma \vdash \bra{p}{l_i(\vec x_i): P_i}{i\in I} : 
+\tbra{p}{l_i(\vec U_i):S_i}{i\in I}
 $}
 \end{prooftree}
 
@@ -375,7 +379,8 @@ $\dual{\tsel{p}{l_i: T_i}{i\in I}}$ & = &
 $\dual{\trec{T}}$ & = & $\trec{\dual{T}}$ \\
 $\dual{\trecvar}$ & = & $\trecvar$ \\ 
 \end{tabular}
-\captionof{table}{Duality of Binary Session Types involving participants $\role{p}$ and $\role{q}$}
+\captionof{table}{Duality of Binary Session Types 
+Involving Participants $\role{p}$ and $\role{q}$}
 \label{table:dual}
 \end{center}
 \renewcommand{\arraystretch}{1}
@@ -413,7 +418,7 @@ T_{\text{Client}} &=
 	\tend \\
 T_{\text{Server}} &= \tbraone{Client}{
 \begin{cases}
-	\tmsg{Succ(int)}: \tselone{Client}{\tmsg{Succ(int)}} \\
+	\tmsg{Succ(int)}: \tselone{Client}{\tmsg{Succ(int)}}. \tend \\
 	\tmsg{Quit()}:  \tend \\
 \end{cases}
 } \\
@@ -437,7 +442,7 @@ sorts to express subsorting,
 i.e. $\texttt{nat} \subtype \texttt{int}$.
 } defines the subtyping relation: 
 $T \subtype T'$ reads \textit{$T$ is a subtype of $T'$},
-and is defined coinductively on the structure of session types.
+and is defined coinductively on the structure of $T$.
 
 We present the inference rules for 
 \rulename{Sub-Sel} and \rulename{Sub-Bra}
@@ -445,14 +450,6 @@ inspired by \cite{MPST} but adapted for polyadic communication;
 the intuition behind subtyping and subsorting is outlined below:
 
 \begin{itemize}
-\item \textbf{Branching}: 
-The supertype of a branching process offers 
-a subset of the branches and 
-expects more specific types of payload; 
-intuitively, if a process expects to 
-receive an \texttt{int}, 
-it can handle a \texttt{nat} payload.
-
 \item \textbf{Selection}: 
 The supertype of a selection process offers a 
 superset of the internal choices and 
@@ -460,31 +457,51 @@ can send more generic types of payload;
 intuitively, if a process sends a \texttt{nat}, 
 the payload is compatible with receivers expecting 
 a more generic \texttt{int} payload.
+
+\item \textbf{Branching}: 
+The supertype of a branching process offers 
+a subset of the branches and 
+expects more specific types of payload; 
+intuitively, if a process expects to 
+receive an \texttt{int}, 
+it can handle a \texttt{nat} payload.
 \end{itemize}
 
 \begin{prooftree}
-\AxiomC{$\forall i \in I.$}
-\AxiomC{$U'_1 \subtype U_1 ~ \dots ~ U'_n \subtype U_n$}
-\AxiomC{$S_i \subtype T'_i$}
-\RightLabel{\rulename{Sub-Bra}}
+\AxiomC{$\forall i \in I.\left(
+\vec U_i = U_1, \dots, U_n 
+\quad
+\vec U'_i = U'_1, \dots, U'_n
+\quad
+U_1 \subtype U'_1 ~ \dots ~ U_n \subtype U'_n
+\quad
+T_i \subtype T'_i
+\right)$}
+\RightLabel{\rulename{Sub-Sel}}
 \doubleLine
-\TrinaryInfC{$
-	\tbra{p}{l_i(U_1 \dots U_n):T_i}{i\in I \cup J}
+\UnaryInfC{$
+	\tsel{p}{l_i(\vec U_i):T_i}{i\in I}
 	\subtype
-	\tbra{p}{l_i(U'_1 \dots U'_n):T'_i}{i\in I}
+	\tsel{p}{l_i(\vec U'_i):T'_i}{i\in I \cup J}
 $}
 \end{prooftree}
 
 \begin{prooftree}
-\AxiomC{$\forall i \in I.$}
-\AxiomC{$U_1 \subtype U'_1 ~ \dots ~ U_n \subtype U'_n$}
-\AxiomC{$T_i \subtype T'_i$}
-\RightLabel{\rulename{Sub-Sel}}
+\AxiomC{$\forall i \in I.\left(
+\vec U_i = U_1, \dots, U_n 
+\quad
+\vec U'_i = U'_1, \dots, U'_n
+\quad
+U'_1 \subtype U_1 ~ \dots ~ U'_n \subtype U_n
+\quad
+T_i \subtype T'_i
+\right)$}
+\RightLabel{\rulename{Sub-Bra}}
 \doubleLine
-\TrinaryInfC{$
-	\tsel{p}{l_i(U_1 \dots U_n):T_i}{i\in I}
+\UnaryInfC{$
+	\tbra{p}{l_i(\vec U_i):T_i}{i\in I \cup J}
 	\subtype
-	\tsel{p}{l_i(U'_1 \dots U'_n):T'_i}{i\in I \cup J}
+	\tbra{p}{l_i(\vec U'_i):T'_i}{i\in I}
 $}
 \end{prooftree}
 
