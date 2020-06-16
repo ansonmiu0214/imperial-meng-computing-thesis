@@ -84,6 +84,20 @@
   morestring=[b]',
   morestring=[b]"
 }
+\lstdefinelanguage{PureScript}{
+  keywords={class,instance,Int,Bool},
+  keywordstyle=\color{blue}\bfseries,
+%  ndkeywords={class, export, boolean, throw, implements, import, this},
+%  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=true,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{darkgray}\ttfamily,
+  stringstyle=\color{purple}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
 \lstdefinelanguage{Python}{
   keywords={class, self, def, cls, int, str, bool, pass, return, from, import, and, if, else, None, is, not},
   keywordstyle=\color{blue}\bfseries,
@@ -105,6 +119,7 @@
     escapeinside={(*@}{@*)}
 }
 \def\lstonelinejs{\lstinline[language=javascript,basicstyle=\ttfamily]}
+\def\lstonelineps{\lstinline[language=purescript,basicstyle=\ttfamily]}
 
 % Figure and table counter
 \usepackage{chngcntr}
