@@ -8,28 +8,20 @@ industrial relevance of our work.
 
 \paragraph{Session Delegation}
 Delegation allows channels to be sent between endpoints.
-This directly addresses the limitations presented in
-\cref{section:evalatm}: in the \tprotocol{ATM} protocol,
-when the \trole{Client}
-connects to the \trole{Svr},
-the \trole{Svr} should be able to send a private channel
-for \trole{Client} to perform bank operations,
+Using the \tprotocol{Noughts and Crosses} game
+from \cref{section:evalgame}, the developer
+may want the \trole{Svr} to send a private channel
+to both players to play the game,
 whilst concurrently accepting new connections.
 
 The API generation solution 
 presented by Scalas et al. \cite{LinearDecomp} supports
 \textit{distributed multiparty delegation} in Scala.
-We have also shown in \cref{section:evalatm} that
-the developer can implement delegation with small changes
-to the session runtime.
-Future work can apply the findings from \cite{LinearDecomp},
-extend the Scribble protocol language for sending
-channels through messages, and formalise the workaround
-in \cref{section:evalatm} with respect to the extended 
-Scribble syntax for delegation.
-
-\paragraph{``Serverless'' Server-Side Endpoints}
-\dots
+Their work also uses the Scribble toolchain
+for protocol specification.
+Future work can apply the findings from \cite{LinearDecomp}
+and extend \codegen to support channel delegation
+in the generated handler-style APIs.
 
 \paragraph{Explicit Connection Actions}
 Hu and Yoshida \cite{ExplicitConnections} extends 

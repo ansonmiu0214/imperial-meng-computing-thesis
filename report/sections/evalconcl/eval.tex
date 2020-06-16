@@ -12,7 +12,7 @@ toolchain.
 
 To evaluate the expressiveness
 of our work,
-we use three case studies
+we use two case studies
 of protocols found in webservices
 to demonstrate strengths and weaknesses
 of our work:
@@ -45,19 +45,6 @@ developer implementing the protocol, which demonstrates
 the practicality of our extensions to \codegen to support
 \newtheory.
 
-\item
-\textbf{\tprotocol{ATM} Protocol:}
-
-In \cref{section:evalatm},
-we implement an ATM web application to demonstrate
-limitations of our work. Our generated APIs do not allow
-the server endpoint (in this case, the \trole{Bank})
-to participate in concurrent sessions (i.e. interacting
-with different \trole{Client}s concurrently), even though
-the protocol is written in a way that allows this.
-However, we propose a way to address this limitation, and expand
-upon this in \cref{section:future}.
-
 \end{itemize}
 
 To evaluate the performance of our work,
@@ -76,6 +63,6 @@ and comment on our findings in \cref{section:benchmarks}.
 
 \input{sections/evalconcl/eval/twobuyer}
 
-\input{sections/evalconcl/eval/atm} 
+%\input{sections/evalconcl/eval/atm} 
 
 \input{sections/evalconcl/eval/benchmarks}

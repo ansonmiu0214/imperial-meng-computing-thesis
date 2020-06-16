@@ -1,6 +1,6 @@
 \section{Contributions}
 
-In this project, we develop and present an
+In this project, we develop and present a novel
 MPST-based framework for developing full-stack
 interactive TypeScript applications over WebSocket transport.
 
@@ -14,7 +14,6 @@ We explain how our session type encodings target the Node.js
 server-side runtime and React.js framework in
 \cref{chap:node,chap:react} for server-side
 and browser-side endpoints respectively.
-
 In particular, we present a novel approach for integrating
 session types into web-based GUI programming based on
 translating the theory on model types \cite{MVU2020}
@@ -24,20 +23,22 @@ the generated APIs statically enjoy linear channel usage
 guarantees and affine channel usage guarantees for back-end
 and front-end targets respectively.
 
-Compared to previous work, we are not only able to
+Compared to previous work 
+\cite{Exceptional,PureScript2019,MVU2020,LINKS} on
+session-typed web development, 
+we are not only able to
 \textbf{statically} provide the same level of communication safety
 guarantees from multiparty session type theory, but we do so
 using modern web programming practices to increase
 the relevance and usability of our work in industry:
 our work targets TypeScript, Node.js and React.js,
 and we explain in \cref{chap:ext} how we support advanced
-web development idioms such as asynchronous implementations.
+web development idioms (such as asynchronous implementations)
+and handle premature disconnections gracefully.
 
-In addition, existing proposals on API generation for web development
-over WebSockets \cite{PureScript2019} only support protocols
-implementing server-centric topologies, in order to be 
-compatible with WebSocket transport.
-We formalise a theory of routed multiparty session types in 
+We also do not limit support to protocols that describe
+a server-centric topology: we formalise 
+a theory of routed multiparty session types in 
 \cref{chap:theory} to prove that it is possible to relax the
 server-centric topology assumption over WebSocket transport in a way 
 that preserves communication along with the communication safety 
@@ -48,7 +49,8 @@ Our work has received positive feedback from academia.
 The project has been accepted and published as 
 \emph{Generating Interactive WebSocket Applications in TypeScript}
 in Volume 314 of the Electronic Proceedings in Theoretical
-Computer Science \cite{PLACES2020}; we were also invited to present this work
+Computer Science (EPTCS) \cite{PLACES2020}.
+We were also invited to present this work
 at the 12th International Workshop on
 Programming Language Approaches to Concurrency- \& 
 Communication-cEntric Software (PLACES 2020).
