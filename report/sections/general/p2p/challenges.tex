@@ -16,7 +16,8 @@ Consider the global type
 A \to B: \tmsg{M1}. S \to B: \tmsg{M2}. \texttt{end}
 \]
 By existing LTS semantics over
-global types (\cref{subsubsection:lts}), then $SB!\tmsg{M2}$
+global types \cite{characterisation}, 
+then $\aout{S}{B}{\tmsg{M2}}$
 is a prefix of a valid execution trace.
 If we define our routing construct simply by replacing every single
 $A \to B: \tmsg{M}$ interaction with $A \to S: \tmsg{M}.
@@ -25,7 +26,7 @@ S \to B: \tmsg{M}$, we transform the global type into
 A \to S: \tmsg{M1}. S \to B: \tmsg{M1}. S \to B: \tmsg{M2}. \texttt{end}
 \]
 our naive definition of routing has over-serialised the protocol
-since $SB!\tmsg{M2}$ can no longer occur first because \trole{S}
+since $\aout{S}{B}{\tmsg{M2}}$ can no longer occur first because \trole{S}
 is forced to send \tmsg{M1} first, which it cannot do so until receiving
 from \trole{A}.
 This implies that we need to handle routing interactions differently

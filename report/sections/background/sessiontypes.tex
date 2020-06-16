@@ -547,5 +547,213 @@ $}
 \subsection{Multiparty Session Types}
 \label{subsection:bgmpst}
 
-% need LTS semantics here too
+Whilst binary session types provide communication guarantees 
+between exactly 2 participants, 
+distributed systems generally involve more parties in practice. 
+This is equally relevant in interactive web applications, 
+as motivated by the \textit{Battleships} game example 
+in \cite{PureScript2019} where the server coordinates 
+interactions between two players. 
 
+Whilst there is a natural syntactical extension to 
+our session calculus for 
+describing multiparty sessions\footnote{
+We also adopt the shorthand 
+$\mathcal{M} ::= \prod^n_{i=1} \ptprocess{p_i}{P_i}$ 
+as used in the literature.} as
+
+\[
+\begin{array}{rl}
+\mathcal{M} ::= & \ptprocess{p_1}{P_1} ~\mid~
+\ptprocess{p_2}{P_1} ~\mid~\dots~\mid
+\ptprocess{p_n}{P_n}
+\end{array}
+\]
+
+the same cannot be said for the binary session typing discipline,
+particularly with respect to duality.
+The same notion of duality does not extend to the 
+decomposition of multiparty interactions into 
+multiple binary sessions: 
+\cite{C406Lecture} and \cite{MPST} both present 
+counterexamples of well-typed binary sessions that, 
+when composed to represent a multiparty session, 
+results in communication errors thus 
+violating guarantees of well-typed sessions.
+
+Honda et al. presents {multiparty session types} 
+in \cite{MPAST} to extend the 
+binary session typing discipline for 
+sessions involving more than 2 participants, 
+whilst redefining the notion of compatibility 
+in this multiparty context. 
+\textit{Multiparty session types} (MPST)
+are defined in terms a \textit{global type},
+which provides a bird's eye view of the communication protocol
+describing the interactions between pairs of participants. 
+\cref{fig:mpst} defines the syntax of global types
+inspired by \cite{MPST};
+we omit message payload types for brevity.
+
+% Introduce global type, projection
+\begin{figure}[!hb]
+\doublespacing
+\[
+\begin{array}{rlr}
+
+G ::= & & \text{Global Types} \\
+     & \tend & \text{Termination} \\
+\mid & \gcomm{p}{q}{l_i: G_i}{i \in I} & \text{Message Exchange} \\
+\mid & \trec{G} & \text{Recursive Type} \\
+\mid & \trecvar & \text{Type Variable} \\
+\end{array}
+\]
+\singlespacing
+\caption{Syntax of Global Types}
+\label{fig:mpst}
+\end{figure}
+
+To check the conformance of a participant's process 
+against the protocol specification 
+described by the global type, 
+we \textit{project} the global type onto the participant
+to obtain a session type that only preserves the 
+interactions described by the global type that 
+pertain to the participant. 
+Projection is defined by the $\upharpoonright$ operator, 
+more commonly seen in literature in its infix form 
+as $\proj{G}{p}$ describing the projection of global type 
+$G$ for participant $\role{p}$. 
+Intuitively, the projected local type of a participant 
+describes the protocol from the viewpoint of the participant.
+
+More formally, projection can be interpreted as a 
+\textit{partial function} 
+${\upharpoonright} :: G \times \mrole{p} \rightharpoonup S$,
+as the projection for a participant may be undefined for 
+an ill-formed global type; 
+\cite{C406Lecture} presents examples of where this is the case, 
+and \cite{MPST} presents the formal definition of projection.
+We focus on the definition of projection for the 
+message exchange global type given below:
+
+\[
+\proj{\gcomm{p}{q}{l_i: G_i}{i \in I}}{r} =
+\begin{cases}
+\tsel{q}{l_i: \proj{G_i}{p}}{i \in I} 
+	& \text{if } \mrole{r} = \mrole{p} \\
+\tbra{p}{l_i: \proj{G_i}{q}}{i \in I} 
+	& \text{if } \mrole{r} = \mrole{q} \\
+\underset{i \in I}{\MERGEOP}~\proj{G_i}{r}
+	& \text{otherwise} \\
+\end{cases}
+\]
+
+The third case describes that,
+for a participant not involved in the communication,
+the projections of the continuations $\proj{G_i}{r}$
+do not necessarily have to be the same, but they
+need to be ``compatible''. 
+The $\mergeop$ syntax denotes the \textit{merging operator}.
+It is a partial function on local types allows us to construct
+a projection that is compatible with the projections on
+the continuations.
+We use the \textit{inductive} definition presented by
+Scalas and Yoshida in \cite{LessIsMore}, shown in \cref{fig:merge}.
+
+\begin{figure}[!h]
+\doublespacing
+\[
+\begin{array}{rlr}
+
+\tmerge{\tend}{\tend} &= \tend 
+	& \rulename{Merge-End} \\
+\tmerge{\trecvar}{\trecvar} &= \trecvar 
+	& \rulename{Merge-RecVar} \\
+\tmerge{\trec{T}}{\trec{T'}} &= \trec{\tmerge{T}{T'}} 
+	& \rulename{Merge-Rec} \\
+\tmerge{\tsel{p}{l_i: T_i}{i \in I}}{\tsel{p}{l_i: T_i}{i \in I}} 
+	&= \tsel{p}{l_i: T_i}{i \in I}
+	& \rulename{Merge-Sel} \\
+\tmerge{\tbra{p}{l_i: T_i}{i \in I}}{\tbra{p}{l_j: T'_j}{j \in J}} 
+	&= \tbra{p}{l_k: T''_k}{k \in I \cup J}
+	& \rulename{Merge-Bra} \\
+
+	& 
+	\text{where } T''_k =
+	\begin{cases}
+	T_k & \text{if } k \in (I \setminus J) \\
+	T'_k & \text{if } k \in (J \setminus I) \\
+	\tmerge{T_k}{T'_k} & \text{otherwise} \\
+	\end{cases}
+	& \\
+
+\end{array}
+\]
+\singlespacing
+\captionof{figure}{Definition of Merging Operator}
+\label{fig:merge}
+\end{figure}
+
+The notion of compatibility in multiparty session types 
+is still captured by \rulename{MTy}, 
+but adapted to consider the local projections for 
+all participants as supposed to dual types in the binary case. 
+
+\begin{prooftree}
+\AxiomC{$
+\forall i \in I. ~ \left( \cdot \vdash P_i : \proj{G}{p_i} \right)
+$}
+\AxiomC{$
+\pt{G} \subseteq \left\{ \mrole{p_i} \mid i \in I \right\}
+$}
+\RightLabel{\rulename{MTy}}
+\BinaryInfC{$
+\displaystyle \vdash \prod^{}_{i \in I} \ptprocess{p_i}{P_i} ~: G
+$}
+\end{prooftree}
+
+For a multiparty session 
+$\mathcal{M} = \prod_{i \in I} \ptprocess{p_i}{P_i}$ 
+to be well-typed by a global type $G$: 
+
+\begin{enumerate}
+\item 
+All participant processes $\mrole{p_i}{P_i}$ are well-typed 
+with respect to their corresponding well-defined projection 
+$\proj{G}{p_i}$, and 
+\item 
+$G$ does not describe interactions with participants 
+not defined in $\mathcal{M}$.
+$\pt{G}$ denotes the set of participants in the global type $G$,
+defined inductively on $G$.
+
+\begin{align*}
+\pt{\tend} &= \emptyset \\
+\pt{\trecvar} &= \emptyset \\
+\pt{\trec{G}} &= \pt{G} \\
+\pt{\gcomm{p}{q}{l_i: G_i}{i \in I}} &= 
+	\{ \mrole{p}, \mrole{q} \} \cup \underset{i \in I}{\bigcup}~\pt{G_i} \\
+\end{align*}
+
+\end{enumerate}
+
+Well-typed multiparty session enjoys the following 
+guarantees as outlined in \cite{GentleMPST}:
+
+\begin{itemize}
+\item \textbf{Communication safety}: The types of sent and expected messages will always match.
+\item \textbf{Protocol fidelity}: The exchange of messages between processes will abide by the global protocol.
+\item \textbf{Progress}: Messages sent by a process will be eventually received, and a process waiting for a message will eventually receive one; this also means there will not be any sent but unreceived messages.
+\end{itemize}
+
+
+This motivates an elegant, decentralised solution for checking protocol conformance in practice: once the global type for the protocol is defined, local processes can verify their implementation against their corresponding projection in isolation, independent of each other. 
+We illustrate this in \cref{fig:mpstworkflow}.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=.75\textwidth]{MpstFramework}
+\caption{Type Checking with Multiparty Session Types}
+\label{fig:mpstworkflow}
+\end{figure}
