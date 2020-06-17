@@ -24,8 +24,8 @@ Enabling more complex communication patterns caters for
 more interactive use cases, but introduces additional 
 concerns to the developer with respect to implementation correctness.
 
-\paragraph{The need for communication safety 
-in interactive web applications}
+\paragraph{Communication Safety 
+in Interactive Web Applications}
 
 Consider a \textit{flight booking service}
 between a \trole{Traveller} and a \trole{FlightServer}.
@@ -44,9 +44,9 @@ destination.
 
 We can implement the flight booking service as a web
 application.
-The \trole{FlightServer} can be a web server
+\trole{FlightServer} can be a web server
 running on the \textit{Node.js} JavaScript runtime \cite{nodejs}.
-The \trole{Traveller} can run on the web browser
+\trole{Traveller} can run on the web browser
 as a \textit{single-page application} (SPA) written
 in a popular framework like \textit{React.js} \cite{React}.
 SPAs feature a single HTML page and dynamically renders
@@ -69,7 +69,6 @@ Whilst WebSockets make this web-based implementation possible,
 it introduces the developer to a new family of communication errors
 (in addition to the usual testing for application logic correctness), 
 even for this simple example:
-we highlight just a few:
 
 \begin{itemize}
 
@@ -125,7 +124,7 @@ implementations to be free from communication errors.
 \paragraph{Limitations of State-of-the-Art Session-Typed Web Development}
 Existing work \cite{MVU2020,PureScript2019} that 
 adapt the MPST framework for web development
-acknowledge the limitations of JavaScript 
+acknowledge the limitations of \textit{JavaScript} 
 -- the language of the browser --
 in providing static type-level guarantees
 for communication safety, 
@@ -142,7 +141,7 @@ we observe two main limitations from the state-of-the-art:
 \subparagraph{L1: 
 Incompatibility with modern web programming practices}
 
-The current state-of-the-art succeeds in \textbf{statically}
+The current state-of-the-art succeeds in statically
 providing communication safety guarantees,
 but requires the developer to compromise by adapting
 to programming paradigms and practices that are not
@@ -171,7 +170,7 @@ Going back to the flight booking service as an example,
 \cite{PureScript2019,MVU2020} do not handle premature
 disconnections; if the \trole{Traveller} receives a quote
 and closes their browser prematurely and the \trole{FlightServer}
-isn't notified of this event, 
+is not notified of this event, 
 the reserved seat will not be released.
 These compromises limit the usability of the MPST framework
 in modern web programming.

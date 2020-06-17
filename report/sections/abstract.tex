@@ -1,6 +1,14 @@
 \begin{abstract}
 
 \noindent
+Modern web programming
+involves coordinating interactions
+between browser clients and a web server.
+Typically, the interactions are
+informally described, which makes
+it difficult to verify communication
+correctness in the distributed system.
+
 Multiparty Session Types (MPST)
 is a typing discipline for concurrent
 processes that communicate via
@@ -30,7 +38,7 @@ from a communication protocol specification
 based on multiparty session type theory.
 Our work is compatible with modern web programming
 industrial practices. The generated APIs
-build upon TypeScript concurrency primitives,
+build upon TypeScript concurrency practices,
 complement the event-driven style of programming
 in full-stack web development,
 and are compatible
@@ -39,8 +47,9 @@ for server-side and browser-side endpoints respectively.
 We evaluate the expressiveness of \codegen for modern
 web programming
 using case studies of protocols found in web-services,
-and analyse the overhead of our implementation through 
-running micro-benchmarks against a baseline implementation.
+and analyse the performance overhead
+through 
+running benchmarks against a baseline implementation.
 
 \newtheory can express interactions to be routed
 via an intermediate participant.

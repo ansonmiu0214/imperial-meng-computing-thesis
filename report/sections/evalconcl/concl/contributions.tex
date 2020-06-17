@@ -8,16 +8,17 @@ We motivate our API generation approach from
 \cite{Hybrid2016,PureScript2019} to generate TypeScript APIs
 from a Scribble protocol specification.
 Developers write their full-stack applications
-by implementing the generated APIs, and can enjoy 
+by implementing the generated APIs, and enjoy 
 communication safety guarantees by construction.
-We explain how our session type encodings target the Node.js
-server-side runtime and React.js framework in
-\cref{chap:node,chap:react} for server-side
-and browser-side endpoints respectively.
-In particular, we present a novel approach for integrating
+APIs generated for server-side endpoints
+are compatible with the Node.js runtime,
+as detailed in \cref{chap:node}.
+For browser-side endpoints,
+we present a novel approach for integrating
 session types into web-based GUI programming based on
 translating the theory on model types \cite{MVU2020}
-to idiomatic practices on the React.js framework.
+to idiomatic practices on the React.js framework;
+this is highlighted in \cref{chap:react}.
 With respect to session type theory, implementations using
 the generated APIs statically enjoy linear channel usage
 guarantees and affine channel usage guarantees for back-end
@@ -27,7 +28,7 @@ Compared to previous work
 \cite{Exceptional,PureScript2019,MVU2020,LINKS} on
 session-typed web development, 
 we are not only able to
-\textbf{statically} provide the same level of communication safety
+statically provide the same level of communication safety
 guarantees from multiparty session type theory, but we do so
 using modern web programming practices to increase
 the relevance and usability of our work in industry:
@@ -50,7 +51,7 @@ The project has been accepted and published as
 \emph{Generating Interactive WebSocket Applications in TypeScript}
 in Volume 314 of the Electronic Proceedings in Theoretical
 Computer Science (EPTCS) \cite{PLACES2020}.
-We were also invited to present this work
+We were also invited to present a part of this work
 at the 12th International Workshop on
 Programming Language Approaches to Concurrency- \& 
 Communication-cEntric Software (PLACES 2020).
@@ -63,5 +64,6 @@ design their application with communication safety in mind.
 Our formalism of routed multiparty session types enables our
 API generation tool to support a wider range of protocols, and
 further reveals the potential
-for implementing dynamic communication structures over centralised
+for implementing dynamic communication structures 
+over centralised
 network topologies.

@@ -2,11 +2,11 @@
 
 The objective of this project is to provide
 developers with a development workflow
-that provides communication safety guarantees in modern
-web programming through multiparty session types.
+that \textit{provides communication safety guarantees in modern
+web programming} through multiparty session types.
 
 We tackle the limitations of the current
-state-of-the-art with a two-step strategy:
+state-of-the-art with two solutions:
 
 \subparagraph{S1: \codegen}
 We implement an end-to-end framework
@@ -22,12 +22,19 @@ and React.js browser-side framework.
 By implementing the generated APIs in their full-stack applications,
 developers can enjoy static guarantees with respect 
 to communication safety: 
-there will not be any communication mismatches,
-and channel linearity will be respected.
+there will \textit{not} be any \textbf{deadlocks} or
+\textbf{communication mismatches},
+and \textbf{channel linearity} will be respected.
 
 \subparagraph{S2: \newtheory}
 We present an extension of the canonical MPST
 theory that supports \textit{routed communication}.
+We prove that \newtheory also extends the communication safety
+properties of the canonical MPST theory, so
+processes that implement \newtheory also enjoy
+guarantees of \textbf{deadlock-freedom}, \textbf{channel linearity},
+and the absence
+of \textbf{communication mismatches}.
 
 Through \newtheory, we can express interactions to be
 routed via an intermediate endpoint.
@@ -37,7 +44,7 @@ using routed communication.
 We also extend \codegen to implement \newtheory.
 \\
 
-By step \textbf{S1}, we address the limitation \textbf{L1}.
+By solution \textbf{S1}, we address the limitation \textbf{L1}.
 Our work provides the same communication safety guarantees
 as the current state-of-the-art, but 
 is compatible with modern web programming tools and idioms.
@@ -60,7 +67,7 @@ asynchronous operations), and provides an error handling
 mechanism tailored to the dynamic web-based environment
 (where roles can disconnect prematurely).
 
-In step \textbf{S2},
+In solution \textbf{S2},
 we show that routing communication interactions through an intermediate
 role, such as a web server, preserves the communication
 safety properties and the semantics from the original
