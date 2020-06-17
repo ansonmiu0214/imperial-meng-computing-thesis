@@ -1,19 +1,16 @@
 \section{Approach}
 We motivate our approach from \cite{MVU2020} by extending
 their work on \textit{multiple model types} motivated by the
-\textit{Model-View-Update} architecture (MVU).
-An MVU application features a \textit{model} encapsulating application
-state, a \textit{view function} rendering the state on the 
-Document Object Model (DOM), and an
-\textit{update function} handling \textit{messages} produced by the
-rendered model to produce a new model.
+\textit{Model-View-Update} architecture (MVU),
+introduced in \cref{section:bgrelated}.
 The concept of model types express type dependencies between these
 components: a \emph{model type} uniquely defines a \textit{view function},
 set of \textit{messages} and \textit{update function} -- rather than
 producing a new model, the update function defines valid transitions to
 other model types.
 
-We leverage the correspondence between model types and states in the EFSM:
+We leverage the correspondence between model types 
+and states in the EFSM:
 each state in the EFSM is a model type, the set of messages represent
 the possible channel actions available at that state,
 and the update function defines which successor state to transition to,

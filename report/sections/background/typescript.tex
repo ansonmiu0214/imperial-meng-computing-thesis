@@ -1,0 +1,108 @@
+\section{TypeScript}
+\label{section:typescript}
+
+We introduce the TypeScript language 
+\cite{UnderstandingTypeScript}
+as our choice of target language
+for session type API generation.
+Developed by \textit{Microsoft Research},
+TypeScript is an extension to
+JavaScript to address
+the deficiencies of the latter in
+\textit{developing} and \textit{maintaining}
+large-scale complex applications.
+Syntactically,
+TypeScript is a \textit{superset} of JavaScript,
+so every JavaScript program is a
+TypeScript program.
+The TypeScript Compiler is used
+to compile a TypeScript program into JavaScript
+source code; since
+JavaScript is a dynamically typed langauge,
+the compilation process features full type erasure.
+
+We introduce specific language
+features used to implement our API generation
+solution throughout the report as needed;
+here, we highlight the key properties
+of the type system implemented in the language.
+
+\paragraph{Structural Typing}
+In a structural type system, type equivalence
+is determined by \textit{shape} rather than by name
+(which is the case in a \textit{nominal} type system).
+
+Consider the following TypeScript code:
+
+\begin{lstlisting}[language=javascript]
+class ThisSquare {
+	constructor(public side: number) { }
+};
+
+class ThatSquare {
+	constructor(public side: number) { }
+};
+
+declare function area(sq: ThisSquare): number;
+
+area(new ThisSquare(2));	// ok
+area(new ThatSquare(2));	// ok (*@\label{line:structural1}@*)
+area({ side: 2 });			// ok (*@\label{line:structural2}@*)
+\end{lstlisting}
+
+The \texttt{area} function takes a \texttt{ThisSquare}
+as parameter.
+Under a structural type system,
+\cref{line:structural1,line:structural2}
+will type-check, because \texttt{ThatSquare} and the object
+literal created from scratch matches the \textit{shape}
+of \texttt{ThisSquare} -- all of them have a \texttt{side}
+property typed \lstonelinejs{number}.
+
+In languages (e.g. Java) that use a nominal type system, 
+\cref{line:structural1}
+will not type-check because \texttt{ThatSquare} is not named
+\texttt{ThisSquare}.
+
+\paragraph{Gradual Typing}
+In a gradual type system, a program can have parts
+that are statically typed and other parts are dynamically
+typed \cite{GradualTyping}.
+TypeScript distinguishes dynamically typed code using
+the \lstonelinejs{any} type.
+
+\begin{lstlisting}[language=javascript]
+// Invoke remote API
+fetch('https://jsonplaceholder.typicode.com/todos/1')
+	// Convert to JavaScript Object Notation
+	.then((response: Response) => response.json())
+	.then((json: any) => {
+		// Up to the developer to correctly deserialise;
+		// incorrect implementations will cause
+		// runtime type error.
+	});
+\end{lstlisting}
+
+The rationale for this decision in \cite{UnderstandingTypeScript}
+is that, JavaScript programs tend to interact with
+data of unspecified types (such as fetching data
+from API calls over the network); these parts
+need to be dynamically typed in order to give developers
+a smooth transition into TypeScript, and for TypeScript
+to be usable in a distributed system setting. \\
+
+\noindent
+Based on the compatibility of TypeScript
+with JavaScript, 
+we believe that TypeScript API generation for session-typed
+web development best achieves our objective
+of providing
+developers with a workflow
+that provides communication safety guarantees in \textit{modern
+web programming}
+through multiparty session types.
+We argue that the type system of TypeScript,
+along with other language features we introduce
+throughout the course of the report, is sufficient
+for implementing session type theory in a manner that
+complements idiomatic web development practices.

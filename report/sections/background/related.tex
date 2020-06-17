@@ -275,7 +275,7 @@ imperative style of application code written in Java
 
 
 \subsubsection{Runtime Monitors in Python}
-Neykova and Yoshida targeted the MPST methodology 
+Neykova targeted the MPST methodology 
 for Python programs in \cite{Python2017} 
 and proposed to generate \textit{runtime monitors} 
 from the EFSM.
@@ -307,7 +307,7 @@ so channel linearity is trivially guaranteed here.
 \label{subsection:sessiontypewebdev}
 
 We discuss the current state-of-the-art proposals
-for integrating session types in web development.
+for session-typed web development.
 
 \subsubsection{API Generation in PureScript}
 King et al. presented an approach in \cite{PureScript2019}
@@ -364,19 +364,77 @@ In particular, the final point about guaranteeing channel linearity
 by construction is something we can build upon in our solution,
 since linear types is a feature left to be desired in
 ``mainstream'' programming languages.
-We also observe the challenges of applying session types 
-to the front-end environment, as shown by the careful choice 
+We also observe the challenges of session-typed GUI
+programming, as shown by the careful choice 
 made in \cite{PureScript2019} 
-to use the \textit{Concur UI} framework which 
+to use the \textit{Concur UI} framework \cite{ConcurUI} which 
 builds UI elements sequentially to model sequential sessions.
-Not doing so would require binding channel resources into 
-event listeners on UI elements, which makes linearity violation possible 
+Not doing so would make channel linearity violation possible 
 (e.g. by binding a send transition to a button click event,
 the button may still be active after the transition is complete;
 clicking on it again will reuse the channel resource).
+Whilst \cite{PureScript2019} supports multiparty session types,
+the communication protocol must describe all interactions
+to go through a centralised server role to respect the
+network topology enforced by WebSocket transport.
 
-As motivated in \cref{section:intro}, \dots
+As motivated in \cref{section:intro}, 
+the functional paradigm and sequential UI framework
+are necessary features for the proposal to statically 
+provide communication safety guarantees, but 
+this type of workflow is not compatible with 
+modern web programming practices and compromises on usability.
 
+\subsubsection{Session-Typed GUI Programming using Links}
+Fowler presented the first formal integration
+of session typing and GUI programming in \cite{MVU2020}.
+His work formalised the \textit{Model-View-Update} (MVU)
+architectural pattern for GUI development.
+An MVU application features a \textit{model} encapsulating application
+state, a \textit{view function} rendering the state on the 
+user interface, and an
+\textit{update function} handling
+\textit{messages} produced by the
+rendered model to produce a new model.
+Fowler introduces the concept of model types
+to express type dependencies between these components:
+a \emph{model type} uniquely defines a \textit{view} function,
+set of \textit{messages} and \textit{update function} --
+rather than producing a new model, the update function 
+defines valid transitions to other model types.
+This approach guarantees channel linearity for GUI programming:
+the update function transitions to a successor model, which only
+renders an interface with the set of messages unique to that model,
+so channel actions from the predecessor model are not rendered,
+which makes reuse impossible.
+The core MVU calculus is also extended with \textit{commands}
+and \textit{linearity} required to express communication
+actions in session type theory.
 
-\subsubsection{MVU using Links}
-\dots
+\cite{MVU2020} is implemented using
+the \textit{Links} web programming language
+\cite{LINKS}. Links is a strict, typed, functional language
+that can be used to write full-stack web applications;
+and similar to PureScript, it is compiled to JavaScript.
+As it has a linear type system, session types can be
+implemented using native language features, since the
+language can monitor linear channel usage.
+Links also supports error handling for session types,
+as introduced in \cite{Exceptional}; 
+given side-effects must be made explicit
+in functional programming, \cite{Exceptional} introduces
+a \textit{session cancellation} operator to ensure
+that channel resources are closed after handling
+side-effects, such as errors.
+
+This work succeeds in 
+retaining the declarative approach for writing
+web interfaces, as the view function incorporates standard
+\textit{Hyper-Text Mark-up Language} (HTML).
+The novel approach of guaranteeing channel linearity
+in GUI programming through the model type abstraction
+is something we can build upon. 
+However, Links does not support multiparty session types,
+and similar to \cite{PureScript2019},
+it can only express server-centric communication structures
+over WebSocket transport.
