@@ -1,6 +1,6 @@
 \section{Implementation}
 
-\fancyname{SessionTS} is written in Python. 
+\codegen is written in Python. 
 It offers flexible syntax, a rich standard library, and 
 a healthy ecosystem of DOT graph parsers and template engines,
 making it a suitable choice for implementing our code generator.
@@ -8,7 +8,7 @@ Its rich standard library also simplifies many tasks: we use
 the \texttt{argparse} package to generate an informative
 command line interface (CLI) for developers to 
 supply the correct information (\cref{lst:cmdline})
-to use \fancyname{SessionTS},
+to use \codegen
 and the \texttt{subprocess} package to 
 invoke external tools, such as Scribble and the TypeScript Compiler.
 
@@ -31,12 +31,13 @@ optional arguments:
   -o OUTPUT, --output OUTPUT
                  Output directory for generation
 \end{lstlisting}
-\captionof{lstlisting}{Entry Point for \fancyname{SessionTS}}
+\captionof{lstlisting}{Entry Point for \codegen}
 \label{lst:cmdline}
 \end{figure}
 
 We use Docker \cite{docker} to encapsulate our code generator
-and its dependencies -- we found the canonical Python virtual environment
+and its dependencies -- 
+we found the canonical Python virtual environment
 solution to be insufficient, as the Scribble toolchain is
 a standalone Java executable with non-trivial setup procedures.
 The Dockerfile builds a Docker image with Scribble and

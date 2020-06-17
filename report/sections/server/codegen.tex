@@ -1,21 +1,21 @@
-\chapter{\fancyname{SessionTS}: Session Type API Generation for TypeScript}
+\chapter{\codegen: Session Type API Generation for TypeScript}
 \label{chap:codegen}
 
 In this chapter, we present
-\fancyname{SessionTS},
+\codegen,
 a toolchain for generating TypeScript APIs that developers can
 use to write web applications that conform to their specified
 communication protocol.
 The toolchain is publicly available at \cite{repo}.
 
-\fancyname{SessionTS} supports communication protocols that define 
+\codegen supports communication protocols that define 
 \emph{server-centric} topologies, meaning that: 
 \textbf{(1)} there is exactly one participant executed on the 
 Node.js runtime; 
 \textbf{(2)} all other participants run on the web browser; and
 \textbf{(3)} all non-server participants only communicate with the server.
-Examples of such protocols include the \tprotocol{Noughts and Crosses}
-multiplayer game (\cref{section:evalgame}) and the \tprotocol{ATM} protocol.
+An example would be the \tprotocol{Noughts and Crosses}
+multiplayer game (\cref{lst:game}).
 We relax this assumption in \cref{part:general}.
 
 \input{sections/server/codegen/workflow}

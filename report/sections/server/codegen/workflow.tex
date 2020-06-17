@@ -1,7 +1,8 @@
 \section{Development Workflow}
 
 We motivate our development workflow from previous work 
-\cite{PureScript2019, Hybrid2016} by extending the Scribble toolchain
+\cite{PureScript2019, Hybrid2016, LinearDecomp} 
+by extending the Scribble toolchain
 and generating APIs that integrate the developer's 
 application logic
 into the execution of the communication automata.
@@ -16,13 +17,14 @@ Scribble (\cref{subsection:scribble}),
 stating the role (hereafter \textit{endpoint})
 to generate APIs for,
 and the code generation \textit{target}
-(i.e. whether the role runs on the server or the web browser).
+(i.e. whether the role runs on the back-end web server or 
+the front-end web browser).
 
-\item \fancyname{SessionTS} delegates to the 
+\item \codegen delegates to the 
 Scribble toolchain for verifying the well-formedness of
 the protocol and expects to receive a DOT graph representation of
 the endpoint FSM (\cref{subsection:efsm}). 
-\fancyname{SessionTS} parses the endpoint's 
+\codegen parses the endpoint's 
 interactions from the DOT graph and generates TypeScript APIs
 for the developer (\cref{subsection:apigen}) 
 tailored to the specified target.
@@ -37,7 +39,7 @@ communication errors by session type theory.
 \begin{figure}[!ht]
 \centering
 \includegraphics[width=\textwidth]{DevelopmentWorkflow}
-\captionof{figure}{Overview of \fancyname{SessionTS} Development Workflow}
+\captionof{figure}{Overview of \codegen Development Workflow}
 \label{fig:devworkflow}
 \end{figure}
 
@@ -49,22 +51,22 @@ as presented in
 \cite{Scribble}, for formalising the communication structure. This is
 inspired by existing work on implementing session type theory 
 in mainstream programming languages
-\cite{Hybrid2016, PureScript2019, Python2017}. 
+\cite{Hybrid2016, PureScript2019, Python2017, LinearDecomp}. 
 We use the variant of the Scribble language 
-previously introduced in \cref{subsection:bgscribble}.
+discussed in \cref{subsection:bgscribble}.
 
 \subparagraph{Type declaration statements}
-Specific to our TypeScript API generation toolchain,
+Specific to \codegen,
 the developer is \textit{not} required to explicitly
 add type declaration statements for built-in types.
 \cref{lst:adder} is a \textit{syntactically correct}
 Scribble protocol as far as 
-\fancyname{SessionTS} is concerned. 
-Internally, \fancyname{SessionTS} inspects the protocol file
+\codegen is concerned. 
+Internally, \codegen inspects the protocol file
 and parses existing type declarations using regular expressions
 (or \textit{regex}) -- this is necessary to extract any
 custom data types that will appear in the communication (for example,
-\cref{lst:game}), and allows \fancyname{SessionTS} to inject
+\cref{lst:game}), and allows \codegen to inject
 ``boilerplate'' type declarations for built-in TypeScript types before
 calling Scribble.
 
@@ -76,11 +78,11 @@ global protocol Adder(role Client, role Svr) {
 		RES(number)         from Svr to Client;
 		do Adder(Client, Svr);
 	} or {
-		QUIT(string) from Client to Svr;
+		QUIT(string) 		from Client to Svr;
 		choice at Svr {
-			THANKS()    from Svr to Client;
+			THANKS()    	from Svr to Client;
 		} or {
-			TERMINATE() from Svr to Client;
+			TERMINATE() 	from Svr to Client;
 		}
 	}
 }
@@ -110,10 +112,11 @@ and transitions between states are represented by
 communication actions, i.e. the sending or receiving of a message.
 
 Scribble expresses the EFSM using the 
-DOT graph description language \cite{dot}, with each
+\textit{DOT} graph description language \cite{dot}, 
+with each
 communication action encoded as the label of the corresponding
 state transition. 
-\fancyname{SessionTS} uses the pydot library \cite{pydot}
+\codegen uses the \textit{pydot} library \cite{pydot}
 to parse the graph into an internal representation of the EFSM.
 We define an \texttt{EfsmBuilder} class with APIs designed for
 constructing the EFSM representation by iterating over the 
@@ -171,9 +174,10 @@ the structure of the generated code, as the string interpolation
 aspect is likely to be interleaved with source code implementing
 additional logic for code generation.
 
-For \fancyname{SessionTS}, we leverage the Jinja \cite{jinja} 
+For \codegen, we leverage the \textit{Jinja} \cite{jinja} 
 template engine library for code generation. 
-We first construct templates for the TypeScript files we wish to generate,
+We first construct templates for the TypeScript files 
+we wish to generate,
 specifying placeholders for dynamic content (to be extracted
 from the \texttt{Endpoint} object); 
 we then provide Jinja with the template path and the 
@@ -205,7 +209,8 @@ markup for simple control structure: \texttt{\{\{ state \}\}}
 denotes a placeholder for Jinja to render the \texttt{state} variable,
 and the \texttt{\{\% \%\}} syntax  is used for conditionals and
 control structures 
-(such as for loops, to dynamically render the enclosing ``sub-template''
+(such as for loops, to dynamically render the 
+enclosing ``sub-template''
 by iterating over a collection).
 The main advantage that Jinja brings is that 
 it decouples the ``presentation''
@@ -237,7 +242,8 @@ class CodeGenerationStrategy(ABC):
 
 As we generate a different set of TypeScript artefacts depending
 on the specified target, we structure the different code generators
-using the Strategy design pattern. Each target extends the
+using the Strategy design pattern. 
+Each target extends the
 abstract base class \texttt{CodeGenerationStrategy} 
 and implements its own \texttt{generate()}
 method to return a list of \texttt{(path, content)} tuples. 
