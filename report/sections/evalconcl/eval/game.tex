@@ -1,9 +1,17 @@
 \section{Multiparty Sessions: \tprotocol{Noughts and Crosses}}
 \label{section:evalgame}
 
-We implement the classic turn-based board game of \textit{Noughts and Crosses}
+We implement the classic turn-based board game of 
+\textit{Noughts and Crosses}
 between two players,
-as introduced in \cref{section:intro}.
+as introduced in \cite{PLACES2020}.
+Both players, identified by either \textit{noughts (O's)}
+or \textit{crosses (X's)} respectively, take turns
+to place a mark on an unoccupied cell of a 3-by-3 grid
+until one player wins (when their markers form one straight
+line on the board) or a stalemate is reached (when all cells
+are occupied and no one wins).
+
 We formalise the game interactions using a Scribble protocol
 presented in \cref{lst:game}.
 The \tprotocol{Game} protocol describes one turn:
@@ -51,7 +59,10 @@ GitHub\footnote{
 and developer implementation.
 
 \subsection{Game Server}
-We set up the WebSocket server as an Express.js \cite{Express} application
+We set up the WebSocket server as an \textit{Express.js}\footnote{
+Express is a commonly used library for writing lightweight
+web servers in JavaScript.
+} \cite{Express} application
 on top of the Node.js runtime.
 We define our own game logic in a \texttt{Board} class
 to keep track of the game state and expose methods 
@@ -66,10 +77,10 @@ We illustrate this in \cref{lst:gamesvr}.
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2]
 const handleP1Move = new Implementation.S13({
-	Pos: async (move: Point) => {
+	Pos: (*@\hl{async}@*) (move: Point) => {
 		// `board` manages game state;
 		// `board.P1` registers the move and returns the game result
-		const result = await board.P1(move);
+		const result = (*@\hl{await}@*) board.P1(move);
 		switch (result) {
 			case MoveResult.Win: {
 				return new Implementation.S15([
@@ -96,9 +107,15 @@ const handleP1Move = new Implementation.S13({
 
 const handleP2Move = ...		// Defined similarly as handleP1Move
 
-new Svr(wss, handleP1Move, (role, reason) => {
+const cancellation = (role: Roles.All, reason: string) => {
 	console.log(`${role} cancelled because of ${reason}`);
-});
+}
+
+new Svr(
+	wss,						// WebSocket server
+	handleP1Move,		// Game logic
+	cancellation		// Error handler
+);
 \end{lstlisting}
 \captionof{lstlisting}{Implementing \tprotocol{Noughts and Crosses} Game Server using
 \codegen}
@@ -124,7 +141,7 @@ the developer could implement \trole{P1} using a GUI and provide
 \trole{P2} with a text-based game experience on the browser.
 
 The main implementation detail for players
-is to make a move. 
+is to make moves. 
 Intuitively, the developer implements a grid and binds a handler
 to the \lstonelinejs{'onClick'} event of each vacant cell to send that cell's coordinate 
 in a \tmsg{Pos(Point)} message to the game server.
@@ -174,7 +191,7 @@ to the table cell.
 			return <SelectPoint><td>{cell}</td></SelectPoint>
 		} else {
 			// Render nought or cross,
-			// but clicking on this cell 	will *not* send anything
+			// but clicking on this cell will *not* send anything
 			return <td>{cell}</td>
 		}		
 	})}
@@ -207,3 +224,6 @@ in \cref{chap:ext} play crucial roles in
 improving the usability of the generated APIs when
 compared with existing work on session types for web development 
 \cite{PureScript2019,MVU2020,LINKS}.
+
+Code is available at 
+\url{https://github.com/ansonmiu0214/SessionTS-Examples/NoughtsAndCrosses}.

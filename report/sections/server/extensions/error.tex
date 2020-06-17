@@ -10,11 +10,15 @@ session type implementations that do not account for failure
 are of limited use in distributed programming.
 
 We motivate the need for handling a variety exceptions in
-modern web programming in \cref{subsection:errormotivation},
+modern web programming in \cref{subsection:errormotivation} and
 demonstrate how we implement a structured error handling
-framework through extending the generated APIs and 
-runtime in \cref{subsection:errorapi,subsection:errorruntime}
-respectively, and explain the limitations of our framework
+framework through extending the generated APIs 
+(in \cref{subsection:errorapi}) and 
+runtime (in \cref{subsection:errorruntime}).
+We highlight the caveats of our error handling framework
+when dealing with asynchronous operations 
+(in \cref{subsection:errorasync}),
+and conclude by explaining the limitations of our framework
 in \cref{subsection:errorlimit}.
 
 \subsection{Motivation}
@@ -263,11 +267,13 @@ in \cref{lst:cancelconnectsvr}.
 
 const socketToRole = new Map<WebSocket, Roles.Peers>();
 
+// Invoked when socket is closed
 const onClose = ({ target: socket }) => {
 	// Wait for the role again
 	waiting.add(socketToRole.get(socket));
 }
 
+// Invoked when server receives connection request.
 const onSubscribe = (event) => {
 	...
 	// Update role-WebSocket mapping.
@@ -338,6 +344,8 @@ by the user-supplied session cancellation handler.
 \begin{lstlisting}[language=javascript,tabsize=2]
 private processCancellation(role: Roles.All, reason?: any) {
 	this.setState({
+		// Calls the user-specified cancellation handler,
+		// which returns a React node to render on DOM
 		elem: this.props.cancellation(role, reason);
 	});
 }
@@ -417,6 +425,8 @@ except for the fact that the browser does not
 it simply disconnects.
 
 \subsection{Caveats with Asynchronous Operations}
+\label{subsection:errorasync}
+
 Implementing session cancellation whilst
 preserving support for asynchronous operations introduces
 subtle caveats. 

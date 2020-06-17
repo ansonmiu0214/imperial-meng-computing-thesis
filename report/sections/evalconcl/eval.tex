@@ -3,13 +3,13 @@
 
 In this chapter, we
 evaluate the expressiveness
-and performance of our API generation
-toolchain.
+and performance of our generated APIs.
 
 %TODO: add when finalised
 %with respect to the main objective
 %of \dots
 
+\subsubsection{Expressiveness}
 To evaluate the expressiveness
 of our work,
 we use two case studies
@@ -20,25 +20,28 @@ of our work:
 \begin{itemize}
 
 \item
-\textbf{\tprotocol{Noughts and Crosses} Game:}
+\textbf{\tprotocol{Noughts and Crosses} Game, as introduced
+in \cite{PLACES2020}:}
 
 In \cref{section:evalgame},
 we implement a classic multiplayer game which involves a game server
 and two players interacting with the game via the browser,
 to show that our work is compatible with multiparty sessions,
-which isn't the case in \cite{MVU2020,Exceptional}.
+which is not the case in \cite{MVU2020,Exceptional}.
 We show how our generated APIs are compatible with the
 state management solution used by the game, and give examples of 
 how the generated APIs empower the developer to intuitively 
 implement the game interface.
 
 \item
-\textbf{\tprotocol{Two Buyers} Protocol, as introduced in \cref{section:twobuyer}:}
+\textbf{\tprotocol{Two Buyers} Protocol, as introduced in 
+\cref{section:twobuyer} and \cite{JACM2016,MPAST}:}
 
 In \cref{section:evaltwobuyer},
 we walk through an implementation of the \tprotocol{Two Buyers}
 protocol. This \textit{cannot} be implemented in
-\cite{PureScript2019,MVU2020}, which illustrates the novelty
+\cite{PureScript2019,MVU2020,Exceptional}, 
+which illustrates the novelty
 of our \newtheory theory on routed multiparty session types.
 We emphasise how the routing mechanism is transparent to the
 developer implementing the protocol, which demonstrates
@@ -47,6 +50,7 @@ the practicality of our extensions to \codegen to support
 
 \end{itemize}
 
+\subsubsection{Performance}
 To evaluate the performance of our work,
 we run micro-benchmarks
 on a variant of the \tprotocol{Ping Pong}

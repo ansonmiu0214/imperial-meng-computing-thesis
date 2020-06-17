@@ -4,10 +4,130 @@
 \section{Implementation for \tprotocol{Noughts and Crosses}}
 \label{section:evalcodegame}
 
+\begin{lstlisting}[language=javascript,tabsize=2]
+/**
+ * User implementation of game board state.
+ * Export game board instance.
+ */
+
+import { Coordinate as Point } from './Game/GameTypes';
+
+enum Cell { Empty, P1, P2 };
+export enum MoveResult { Win, Draw, Continue };
+
+class Board {
+
+	private _board: Array<Array<Cell>>;
+	private _emptyCellCount: number;
+
+	constructor() {
+		this._board = [[Cell.Empty, Cell.Empty, Cell.Empty],
+		[Cell.Empty, Cell.Empty, Cell.Empty],
+		[Cell.Empty, Cell.Empty, Cell.Empty]];
+		this._emptyCellCount = 9;
+	}
+
+	// Factory for generating a function that, given a player role,
+	// places the marker and returns the game result with respect to 
+	// that player.
+	private _makeMove = (marker: Cell) => ({ x: row, y: col }: Point) 
+		=> {
+		return new Promise<MoveResult>((resolve, _) => {
+			setTimeout(() => {
+				// Update board state
+				this._board[row][col] = marker;
+				this._emptyCellCount--;
+		
+				// Check for winning move
+				if (this._board[row].every(cell => cell === marker))
+					resolve(MoveResult.Win);
+		
+				/* Winning column */
+				if (this._board.every(row => row[col] === marker))
+					resolve(MoveResult.Win);
+		
+				/* Placed middle marker - check corners */
+				if (row === 1 && col === 1) 
+					if ((this._board[0][0] === marker 
+						&& this._board[2][2] === marker) ||
+						(this._board[0][2] === marker 
+						&& this._board[2][0] === marker))
+						resolve(MoveResult.Win);
+						
+				/* Placed corner marker - check diagonals */
+				if (row !== 1 && col !== 1) 
+					if (this._board[1][1] === marker 
+						&& this._board[2 - row][2 - col] === marker)
+						resolve(MoveResult.Win);
+		
+				resolve(this._emptyCellCount === 0 ? 
+					MoveResult.Draw : MoveResult.Continue);
+			}, 2000);
+		})
+
+	}
+
+	p1(move: Point) { return this._makeMove(Cell.P1)(move); }
+	p2(move: Point) { return this._makeMove(Cell.P2)(move); }
+
+	clear() {
+		this._board = [[Cell.Empty, Cell.Empty, Cell.Empty],
+		[Cell.Empty, Cell.Empty, Cell.Empty],
+		[Cell.Empty, Cell.Empty, Cell.Empty]];
+		this._emptyCellCount = 9;
+	}
+
+}
+
+// Initialise state
+export const board = new Board();
+\end{lstlisting}
+
 % BOARD CLASS
 
-\section{Implementation for \tprotocol{Two Buyer}}
-\label{section:evalcodetwobuyer}
+%\section{Implementation for \tprotocol{Two Buyer}}
+%\label{section:evalcodetwobuyer}
 
-%\section{Implementation for \tprotocol{ATM}}
-%\label{section:evalcodeatm}
+\section{Package Dependencies for Benchmarks}
+\label{section:evalbenchmarkpackagejson}
+
+\begin{lstlisting}[language=javascript,tabsize=2,
+title=Packages for Ping Pong Client]
+{
+  "dependencies": {
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "@types/jest": "^24.0.0",
+    "@types/node": "^12.0.0",
+    "@types/react": "^16.9.0",
+    "@types/react-dom": "^16.9.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-scripts": "3.4.1",
+    "typescript": "~3.7.2"
+  },
+  "devDependencies": {
+    "@babel/preset-typescript": "^7.10.1",
+    "customize-cra": "^1.0.0",
+    "react-app-rewired": "^2.1.6"
+  }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=javascript,tabsize=2,
+title=Packages for Ping Pong Server]
+{
+  "dependencies": {
+    "express": "^4.17.1",
+    "ws": "^7.3.0",
+    "zombie": "^6.1.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.6",
+    "@types/ws": "^7.2.4",
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.3"
+  }
+}
+\end{lstlisting}

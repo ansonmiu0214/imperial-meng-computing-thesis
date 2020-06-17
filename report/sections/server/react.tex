@@ -1,7 +1,7 @@
-\chapter{\fancyname{ReactMPST}: Front-End Session Type Web Development}
+\chapter{\reactcodegen: Front-End Session Type Web Development}
 \label{chap:react}
 
-In this chapter, we present \fancyname{ReactMPST},
+In this chapter, we present \reactcodegen,
 our session type API generation strategy for browser-side endpoints
 implemented using React \cite{React}.
 We will refer to the FSM of the \trole{Client}
@@ -9,9 +9,25 @@ endpoint (\cref{fig:adderclientfsm})
 from the \tprotocol{Adder} protocol 
 throughout this chapter.
 
+We highlight the challenges of session-typed GUI programming
+(\cref{section:reactchallenges}) and motivate 
+our approach (\cref{section:reactapproach})
+for adapting the proposal from
+\cite{MVU2020} for the React.js framework, along with a brief
+introduction to the framework.
+We proceed to explain how we leverage React
+to encode the EFSM (\cref{section:reactefsm})
+and implement the session runtime (\cref{section:reactruntime}),
+focusing on our novel approach to preventing
+channel reuse in GUI programming using React.
+We conclude by analysing some alternative designs
+(\cref{section:reactalt})
+and evaluating the limitations of our approach
+(\cref{section:reactlimitations}).
+
 \begin{figure}[!b]
 \centering
-\includegraphics[width=0.55\textwidth]{AdderClientFSM}
+\includegraphics[width=0.6\textwidth]{AdderClientFSM}
 \captionof{figure}{\trole{Client} Endpoint FSM
 in \tprotocol{Adder} protocol}
 \label{fig:adderclientfsm}
@@ -24,9 +40,23 @@ in \tprotocol{Adder} protocol}
 \input{sections/server/react/alt}
 \input{sections/server/react/limitations}
 
-%\section{Summary}
-%\begin{itemize}
-%\item static guarantees on avoiding communication mismatch
-%\item static guarantees on affine channel usage
-%\item leverage the react framework to express the model types approach from Fowler 2020 appropriately, to provide static guarantees, by construction, that the channel actions made available at each state respect the protocol, and by definition, multiparty session type safety
-%\end{itemize}
+\section{Summary}
+In this chapter, we have presented
+our session type API generation strategy
+which targets the React framework for browser-side endpoints.
+
+We motivated our approach of
+implementing the concept of model types introduced in \cite{MVU2020}
+using a popular front-end framework in React.
+We define an interpretation of model types
+using the EFSM obtained from a Scribble protocol.
+
+We discussed how to prevent channel reuse in
+GUI programming in React. We build upon the design choices
+implemented in \nodecodegen by concealing channel resources
+in the session runtime and exposing seams for the developer
+to customise what interface to render at each EFSM state,
+what user interface events are allowed to trigger a send action,
+and how to handle messages received from the channel.
+
+% Developers that implement...

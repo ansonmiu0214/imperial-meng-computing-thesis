@@ -1,4 +1,6 @@
 \section{Approach}
+\label{section:reactapproach}
+
 We motivate our approach from \cite{MVU2020} by extending
 their work on \textit{multiple model types} motivated by the
 \textit{Model-View-Update} architecture (MVU),
@@ -17,9 +19,9 @@ and the update function defines which successor state to transition to,
 given the supported channel actions at this state.
 
 We implement model types for the EFSM on top of the 
-\emph{React.js} framework developed by Facebook \cite{React}.
+\emph{React.js} (React) framework developed by Facebook \cite{React}.
 React is widely used in industry to create scalable single-page
-TypeScript applications, so this makes our workflow beneficial in an
+web applications, so this makes our workflow beneficial in an
 industrial context. 
 The framework defines a way for data to flow
 between UI elements, and empowers the UI to subscribe and
@@ -39,7 +41,12 @@ groups of files:
 \begin{itemize}
 
 \item 
-\textbf{S[40-43].tsx:}
+\textbf{S[40-43].tsx\footnote{
+The \filename{.tsx} file extension allows
+for embedding \textit{JSX} \cite{JSX} elements inside the file.
+JSX is a XML-like syntax extension to JavaScript
+for elements and components.
+}:}
 Developer APIs for implementing EFSM states 
 (\cref{section:reactefsm});
 

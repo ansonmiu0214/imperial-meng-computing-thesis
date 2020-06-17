@@ -43,7 +43,7 @@ class ThatSquare {
 	constructor(public side: number) { }
 };
 
-declare function area(sq: ThisSquare): number;
+const area = (sq: ThisSquare) => sq.side * sq.side;
 
 area(new ThisSquare(2));	// ok
 area(new ThatSquare(2));	// ok (*@\label{line:structural1}@*)

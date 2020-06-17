@@ -3,7 +3,7 @@
 
 There are many parallels between the runtime we generate
 for \fancyname{ReactMPST} compared to that of \fancyname{NodeMPST}.
-We focus on the details unique to browser-side endpoints.
+We focus on the details unique to React endpoints.
 
 We define the public API for the session runtime
 as a React component. The developer provides implementation details via
@@ -14,15 +14,17 @@ of the \tprotocol{Adder} protocol below.
 \begin{lstlisting}[language=javascript]
 type Props = {
 	endpoint: string,
-	states: {
-		S40: Constructor<S40>,
-		S42: Constructor<S42>,
+	states: {						// mapping of state identifier
+		S40: Constructor<S40>,		// to EFSM state components
+		S42: Constructor<S42>,		// implemented by developer
 		S43: Constructor<S43>,
 		S41: Constructor<S41>,
 	},
-	waiting: React.ReactNode,
-	connectFailed: React.ReactNode,
+	waiting: React.ReactNode,		// render when waiting to start
+	connectFailed: React.ReactNode,	// render if connection failed
 };
+
+export class Session extends React.Component<Props, ...
 \end{lstlisting}
 
 The developer provides the WebSocket URL for the runtime
@@ -36,6 +38,35 @@ and pass the required props based on the type of state.
 Additionally, the developer needs to define what to render
 whilst \texttt{waiting} for the session to begin, and possibly
 an error screen if the connection has failed.
+We show an example below.
+
+\begin{lstlisting}[language=javascript,tabsize=2]
+// Developer implementations
+class InputWindow extends S40 { ... };
+class QuitReceived extends S41 { ... };
+class WaitScreen extends S42 { ... };
+class PendingQuit extends S43 { ... };
+
+// Main application component
+class MainApp extends React.Component {
+	render() {
+		return <div>
+			<h1>Adder Client</h1>
+			<Client
+				endpoint='ws://localhost:8080'
+				states={{
+					S40: InputWindow,
+					S41: QuitReceived,
+					S42: WaitScreen,
+					S43: PendingQuit,		
+				}}>
+				waiting={<h1>Pending Connection</h1>}
+				connectFailed={<p>Connection Failed</p>}
+			/>
+		</div>;
+	}
+}
+\end{lstlisting}
 
 When the session starts, the private API takes over and executes
 the EFSM by rendering the React component corresponding to the
@@ -48,7 +79,12 @@ Traditionally, this would be done in the constructor,
 but for React components, the constructor may be invoked more
 than once depending on how reconciliation works.
 For this reason, we create the \texttt{WebSocket} in the
-\texttt{componentDidMount} method as it is guaranteed
+\texttt{componentDidMount}\footnote{
+The \texttt{componentDidMount} method is part
+of the ``commit'' phase in the lifecycle of a React component.
+This is when the component is mounted on the browser DOM and
+methods in the phase are guaranteed to be called exactly once.
+} method as it is guaranteed
 to be only called once.
 In fact, under React's \textit{Strict Mode},
 constructors are \textit{explicitly invoked twice} to 
@@ -62,11 +98,14 @@ has been instantiated when we use it),
 we define the public API (the React component named 
 \texttt{Session}) to manage the (possibly \lstonelinejs{undefined})
 WebSocket in its state, and the private API (the React component
-named after the role -- in this case, \trole{Client})after
+named after the role -- in this case, \trole{Client}) after
 as a separate non-exported class
-with the WebSocket available via props. Once the WebSocket
-is instantiated in the \trole{Session} component, it renders the
-\trole{Client} component, passing the non-optional WebSocket value via props.
+with the WebSocket available via props. 
+Once the WebSocket
+is instantiated in the \trole{Session} component,
+it renders the
+\trole{Client} component, 
+passing the non-optional WebSocket value via props.
 
 \begin{lstlisting}[language=javascript,tabsize=2]
 type Transport = { ws: WebSocket };
@@ -84,14 +123,16 @@ class Session extends React.Component<Props, Partial<Transport>> {
 export default Session;
 \end{lstlisting}
 
-The connection phase is managed in the same way as \fancyname{NodeMPST}:
+The connection phase is managed in the same way as \nodecodegen:
 when the \texttt{Client} component is mounted,
 it sends a connection request to the server and overrides the
-\texttt{onmessage} event handler to listen for the connection confirmation,
-before advancing the EFSM to the initial state to begin executing the protocol.
+\texttt{onmessage} event handler to listen for 
+the connection confirmation,
+before advancing the EFSM to the initial state to 
+begin executing the protocol.
 
 \subsection{Executing the EFSM}
-Unlike \fancyname{NodeMPST}, our EFSM state encoding does not define
+Unlike \nodecodegen, our EFSM state encoding does not define
 continuation states using the actual implementation.
 This is because state encodings are React components
 that need to be instantiated by the runtime.
@@ -181,18 +222,20 @@ private advance(state: State) {
 We keep track of the current EFSM state in the state of the
 private \texttt{Client} component.
 This enables the UI to be re-rendered, and therefore ``react'',
-to EFSM state transitions, which is precisely the goal of \fancyname{ReactMPST}.
+to EFSM state transitions, which is precisely the goal of 
+\reactcodegen.
 
 \subsection{Sending Messages}
 \label{subsection:reactruntimesend}
 
 Messages are sent through the WebSocket in the same way 
-as \fancyname{NodeMPST} -- objects marked with label and payload
+as \nodecodegen (see \cref{subsection:noderuntimesend}) 
+-- objects marked with label and payload
 are serialised into JSON. The process of sending is always followed
 by a transition to the successor state, so we define the
 \texttt{sendMessage()} method on the runtime to also take
 the successor state as a function argument, so it can make that transition
-immediately after.
+immediately after.\\
 
 \begin{lstlisting}[language=javascript,numbers=none]
 private sendMessage(label: string, payload: any, next: State) {

@@ -1,7 +1,9 @@
 \section{Challenges}
+\label{section:reactchallenges}
+
 Our goal with \fancyname{ReactMPST} is to
 generate session type implementations for the web browser.
-Session typing the user interface (UI) logic is inherently difficult --
+Integrating session types into user interfaces is inherently difficult --
 assuming channel actions are bound to user interface events 
 (i.e. clicking a button sends a message), how does one formalise
 channel linearity? How do we guarantee that, if the button
@@ -9,25 +11,28 @@ triggers a send at some EFSM state, that it triggers not more than
 one channel action, \textit{and} the user cannot trigger the action
 at another EFSM state?
 
-We recap how existing work (\cref{subsection:sessiontypewebdev})
+We recap how existing work 
+(as discussed in \cref{subsection:sessiontypewebdev})
 tackle browser-side session typing.
 Fowler introduced the concept of model types to prevent
 channel linearity violation in his proposal for
 integrating session types with
 graphical user interface (GUI) programming \cite{MVU2020}, but
-it requires the linear type system available from
-the proprietary Links web programming language \cite{LINKS}.
+it uses the Links web programming language \cite{LINKS} which
+lacks compatibility with the ecosystem of JavaScript
+libraries that one might use in front-end development as well.
 The session type-safe web development framework presented
 by King et al. \cite{PureScript2019} generates APIs for
 a functional target language in PureScript, and relies on
-the Concur UI framework that constructs UIs sequentially.
+the \textit{Concur UI} framework that constructs UIs sequentially.
 
-We find these proposals to come at the cost of
+As motivated in \cref{section:intro},
+we find these proposals to come at the cost of
 limiting developer productivity by adopting unconventional practices
 that may require a learning curve.
 Through our work, we aim to distil the key
 concepts from existing work that provide session type safety
 for web-based GUI programming, and implement them using
-mainstream front-end web development tools (e.g. TypeScript
+mainstream front-end web development tools (i.e. TypeScript
 and React), to provide developers with an intuitive way to implement
 browser-side endpoints that guarantee communication safety.

@@ -8,7 +8,9 @@ existing proposals \cite{PureScript2019,MVU2020} for integrating
 session types into web development.
 \codegen overcomes the limitations of existing work
 through implementing novel theory of routed multiparty
-session types formalised in \cref{chap:theory}.
+session types formalised in \cref{chap:theory};
+the implementation of \newtheory in \codegen is 
+explained in \cref{chap:impl}.
 
 We present the implementation of the \trole{S}eller
 in \cref{lst:evaltwobuyerseller}, 
@@ -21,41 +23,86 @@ which shows the elegance of our solution.
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript]
-// two buyer seller
+new Implementation.Initial({
+	[Labels.S32.title]: (title) => {
+		return new Implementation.S34([
+			Labels.S34.quote, [100], new Implementation.S35([
+				Labels.S35.quote, [100], new Implementation.S36({
+					[Labels.S36.buy]: () => {
+						return new Implementation.Terminal();
+					},
+					[Labels.S36.cancel]: () => {
+						return new Implementation.Terminal();
+					}
+				})
+			])
+		])
+	}
+})
 \end{lstlisting}
-\captionof{lstlisting}{\dots}
+\captionof{lstlisting}{Two Buyer Seller Implementation}
 \label{lst:evaltwobuyerseller}
 \end{figure}
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript]
-// two buyer A p2p
+type State = { split: number };
+
+class ProposeSplit extends S11<State> {
+	state = { split: 0 };
+	
+	render() {
+		const SendSplit = this.split('onClick', ev => {
+			ev.preventDefault();
+			return [this.state.split];		
+		});
+		
+		return <div>
+			<input
+				type='number'
+				value={this.state.split}
+				onChange={ev => this.setState({
+					split: Number(ev.target.value)
+				})}
+				placeholder='Enter split'
+			/>
+			<SendSplit><button>Propose</button></SendSplit>	
+		</div>;	
+	}
+}
 \end{lstlisting}
-\captionof{lstlisting}{\dots}
+\captionof{lstlisting}{Developer Implementation of Peer-to-Peer Interaction
+in Two Buyer}
 \label{lst:evaltwobuyerA}
 \end{figure}
 
 The \newtheory implementation does not affect
 the compatibility of our generated APIs with external libraries.
 The \trole{S}eller endpoint is set up as an Express.js
-application, and both buyers use the \textit{React Context API}
-for application state management. We show an example of
-the latter in the developer's implementation for
-buyer \trole{A} receiving and keeping track of the server's quote
-using a React Context in \cref{lst:evaltwobuyercontext}.
+application, and both buyers use the \textit{React Context API}\footnote{
+React Contexts allow components
+to pass data (such as application state)
+through the component tree without
+having to propagate via props at every level.
+}
+for application state management. 
+%We show an example of
+%the latter in the developer's implementation for
+%buyer \trole{A} receiving and keeping track of the server's quote
+%using a React Context in \cref{lst:evaltwobuyercontext}.
+%
+%\begin{figure}[!h]
+%\begin{lstlisting}[language=javascript]
+%// two buyer A context
+%\end{lstlisting}
+%\captionof{lstlisting}{\dots}
+%\label{lst:evaltwobuyercontext}
+%\end{figure}
 
-\begin{figure}[!h]
-\begin{lstlisting}[language=javascript]
-// two buyer A context
-\end{lstlisting}
-\captionof{lstlisting}{\dots}
-\label{lst:evaltwobuyercontext}
-\end{figure}
-
-We include the implementations of the remaining EFSM states
-for buyer \trole{A} in \cref{section:evalcodetwobuyer}
-for completeness;
-interested readers can find the full implementations for the other
+%We include the implementations of the remaining EFSM states
+%for buyer \trole{A} in \cref{section:evalcodetwobuyer}
+%for completeness;
+Interested readers can find the full implementations for the other
 endpoints alongside the generated code on
 GitHub\footnote{
 \url{https://github.com/ansonmiu0214/SessionTS-Examples/TwoBuyer}

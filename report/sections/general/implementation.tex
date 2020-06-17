@@ -1,4 +1,4 @@
-\chapter{Implementation}
+\chapter{Implementing \newtheory in \codegen}
 \label{chap:impl}
 
 In this chapter, we
@@ -56,7 +56,7 @@ We can now adapt the \texttt{onmessage}
 WebSocket event listener defined at the server endpoint
 to route messages not intended for the server role,
 as shown in \cref{lst:noderoutereceive}.
-By construction from our API generation strategy,
+By construction of our API generation strategy,
 the incoming message must match the interface defined
 above, so it is a safe deserialisation step.
 This preliminary deserialisation allows the server
@@ -146,12 +146,13 @@ will use the receive handler defined for \lstonelinejs{M1(number)}
 to process the received \lstonelinejs{M2(string)}, which is a mismatch.
 
 Hence, we need to implement
-the message receiving framework outlined in \cref{subsection:noderuntimereceive}
+the message receiving framework outlined in 
+\cref{subsection:noderuntimereceive}
 instead, which generalises the pair of message/handler queues to two mappings
 to provide a pair of message/handler queues for each endpoint.
 The runtime instantiates the two mappings of queues,
 and receive handler registration now targets the pair of queues
-specified by the role from which to receive from.
+specified by the role to receive from.
 We illustrate this in \cref{lst:reactrouterreceive}
 
 \begin{figure}[!h]
@@ -179,8 +180,11 @@ class Client extends React.Component<...> {
 \end{figure}
 
 Referring to the previous example under this framework,
-$S$ can route $C$'s message to $B$ first, but \lstonelinejs{M2(string)} will be stored
-under the message queue mapped to $C$, so it will not be processed until $B$ registers
-the receive handler for processing $C$'s message. This cannot happen until $B$ processes
+$S$ can route $C$'s message to $B$ first, 
+but \lstonelinejs{M2(string)} will be stored
+under the message queue mapped to $C$, 
+so it will not be processed until $B$ registers
+the receive handler for processing $C$'s message. 
+This cannot happen until $B$ processes
 \lstonelinejs{M1(number)} from $A$, so the order of communication 
 specified in the global protocol is respected.

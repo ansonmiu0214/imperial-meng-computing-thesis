@@ -4,7 +4,7 @@
 We encode each EFSM state as a React component.
 This encoding is consistent with the semantics of model types,
 as outlined in \cref{table:efsmmodeltypes}.
-\fancyname{ReactMPST} generates an abstract React component class
+\reactcodegen generates an abstract React component class
 for each EFSM state. The developer implements the generated API
 by extending the abstract class to define their own
 view function and implement any abstract methods
@@ -51,7 +51,7 @@ by user-triggered events on UI elements, such as clicking a button or
 typing in a textbox -- this generally aligns
 with idiomatic front-end web development practices.
 
-Without \fancyname{ReactMPST},
+Without \reactcodegen,
 an implementation of state S40 from \cref{fig:adderclientfsm}
 may resemble the following, where the developer attaches
 event listeners on UI elements to trigger channel actions:
@@ -128,12 +128,20 @@ interface (\cref{line:clientsendstatestate}).
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2]
+// UI component keeps track of data entered by user
 type State = { num1: number, num2: number, message: string }; (*@\label{line:clientsendstatestate}@*)
+
 class InputWindow extends S40<State> {
 	render() {
 		const { num1, num2, message } = this.state;
+	
+		// Generate React component that, when clicked,
+		// sends ADD message with `num1` and `num2`.
 		const (*@\hl{Add}@*) = this.ADD('onClick', (*@\label{line:clientsendfactory1}@*)
 			(ev: React.MouseEvent) => [num1, num2]); (*@\label{line:clientsendpayload1}@*)
+			
+		// Generate React component that, when hovered,
+		// sends QUIT message with `message` string.
 		const (*@\hl{Quit}@*) = this.QUIT('onMouseOver', (*@\label{line:clientsendfactory2}@*)
 			(ev: React.MouseEvent) => [message]); (*@\label{line:clientsendpayload2}@*)
 		return (<div>
@@ -294,15 +302,24 @@ successor state.
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2,title=S40.tsx]
+// Expect to receive `factory` function passed in by runtime
 type Props = { factory: SendComponentFactoryFactory };
+
 abstract class S40<State> extends React.Component<Props, State> {
+
+	// Allow developer implementation subclass to use factories
 	protected ADD: SendComponentFactory<[number, number]>;
 	protected QUIT: SendComponentFactory<[string]>;
 	
 	constructor(props: Props) {
 		super(props);
+		
+		// Generate a factory that generates React components
+		// which sends an [ADD] message along with two numbers,
+		// then transitions to State S42.
 		this.ADD = props.factory<[number, number]>( (*@\label{line:factory1}@*)
 			'ADD', ReceiveState.S42);
+
 		this.QUIT = props.factory<[string]>( (*@\label{line:factory2}@*)
 			'QUIT', ReceiveState.S43);
 	}
@@ -328,8 +345,10 @@ what to render on the DOM when the endpoint is waiting
 for the message, rather than updating the DOM with the
 received message.
 Referring to \cref{fig:adderclientfsm} again,
-S42 will be rendered when the endpoint is waiting for
-\tmsg{RES}, but once received, S40 will be immediately
+S42 (preceding state) will be rendered when the 
+endpoint is waiting for
+\tmsg{RES}, but once received, S40 (successor state) 
+will be immediately
 rendered. The developer will need to manage the flow
 of stateful application data between UI components separately
 -- \fancyname{ReactMPST} only generates code for managing
@@ -359,8 +378,8 @@ class WaitScreen extends S42 {
 }
 \end{lstlisting}
 
-Receive states in \fancyname{ReactMPST}
-work in a similar way as with \fancyname{NodeMPST}.
+Receive states in \reactcodegen
+work in a similar way as with \nodecodegen.
 The runtime will invoke the \tmsg{RES} method
 implemented by the developer upon receiving the message
 through the WebSocket.
@@ -380,7 +399,7 @@ registers the handlers with the runtime.
 This raises questions about the type signature for the
 \texttt{register} function, as the receive handler
 identifiers and type signatures differ between receive states.
-We adopt the same strategy as with \fancyname{NodeMPST}:
+We adopt the same strategy as with \nodecodegen:
 the receive handler registered by the receive state
 to the runtime also performs the message parsing,
 so all receive states register a ``general handle function'' typed
@@ -440,13 +459,21 @@ and \texttt{parsedMessage.label} is unknown at compile-time.
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2]
+// Expect to receive `register` function passed in by runtime
 type Props = {
 	register: (handle: ReceiveHandler) => void
 };
+
 abstract class S42<S> extends React.Component<Props, S> {
+
+	// Developer must implement receive handlers
+	// for possible messages received at this state.
 	abstract THANKS(payload1: string): void;
 	abstract TERMINATE(): void;
 	
+	// When component is mounted on DOM,
+	// and the register function is available,
+	// register the message handler with the runtime.
 	componentDidMount() {
 		this.props.register(this.handle.bind(this));
 	}
@@ -470,7 +497,7 @@ Receive State S42 in \tprotocol{Adder} protocol}
 \end{figure}
 
 \subsection{Terminal States}
-To be consistent with the conventions defined for \fancyname{NodeMPST},
+To be consistent with the conventions defined for \nodecodegen
 the browser endpoint proactively closes the connection at its terminal state.
 We generate an abstract React component for terminal states 
 to allow the developer to customise what to
