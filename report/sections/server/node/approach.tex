@@ -10,7 +10,9 @@ We type the parameters and return values of the handlers to
 reflect the message types specified in the protocol.
 By strictly specifying handlers for send and receive actions,
 we do not expose send and receive APIs to the developer,
-making it impossible for the developer to reuse channels.
+contrary to \cite{HuJava},
+making it impossible for the developer to reuse channels,
+hence saving the need for linearity checks.
 
 The responsibility of guaranteeing linear channel usage now falls
 under the runtime that executes the EFSM.
@@ -18,7 +20,7 @@ As we generate this for the developer,
 we can provide \textbf{static}
 linearity guarantees by construction.
 
-When executing \fancyname{SessionTS} to generate code for the
+When executing \nodecodegen to generate code for the
 \trole{Svr} endpoint specifying the \texttt{node} target,
 the developer obtains the following files:
 

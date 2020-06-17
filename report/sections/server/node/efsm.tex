@@ -1,10 +1,11 @@
 \section{EFSM Encoding}
 \label{section:nodeefsm}
 
-We show the structure of the generated EFSM.ts file in
+We show the structure of the generated \filename{EFSM.ts}
+file in
 \cref{lst:nodeefsmfile}.
 Note that the formal definition of the EFSM in 
-\cref{section:scribbleefsm}
+\cref{subsection:bgscribble}
 contains more than just states and the state transition function,
 so we encode the additional information as well.
 Each type of information is grouped into their own
@@ -14,12 +15,12 @@ the EFSM \textit{module} for the developer to use.
 \begin{figure}
 \begin{lstlisting}[language=javascript,tabsize=2,title=EFSM.ts]
 // (*@\cref{subsection:nodeefsmroleslabelsmsg}@*)
-export namespace Roles {...};
-export namespace Labels {...};
-export namespace Message {...};
+export namespace Roles {...};			// for roles in protocol
+export namespace Labels {...};		// for message labels
+export namespace Message {...};		// for message structure
 
 // (*@\cref{subsection:nodeefsmhandlers}@*)
-export namespace Handler {...};
+export namespace Handler {...};		// for handler APIs
 
 // (*@\cref{subsection:nodeefsmimplementation}@*)
 abstract class ISend {...};
@@ -77,9 +78,8 @@ export enum S54 { THANKS = "THANKS", TERMINATE = "TERMINATE", };
 \subparagraph{Messages}
 The handler APIs that we generate for developers
 need to refer to the label identifier and payload type: 
-we refer to this as the message structure, and encode this as a
-Message Type. 
-Each message is expressed as an interface with
+we refer to this as the message structure.
+Each message structure is expressed as an interface with
 properties for the label and payload.
 These interfaces are grouped based on the EFSM state
 they belong using \textit{union types}.
@@ -91,7 +91,7 @@ and known types for elements at each position.
 we easily generalise our type definition to polyadic payloads.
 
 \begin{figure}[!ht]
-\begin{lstlisting}[language=javascript, tabsize=2]
+\begin{lstlisting}[language=javascript]
 // Inside the Message namespace...
 export interface S54THANKS {
 	label: Labels.S54.THANKS,
@@ -111,11 +111,14 @@ export type S54 = | S54THANKS | S54TERMINATE;
 \subsection{Handler APIs}
 \label{subsection:nodeefsmhandlers}
 
-We collect the APIs that the developer needs to implement
-under the \texttt{Handler} namespace. 
-As a design choice, we \textit{do not} generate handlers for
-terminal states, because the semantics of inactivity mean
-there is nothing to handle.
+Handler APIs act as the \textit{seams} of the EFSM.
+A seam is ``a place where one can alter the
+behaviour in the program without editing in that place''
+\cite{seam}. The developer implements handlers
+to define what message to send and how to process a received
+message, without access to the send and receive APIs
+that are used to execute the EFSM.
+We collect these APIs under the \texttt{Handler} namespace. 
 We introduce the generated handlers for sending and receiving states.
 These are non-terminal states that will involve the encoding of its
 successor state. The reader will notice that, in the listings below,
@@ -124,6 +127,9 @@ the successor state is stated to be under the
 \cref{subsection:nodeefsmimplementation}, but for now,
 it is sufficient to acknowledge that those refer to the encoding
 of the successor state.
+As a design choice, we \textit{do not} generate handlers for
+terminal states, because the semantics of inactivity mean
+there is nothing to handle.
 
 \subparagraph{Send}
 We model selections using a union type to
@@ -136,7 +142,7 @@ TypeScript supports \textit{index type queries} to extract
 named property types, so
 \lstonelinejs{Message.S54THANKS['payload']} 
 would resolve to \lstonelinejs{[string]},
-based on the interface definition \cref{lst:addersvrmsg}.
+based on the interface definition in \cref{lst:addersvrmsg}.
 
 \begin{figure}[!ht]
 \begin{lstlisting}[language=javascript, tabsize=2]
@@ -168,7 +174,7 @@ which would be an interface with one property.
 \begin{figure}[!ht]
 \begin{lstlisting}[language=javascript,tabsize=2]
 // Inside the Handler namespace...
-export type S51 = {
+export interface S51 {
 	[Labels.S51.ADD]: (...payload: Message.S51ADD['payload']) =>
 		Implementation.S53,
 	[Labels.S51.QUIT]: (...payload: Message.S51QUIT['payload']) => 
@@ -189,7 +195,8 @@ so \lstonelinejs{[Labels.S51.ADD]} resolves to the
 
 The interface values are functions parameterised by
 the message payload, and must return the successor state encoding.
-We see another benefit of defining the payload in Message Types
+We see another benefit of defining the payload 
+in the message structure interface
 as a tuple: we can define the receive handler parameter
 using the \textit{spread syntax}, which allows the tuple
 expression to be expanded into a list of function arguments. 
@@ -202,7 +209,10 @@ so the former is more intuitive.
 
 \begin{figure}[!ht]
 \begin{lstlisting}[language=javascript,tabsize=2]
+// More intuitive
 const withSpread = (x: number, y: number) => {...} (*@\label{line:yesspread}@*)
+
+// Needs manual destructuring
 const withoutSpread = (payload: [number, number]) => {...} (*@\label{line:nospread}@*)
 
 const handler1: Handler.S51 = { ADD: withSpread		, ... };	// OK
@@ -217,13 +227,15 @@ Compatible with Spread Syntax}
 \label{subsection:nodeefsmimplementation}
 
 The behaviour of the runtime is dependent on the current state,
-so it needs a way to distinguish between
+so the runtime needs a way to distinguish between
 all the different states -- one can think of this as implementing
 the state transition function from the theory, which is analogue to 
 overloading a \texttt{next()} method for each state.
-Due to limitations in the TypeScript language, this would have to
-be some sort of switch statement, with the \texttt{next()}
-method parameterised by some base type assignable to all states.
+TypeScript does not support method overloading,
+so the \texttt{next()} method would need to be defined
+on some base type assignable to all states,
+and the implementation of the \texttt{next()} method 
+can use a switch statement to distinguish between the different states.
 Currently, the state is only determined by the handler
 to be implemented by the developer, so the switch statement
 and base type would have to be defined on the handler APIs.
@@ -241,8 +253,8 @@ operator.
 We attempt to address this by defining an enum of state identifiers
 for each type of state (i.e. an enum for send states, 
 an enum for receive states)
-upon which to execute the EFSM, which solves the switch statement
-problem.
+upon which to execute the EFSM. 
+This can solve the switch statement problem.
 Now, we are left with defining a mapping between the 
 state identifier enum to the handler type. This construct would be
 analogue to \textit{dependent types}, which again, is not a feature
@@ -267,17 +279,16 @@ similar to \cref{lst:conditionaltypes}.
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2]
-enum SendState { S1, S3, ... };
-enum ReceiveState { S2, S4, ... };
+enum SendState { S53, S54 };
+enum ReceiveState { S51 };
 type State = SendState | ReceiveState;
 
 type SendHandler<S extends SendState> = 
-	S extends SendState.S1 ? Handler.S1 :
-	S extends SendState.S3 ? Handler.S3 : ... ;
+	S extends SendState.S53 ? Handler.S53 :
+	S extends SendState.S54 ? Handler.S54 : never ;
 
 type ReceiveHandler<S extends ReceiveState> = 
-	S extends ReceiveState.S2 ? Handler.S2 :
-	S extends ReceiveState.S4 ? Handler.S4 : ... ;
+	S extends ReceiveState.S51 ? Handler.S51 : never;
 \end{lstlisting}
 \captionof{lstlisting}{Approximating Type Dependency
 using \textit{Conditional Types}}
@@ -305,7 +316,7 @@ conditional types were not designed to be exploited in this manner.
 The main limitation of conditional types is its 
 \textit{distributivity} when the type ``parameter'' is an
 union type (which is the case for enums, as
-\texttt{S = SendState.S1 | SendState.S3 | ...}), where
+\texttt{S = SendState.S53 | SendState.S54| ...}), where
 
 \begin{lstlisting}[language=javascript,numbers=none]
 (T1 | T2) extends U ? X : Y
@@ -338,6 +349,29 @@ unique value for, so that the TypeScript Compiler can refine the union
 to the specific constituent upon checking the value of the discriminant
 (e.g. applying a switch statement).
 
+We illustrate this with an example below.
+A \texttt{Shape} is either a \texttt{Circle} or \texttt{Square}.
+Both define a property name \texttt{type}, which is the discriminant
+property, along with properties unique to their shape
+(i.e. radius for circles, side lengths for squares).
+The \texttt{area()} function uses the discriminant property
+(here, in a switch statement) to narrow the type of \texttt{s}
+and perform operations specific to that shape.
+
+\begin{lstlisting}[language=javascript]
+// The `type` property is the discriminant
+interface Circle { type: 'Circle', radius: number };
+interface Square { type: 'Square', side: number };
+type Shape = Circle | Square;
+
+function area(s: Shape) {
+	switch (s.type) {
+		case 'Circle': return 3.14 * s.radius;	// s: Circle
+		case 'Square': return s.side * s.side;	// s: Square
+	}
+}
+\end{lstlisting}
+
 For the time being,
 it is sufficient to understand that for each EFSM state,
 in addition to the API defined under the
@@ -354,14 +388,18 @@ which is used by the runtime.
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2]
-abstract class ISend { type: 'Send' = 'Send'; ... }
-abstract class IReceive { type: 'Receive' = 'Receive'; ... }
-abstract class ITerminal { type: 'Terminal' = 'Terminal'; ... }
+// The `type` property is the discriminant
+abstract class ISend { type: 'Send' = 'Send'; ... } (*@\label{line:nodeefsmsend}@*)
+abstract class IReceive { type: 'Receive' = 'Receive'; ... } (*@\label{line:nodeefsmreceive}@*)
+abstract class ITerminal { type: 'Terminal' = 'Terminal'; ... } (*@\label{line:nodeefsmterminal}@*)
 
 export namespace Implementation {
 	export type Type = ISend | IReceive | ITerminal;
 
 	export class S51 extends IReceive {
+
+		// Stores the handler defined by the developer
+		// as a private property	
 		constructor(private handler: Handler.S51) { super(); }
 		...
 	}

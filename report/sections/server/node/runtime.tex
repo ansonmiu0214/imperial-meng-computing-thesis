@@ -2,7 +2,7 @@
 \label{section:noderuntime}
 
 We define the session runtime for the \trole{Svr} endpoint
-of the \tprotocol{Adder} protocol in Svr.ts,
+of the \tprotocol{Adder} protocol in \filename{Svr.t}s,
 named after the endpoint.
 It exposes a \textbf{public API}
 with seams for the developer to pass in the WebSocket server 
@@ -15,6 +15,7 @@ for executing the EFSM, when all participants have
 joined the session.
 
 \begin{lstlisting}[language=javascript]
+// Exported to developer
 export class Svr {
 	constructor(wss: WebSocket.Server,
 				initialState: Implementation.S51) { ... }
@@ -53,22 +54,32 @@ transparent to the developer.
 \begin{lstlisting}[language=javascript,tabsize=2]
 const waiting: Set<Roles.Peers> = new Set([Roles.Peers.Client]); (*@\label{line:initwaiting}@*)
 
+// Mapping of roles to WebSocket connections
 const roleToSocket: Partial<RoleToSocket> = { (*@\label{line:initroletosocket}@*)
 	[Roles.Peers.Client]: undefined,
 };
 
+// Invoked when a connection request is received
 const onSubscribe = ({ data, target: socket }) => {
+
+	// Deserialise connection request message
 	const { connect: role } = JSON.parse(data) 
 		as Message.ConnectRequest; (*@\label{line:connectionrequest}@*)
+		
+	// Ignore if role is aleady taken
 	if (!waiting.has(role)) { return socket.close(); } (*@\label{line:occupied}@*)
 	
+	// Map the role in the connection request to this WebSocket
 	roleToSocket[role] = socket; (*@\label{line:connectwsbind}@*)
 	waiting.delete(role);
 	
-	if (waiting.size === 0)
+	// Start executing EFSM when all roles have joined
+	if (waiting.size === 0) {
 		new Session(wss, roleToSocket as RoleToSocket, initialState); (*@\label{line:newsession}@*)
+	}
 };
 
+// For every new connection, process message with `onSubscribe`
 wss.addEventListener('connection', ws => {
 	ws.onmessage = onSubscribe; (*@\label{line:wslisteneroverride}@*)
 });
@@ -181,14 +192,18 @@ the type of the current state.
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2]
 next(state: Implementation.Type) {
+	// Distinguish between states using discriminant property
 	switch (state.type) {
 		case 'Send': {
 			const [label, payload, succ]: (*@\hl{???}@*) = state.handler;	 (*@\label{line:noderuntimebadtype1}@*)
-			this.send((*@\hl{???}@*), label, payload); (*@\label{line:noderuntimeunknownrole}@*)		
+			this.send((*@\hl{???}@*), label, payload);	// Who to send to? (*@\label{line:noderuntimeunknownrole}@*)		
 			return this.next(succ);
 		}
 		case 'Receive': {
+			// Handle incoming messages using this anonymous function
 			this.wss.onmessage = ({ data }) => {
+			
+				// Which message structure to use to deserialise?
 				const { label, payload } = JSON.parse(data) as (*@\hl{???}@*); (*@\label{line:noderuntimebadtype2}@*)
 				const succ: (*@\hl{???}@*) = state.handler[label](...payload); (*@\label{line:noderuntimebadtype3}@*)
 				return this.next(succ);
@@ -258,11 +273,11 @@ using abstract classes with abstract methods
 \begin{lstlisting}[language=javascript,tabsize=2]
 next(state: Implementation.Type) {
 	switch (state.type) {
-		case 'Send':
+		case 'Send':				// recall (*@\cref{lst:nodeefsmimplementation} \cref{line:nodeefsmsend}@*)
 			return state.performSend(this.next, this.send);
-		case 'Receive':
+		case 'Receive':			// recall (*@\cref{lst:nodeefsmimplementation} \cref{line:nodeefsmreceive}@*)
 			return state.prepareReceive(this.next, this.register);
-		case 'Terminal':
+		case 'Terminal':		// recall (*@\cref{lst:nodeefsmimplementation} \cref{line:nodeefsmterminal}@*)
 			return;
 	}
 }
@@ -355,7 +370,7 @@ Send State}
 
 We get the label, payload and successor implementation
 directly from the handler implemented by the developer, 
-accurately typed by how we define the handler API in EFSM.ts.
+accurately typed by how we define the handler API in \filename{EFSM.ts}.
 The developer does not need to specify which role
 to send to: this is a sensible design choice, as we know this
 from the Scribble protocol, so we do not need the developer 
@@ -442,25 +457,37 @@ of each non-server endpoint.
 type MessageHandler = (message: any) => void; (*@\label{line:msghandler}@*)
 
 class Session {
-	private handler?: MessageHandler; (*@\label{line:noderuntimehandler}@*)
+	// Optional type, same as `MessageHandler | undefined`
+	private handler?: MessageHandler; | undefined(*@\label{line:noderuntimehandler}@*)
 
 	constructor(...) {
 		...
+		// Process incoming messages from each WebSocket
+		// using `this.receive()`
 		Object.values(this.roleToSocket).
 			.forEach(ws => ws.onmessage = this.receive.bind(this)); (*@\label{line:wsbind}@*)
+			
+		// Initialise handler as undefined
 		this.handler = undefined;
 	}
 	
+	// Set the handler to be used to handle the next receive event
 	register(handler: MessageHandler) { this.handler = handler; } (*@\label{line:register}@*)
 
 	receive({ data }: WebSocketMessage) {
 		const handler = this.handler; (*@\label{line:callhandlerstart}@*)
+		
+		// `Unregister` the current receive handler
 		this.handler = undefined; (*@\label{line:callhandler2}@*)
+		
+		// `handler` has an optional type, so we first
+		// check if there is a value set, then invoke the handler.
+		// Same as `if (handler !== undefined) { handler(data); }`
 		handler?.(data); (*@\label{line:callhandler}@*)
 	}
 }
 \end{lstlisting}
-\captionof{lstlisting}{Approach to Dynamic WebSocket Message Event Listener}
+\captionof{lstlisting}{Attempt to Dynamic WebSocket Message Event Listener}
 \label{lst:noderuntimewsmsg}
 \end{figure}
 
@@ -480,12 +507,20 @@ export class S51 extends IReceive {
 		register: (from: Roles.Peers, messageHandler: MessageHandler)
 			=> void
 	) {
+		// Define dynamic WebSocket message event listener
 		const messageHandler = (message: any) => {
+		
+			// Deserialise message
 			const decoded = JSON.parse(message) as Message.S51;
+			
+			// Discriminate between messages using label
 			switch (decoded.label) {
 				case Labels.S51.ADD: {
+					// Invoke handler to get successor state
 					const successor = 
 						this.handler[decoded.label](...decoded.payload);
+						
+					// Invoke callback to advance EFSM
 					return next(successor);
 				}
 				case Labels.S51.QUIT: {
@@ -495,6 +530,9 @@ export class S51 extends IReceive {
 				}
 			}            
 		}
+		
+		// Register the message handler under the
+		// WebSocket bound to the `Client` role
 		register(Roles.Peers.Client, messageHandler);
 	}
 }
@@ -646,8 +684,11 @@ as shown in \cref{lst:nodesession}:
 \begin{enumerate}
 \item We construct types for these two mappings 
 (\cref{line:mapped1,,line:mapped2}), 
-using a generic mapped typed defined in
-\cref{lst:noderolesmappedtypes}.
+using a generic mapped typed defined below.
+\begin{lstlisting}[language=javascript]
+// Inside the Roles namespace...
+export type PeersToMapped<Value> = { [Role in Peers]: Value };
+\end{lstlisting}
 
 \item Empty queues are initialised for both mappings
 (\cref{line:queue1,,line:queue2}).
@@ -688,13 +729,19 @@ class Session {
 			socket.onmessage = this.receive(role).bind(this);
 		});
 		
+		// Set up empty queues
 		this.messageQueue = { [Roles.Peers.Client]: [], }; (*@\label{line:queue1}@*)
 		this.handlerQueue = { [Roles.Peers.Client]: [], }; (*@\label{line:queue2}@*)
 		
-		this.next(initialState);	
+		this.next(initialState);		// Advance to initial state
 	}
 	
 	receive(from: Roles) { (*@\label{line:receivefunc}@*)
+	
+		// Return a WebSocket message event listener
+		// that looks at the message/handler queue
+		// specific to the `from` role
+		
 		return ({ data }) => { (*@\label{line:receivefuncret}@*)
 			// Array.shift() can return undefined if empty
 			const handler = this.handlerQueue[from].shift();
@@ -719,15 +766,6 @@ class Session {
 \captionof{lstlisting}{Modified \texttt{Session} class to correctly
 handle message receive events}
 \label{lst:nodesession}
-\end{figure}
-
-\begin{figure}[!h]
-\begin{lstlisting}[language=javascript]
-// Inside the Roles namespace...
-export type PeersToMapped<Value> = { [Role in Peers]: Value };
-\end{lstlisting}
-\captionof{lstlisting}{Generic Mapped Type for Roles}
-\label{lst:noderolesmappedtypes}
 \end{figure}
 
 Each endpoint must have consistency between

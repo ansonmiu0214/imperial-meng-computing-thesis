@@ -1,13 +1,13 @@
 \section{Challenges}
 \label{section:nodechallenges}
 
-Our goal with \fancyname{NodeMPST} is to
+Our goal with \nodecodegen is to
 generate session type implementations that
 provide as much \textbf{static} communication safety guarantees
 as possible,
 in a manner suitable for both the TypeScript language 
 and the single-threaded event loop model in Node.js
-As outlined in \cref{section:typescript}, TypeScript's type system
+TypeScript's type system
 is neither affine nor linear, so we need to work around the 
 language's limitations to enforce linear channel usage.
 

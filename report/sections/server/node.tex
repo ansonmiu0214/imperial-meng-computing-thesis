@@ -1,16 +1,30 @@
-\chapter{\fancyname{NodeMPST}: Back-End Session Type Web Development}
+\chapter{\nodecodegen: Back-End Session Type Web Development}
 \label{chap:node}
 
-In this chapter we present \fancyname{NodeMPST},
+In this chapter we present \nodecodegen,
 our session type API generation strategy for 
-server-side endpoints implemented on the Node.js runtime \cite{node}.
+server-side endpoints implemented on the Node.js runtime 
+\cite{nodejs}.
 We continue to use the running example of the \tprotocol{Adder}
-protocol, and refer to the FSM of the \trole{Svr} endpoint
+protocol (\cref{lst:adder}),
+and refer to the FSM of the \trole{Svr} endpoint
 (\cref{fig:addersvrfsm}) throughout this chapter.
+
+We discuss the challenges of implementing
+session types on the Node.js runtime 
+(\cref{section:nodechallenges})
+and motivate our approach (\cref{section:nodeapproach}).
+We explain our design choices for encoding
+the EFSM for server-side endpoints (\cref{section:nodeefsm}),
+and detail the session runtime that is designed
+to execute the EFSM on Node.js (\cref{section:noderuntime}).
+We conclude by analysing some alternative designs 
+(\cref{section:nodealt}) and evaluating the limitations 
+of our approach (\cref{section:nodelimitations}).
 
 \begin{figure}[!b]
 \centering
-\includegraphics[width=0.55\textwidth]{AdderSvrFSM}
+\includegraphics[width=0.6\textwidth]{AdderSvrFSM}
 \captionof{figure}{\trole{Svr} Endpoint FSM
 in \tprotocol{Adder} protocol}
 \label{fig:addersvrfsm}
@@ -22,3 +36,35 @@ in \tprotocol{Adder} protocol}
 \input{sections/server/node/runtime}
 \input{sections/server/node/alt}
 \input{sections/server/node/limitations}
+
+\section{Summary}
+In this chapter, we have presented
+our session type API generation strategy
+which targets the Node.js runtime for server-side
+endpoints.
+
+We motivated our approach of generating
+handler-style APIs that act as seams in the session runtime
+which executes the EFSM.
+By doing so, the mechanism for sending and receiving
+messages are not exposed to the developer,
+which makes channel reuse impossible by construction.
+
+We discussed our session runtime implementation in great
+depth and iterated upon the design to arrive at 
+a minimal runtime implementation that executes the EFSM
+using a message-passing abstraction internally as well.
+In particular, we motivated how to handle message receives
+in a way that preserves the message ordering specified
+in the communication protocol.
+
+Developers that implement their Node.js endpoint application
+using the generated APIs enjoy protocol conformance
+by construction: 
+the TypeScript type system will prevent type mismatches
+in the handlers defined by the developer
+(e.g. sending a \lstonelinejs{string} instead of 
+a \lstonelinejs{number}, or using a message label
+that is not defined on the EFSM state),
+and the handler-style APIs themselves conceal channel
+resources to prevent channel reuse.
