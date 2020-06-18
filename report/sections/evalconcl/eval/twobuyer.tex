@@ -54,7 +54,6 @@ class ProposeSplit extends S11<State> {
 	
 	render() {
 		const SendSplit = this.split('onClick', ev => {
-			ev.preventDefault();
 			return [this.state.split];		
 		});
 		

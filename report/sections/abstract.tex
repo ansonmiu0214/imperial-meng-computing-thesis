@@ -3,28 +3,28 @@
 \noindent
 Modern web programming
 involves coordinating interactions
-between browser clients and a web server.
+between web browser clients and a web server.
 Typically, the interactions are
-informally described, which makes
+informally described, making
 it difficult to verify communication
-correctness in the distributed system.
+correctness in web-based distributed systems.
 
 Multiparty Session Types (MPST)
-is a typing discipline for concurrent
+are a typing discipline for concurrent
 processes that communicate via
-message-passing. MPST theory can ensure
+message passing. MPST theory can ensure
 communication safety properties and
 protocol conformance.
 Existing work in session-typed
 web development over WebSocket transport
 is incompatible with modern web
-programming practices and are limited
+programming practices and is limited
 to supporting communication protocols
 that implement the server-centric network
 topology.
 
 We address limitations in the current 
-state-of-the-art by:
+state of the art by:
 \textbf{(1)} implementing \codegen, a code generation
 toolchain for session-typed web development
 over WebSocket transport using TypeScript;
@@ -42,11 +42,12 @@ build upon TypeScript concurrency practices,
 complement the event-driven style of programming
 in full-stack web development,
 and are compatible
-with the Node.js runtime and the React.js framework
-for server-side and browser-side endpoints respectively.
+with the Node.js runtime for server-side endpoints
+and the React.js framework
+for browser-side endpoints.
 We evaluate the expressiveness of \codegen for modern
 web programming
-using case studies of protocols found in web-services,
+using case studies of protocols found in web services,
 and analyse the performance overhead
 through 
 running benchmarks against a baseline implementation.

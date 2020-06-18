@@ -5,6 +5,7 @@ interactive web applications over WebSocket transport.
 We also present a theory of routed multiparty session types,
 which forms the basis for supporting arbitrary communication structures
 over a server-centric WebSocket-based network topology.
+
 Related work \citep{PureScript2019, MVU2020, LINKS, Exceptional} 
 requires the 
 developer to implement their application using tools that are 
@@ -14,12 +15,14 @@ WebSocket network structure.
 To the best of our knowledge, this is the first work on multiparty session
 type-safe web development that provides the same communication safety 
 guarantees using familiar industry tools in TypeScript and React,
-and supports peer-to-peer browser interactions over WebSockets.
+and supports peer-to-peer browser interactions over WebSockets. \\
 
 In \textbf{\cref{chap:background}}, 
 we introduce the core session type theory
 and provide an overview of related work on integrating session types into
-application development. We also introduce TypeScript and highlight the 
+application development, with a focus on the state-of-the-art
+proposals for session-typed web development. 
+We also introduce TypeScript and highlight the 
 defining features of the language.
 
 The remainder of the report is organised in three parts as such:
@@ -41,7 +44,8 @@ in \textbf{\cref{chap:node}} and \textbf{\cref{chap:react}} respectively.
 
 In \textbf{\cref{chap:ext}},
 we extend \codegen to support advanced
-practices commonly found in full-stack web development in a way that
+practices commonly found in full-stack web development,
+in a way that
 preserves communication safety. 
 We modify the API generation strategies
 to support \textit{asynchronous implementations} 
@@ -58,7 +62,7 @@ client roles, through the concept of \emph{routing}.
 In \textbf{\cref{chap:p2p}}, 
 we introduce the \tprotocol{Two Buyer} multiparty
 protocol to motivate our proposal of providing the server role with 
-routing responsibilities in addition to its existing interactions
+routing responsibilities, in addition to its existing interactions
 specified in the protocol.
 
 In \textbf{\cref{chap:theory}}, 
@@ -88,7 +92,7 @@ consider the compatibility of our work with respect to
 modern web programming practices.
 We perform benchmarks on a web application built using our
 generated APIs against a baseline implementation to evaluate
-the overhead of our work.
+the overhead of our implementation.
 
 Finally, we summarise our work in \textbf{\cref{chap:concl}} 
 and propose potential

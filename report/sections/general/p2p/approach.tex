@@ -4,7 +4,7 @@
 We acknowledge that peer-to-peer browser interactions
 could be achieved via different transport abstractions, 
 such as the WebRTC framework \cite{WebRTC}. 
-However, WebRTC has its own proprietary ``protocol'' 
+However, WebRTC has its own ``protocol'' 
 for establishing connections and exchanging network information,
 which isn't formalised in session type theory. This setup phase
 generally requires a \textit{signalling server} \cite{WebRTCSignaling},
@@ -15,7 +15,7 @@ but would introduce complications in the session runtime and
 error handling (e.g. how to handle cancellations during the connection
 phase?).
 We believe that adopting WebRTC deviates from the focus of project in 
-implementing type-safe webservices.
+implementing type-safe web services.
 
 Hence, for the purpose of our work in this part,
 we establish that WebSocket transport is an invariant, 

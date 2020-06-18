@@ -100,7 +100,7 @@ G_\text{Adder} = \trec{
 The protocol specification language is 
 a component of the broader 
 \textit{Scribble toolchain} initiated by 
-Honda et al. in \cite{Scribble}, 
+Honda et al. \cite{Scribble}, 
 through which the toolchain also facilitates 
 the development of 
 \textit{endpoint applications} that 
@@ -108,7 +108,8 @@ conform to user-specified protocols.
 
 A Scribble global protocol can be projected
 to a role, or \textit{endpoint},
-to obtain a local protocol which represents
+to obtain a \textit{local protocol} 
+which represents
 the global protocol viewed from the perspective
 of the endpoint.
 This allows the endpoint to \textit{verify} their
@@ -196,6 +197,39 @@ Conversely, $\delta($\texttt{S1, Client!Res(int)}$)$
 is undefined.
 \end{itemize}
 
+We also inherit the characteristics of EFSMs derived
+from well-formed protocols, as presented in \cite{Hybrid2016}:
+
+\begin{itemize}
+\item 
+There is \textit{exactly one} initial state 
+(\texttt{S1} in \cref{fig:bgadderfsm}).
+
+An initial state has no incoming transitions.
+Formally, the state identifier of the initial state
+is not in the range of $\delta$.
+
+\item 
+There is \textit{at most one} terminal state 
+(\texttt{S2} in \cref{fig:bgadderfsm}).
+
+A terminal state has no outgoing transitions.
+Formally, the state identifier of the terminal state
+is not in the domain of $\delta$.
+
+\item
+Every non-terminal state is either a \textit{send}
+state or a \textit{receive} state.
+
+A send state only has send actions in its
+outgoing transitions. \texttt{S3} and \texttt{S4}
+are the send states in \cref{fig:bgadderfsm}.
+
+A receive state only has receive actions in its
+outgoing transitions. \texttt{S1} is the only
+receive state in \cref{fig:bgadderfsm}.
+\end{itemize}
+
 Developers can use the EFSM to verify their implementation
 for protocol conformance with respect to an endpoint
 in the global protocol.
@@ -203,8 +237,8 @@ Endpoint API generation is a common approach
 \cite{HuJava,Hybrid2016,Python2017,PureScript2019,LinearDecomp}:
 these proposals generate APIs in the target language
 which the developer
-can use to implement their endpoint application that guarantees
-the following properties:
+can use to implement their endpoint application
+and enjoy the following guarantees:
 
 \begin{itemize}
 
@@ -315,7 +349,7 @@ for session-typed web development.
 King et al. presented an approach
 for integrating \textit{multiparty} session types 
 into web development using 
-the PureScript language \cite{PureScript},
+the PureScript language \cite{PureScript}.
 PureScript is a strongly typed functional language
 that compiles to JavaScript.
 This proposal takes advantage of its expressive type system to 
@@ -324,8 +358,8 @@ We outline the main components of their EFSM encoding:
 
 \subparagraph{Actions as type classes} 
 The semantics of the state transition function 
-in the EFSM express that a (state, action) tuple
-\textit{uniquely defines} a successor state. 
+in the EFSM express that a \texttt{(state, action)} tuple
+\textit{uniquely defines} a successor \texttt{state}. 
 These semantics can be expressed by 
 \textit{multi-parameter type classes (MPTC) 
 with functional dependencies}: 
@@ -391,7 +425,7 @@ modern web programming practices and compromises on usability.
 \subsubsection{Session-Typed GUI Programming 
 using Links \cite{MVU2020}}
 Fowler presented the first formal integration
-of session typing and GUI programming .
+of session typing and GUI programming.
 His work formalised the \textit{Model-View-Update} (MVU)
 architectural pattern for GUI development.
 An MVU application features a \textit{model} encapsulating application
@@ -421,8 +455,8 @@ the \textit{Links} web programming language
 that can be used to write full-stack web applications;
 and similar to PureScript, it is compiled to JavaScript.
 As it has a linear type system, session types can be
-implemented using native language features, since the
-language can monitor linear channel usage.
+implemented using native language features to
+monitor linear channel usage.
 Links also supports error handling for session types,
 as introduced in \cite{Exceptional}; 
 given side-effects must be made explicit

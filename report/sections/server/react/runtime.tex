@@ -2,7 +2,7 @@
 \label{section:reactruntime}
 
 There are many parallels between the runtime we generate
-for \fancyname{ReactMPST} compared to that of \fancyname{NodeMPST}.
+for \reactcodegen compared to that of \nodecodegen.
 We focus on the details unique to React endpoints.
 
 We define the public API for the session runtime
@@ -13,7 +13,7 @@ of the \tprotocol{Adder} protocol below.
 
 \begin{lstlisting}[language=javascript]
 type Props = {
-	endpoint: string,
+	endpoint: string,				// WebSocket URL to connect to
 	states: {						// mapping of state identifier
 		S40: Constructor<S40>,		// to EFSM state components
 		S42: Constructor<S42>,		// implemented by developer
@@ -24,7 +24,7 @@ type Props = {
 	connectFailed: React.ReactNode,	// render if connection failed
 };
 
-export class Session extends React.Component<Props, ...
+export class Session extends React.Component<Props> { ... }
 \end{lstlisting}
 
 The developer provides the WebSocket URL for the runtime
@@ -32,7 +32,7 @@ to instantiate the connection.
 As for the EFSM state implementations derived from the abstract
 classes, the developer constructs an object to map state identifiers
 to concrete implementations. 
-The developer only needs to pass the \textit{constructor} function,
+The developer only needs to pass the \textit{constructor function},
 as the runtime will instantiate the React components separately
 and pass the required props based on the type of state.
 Additionally, the developer needs to define what to render
@@ -52,7 +52,7 @@ class MainApp extends React.Component {
 	render() {
 		return <div>
 			<h1>Adder Client</h1>
-			<Client
+			<Session
 				endpoint='ws://localhost:8080'
 				states={{
 					S40: InputWindow,
@@ -318,7 +318,7 @@ is invoked in the transition function.
 \lstonelinejs{this.setState} may be \textit{asynchronous}
 as React will internally batch multiple calls into a single update
 for performance \cite{ReactState}, so it is possible for the WebSocket message
-event to be queued (and hence, procesesd) before the receive handler
+event to be queued (and hence, processed) before the receive handler
 is registered.
 
 We address this problem using a pair of queues to keep track
@@ -354,8 +354,8 @@ private receive({ data }: MessageEvent) {
 	else { this.messageQueue.push(data); }
 }
 \end{lstlisting}
-\captionof{lstlisting}{Receive Handler Registration and Message Event
-Listener in \fancyname{ReactMPST}}
+\captionof{lstlisting}{Receive Handler Registration and Message Handler
+in \fancyname{ReactMPST}}
 \label{lst:reactreceiveruntime}
 \end{figure}
 

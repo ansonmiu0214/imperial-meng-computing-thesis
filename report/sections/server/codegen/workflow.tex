@@ -235,6 +235,14 @@ class CodeGenerationStrategy(ABC):
     @abstractmethod
     def generate(self, endpoint: Endpoint):
         pass
+        
+# Register the code generator to the 
+# command line interface using the `node' identifier.
+class NodeCodeGenerationStrategy(target='node'):
+	...
+	
+class BrowserCodeGenerationStrategy(target='browser'):
+	...
 \end{lstlisting}
 \captionof{lstlisting}{Implementing \texttt{CodeGenerationStrategy}}
 \label{lst:codegenerationstrategy}
@@ -246,7 +254,10 @@ using the Strategy design pattern.
 Each target extends the
 abstract base class \texttt{CodeGenerationStrategy} 
 and implements its own \texttt{generate()}
-method to return a list of \texttt{(path, content)} tuples. 
+method to return a list of \texttt{(path, content)} tuples.
+Each tuple specifies the \texttt{content}
+of the generated code, and the file \texttt{path} where which
+to save the TypeScript code.
 We define a \texttt{CodeGenerator} class that is parameterised 
 by \texttt{target}: when instantiated, it will select and perform 
 the specialised \texttt{generate()} method based on \texttt{target}, 

@@ -7,9 +7,10 @@ interactive TypeScript applications over WebSocket transport.
 We motivate our API generation approach from 
 \cite{Hybrid2016,PureScript2019} to generate TypeScript APIs
 from a Scribble protocol specification.
-Developers write their full-stack applications
-by implementing the generated APIs, and enjoy 
-communication safety guarantees by construction.
+By writing their full-stack applications using
+the generated APIs, developers enjoy 
+communication safety guarantees in their endpoint
+applications by construction.
 APIs generated for server-side endpoints
 are compatible with the Node.js runtime,
 as detailed in \cref{chap:node}.
@@ -29,7 +30,7 @@ Compared to previous work
 session-typed web development, 
 we are not only able to
 statically provide the same level of communication safety
-guarantees from multiparty session type theory, but we do so
+guarantees, but we do so
 using modern web programming practices to increase
 the relevance and usability of our work in industry:
 our work targets TypeScript, Node.js and React.js,
@@ -38,8 +39,8 @@ web development idioms (such as asynchronous implementations)
 and handle premature disconnections gracefully.
 
 We also do not limit support to protocols that describe
-a server-centric topology: we formalise 
-a theory of routed multiparty session types in 
+a server-centric topology: we formalise \newtheory,
+a theory of routed multiparty session types, in 
 \cref{chap:theory} to prove that it is possible to relax the
 server-centric topology assumption over WebSocket transport in a way 
 that preserves communication along with the communication safety 
@@ -47,7 +48,7 @@ properties inherited from canonical session type theory.
 
 % PLACES
 Our work has received positive feedback from academia.
-The intitial part of this project was published as 
+The initial part of this project was published as 
 \emph{Generating Interactive WebSocket 
 Applications in TypeScript} in Volume 314 of the Electronic Proceedings
 in Theoretical Computer Science (EPTCS) \cite{PLACES2020},

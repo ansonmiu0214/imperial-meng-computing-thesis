@@ -37,7 +37,8 @@ all participants join the session when the protocol begins.
 We also focus on disconnection events as a result of session
 cancellation rather than those stated in the protocol.
 
-\cite{ExplicitConnections} uses a variant of the Scribble protocol
+The work of Hu and Yoshida \cite{ExplicitConnections} 
+uses a variant of the Scribble protocol
 language that supports explicit connection actions. Future work
 can use that as a basis for code generation, and generalise
 our existing mechanisms for session connection and cancellation
@@ -65,12 +66,12 @@ an object to be dependent on its private state, meaning
 it can change at runtime.
 This is compatible with the EFSM abstraction from the
 MPST framework: the permitted methods (i.e. channel actions)
-of the EFSM depends on its current state.
+of the EFSM depend on its current state.
 In fact, Kouzapas et al. \cite{StMungo} presents a way to
 generate typestate specifications for each endpoint of a
 Scribble protocol; Gay et al. \cite{ModularST} proposes
 an encoding of session types in object-oriented languages
-and discuss their approach with respect to typestates.
+and discusses their approach with respect to typestates.
 
 Future work can explore implementing typestates
 in TypeScript. A linear type system would be useful towards 

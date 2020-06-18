@@ -7,7 +7,7 @@ named after the endpoint.
 It exposes a \textbf{public API}
 with seams for the developer to pass in the WebSocket server 
 and application logic
-(i.e. their handler implementations).
+(i.e. implementations of the handler APIs).
 It is developer's responsibility to construct the
 WebSocket server and set it up to listen for incoming connections.
 Internally, it keeps a \textit{private API}
@@ -66,7 +66,7 @@ const onSubscribe = ({ data, target: socket }) => {
 	const { connect: role } = JSON.parse(data) 
 		as Message.ConnectRequest; (*@\label{line:connectionrequest}@*)
 		
-	// Ignore if role is aleady taken
+	// Ignore if role is already taken
 	if (!waiting.has(role)) { return socket.close(); } (*@\label{line:occupied}@*)
 	
 	// Map the role in the connection request to this WebSocket
@@ -384,7 +384,7 @@ the send. We guarantee that \texttt{send()} is called
 \textbf{exactly once} by construction, thus channel linearity
 is never violated.
 Finally, we use the parameterised EFSM transition handler
-to notify the rutime which specific state to transition to.
+to notify the runtime which specific state to transition to.
 
 \subparagraph{Sending through WebSockets}
 We define message structures as interfaces, which
@@ -403,7 +403,8 @@ send(role: Roles.Peers, label: string, payload: any[]) {
 \end{lstlisting}
 
 They are decoded using the same interface schema on the receiving end
-using \texttt{JSON.parse()}: whilst the method return type is the
+using \texttt{JSON.parse()}.
+Whilst the method return type is the
 dynamic \lstonelinejs{any} type, 
 we guarantee type safety by construction
 as we performed the serialisation in the first place, so
@@ -458,7 +459,7 @@ type MessageHandler = (message: any) => void; (*@\label{line:msghandler}@*)
 
 class Session {
 	// Optional type, same as `MessageHandler | undefined`
-	private handler?: MessageHandler; | undefined(*@\label{line:noderuntimehandler}@*)
+	private handler?: MessageHandler; (*@\label{line:noderuntimehandler}@*)
 
 	constructor(...) {
 		...
@@ -585,8 +586,8 @@ and current execution is \textit{not pre-empted}.
 Now consider a multiparty session specified by the global type
 
 \[
-A \to S: \text{\lstonelinejs{M1(string)}}. 
-B \to S: \text{\lstonelinejs{M2(number)}}. \texttt{end} 
+A \to S: \text{\lstonelinejs{M1(string)}}.~ 
+B \to S: \text{\lstonelinejs{M2(number)}}.~\texttt{end} 
 \]
 
 Suppose \trole{S} is the server endpoint.
@@ -626,8 +627,8 @@ corresponding handler is registered.
 We observe that message arrivals do not have to be causally related.
 However, if we consider a similar \textit{binary} example
 \[
-A \to S: \text{\lstonelinejs{M1(string)}}. 
-A \to S: \text{\lstonelinejs{M2(number)}}. \texttt{end}
+A \to S: \text{\lstonelinejs{M1(string)}}.~ 
+A \to S: \text{\lstonelinejs{M2(number)}}.~\texttt{end}
 \]
 then \tmsg{M1} \textit{must} arrive before \textit{M2},
 since this is sent through the WebSocket connection between 
@@ -651,8 +652,8 @@ in \cref{fig:nodereceivecompare}.
 \caption{Message processed after transitioning to receive state}
 \label{subfig:nodereceivehandlefirst}
 \end{subfigure}
-\caption{Possible Orderings for Handling Message Event and Preparing
-Receive State}
+\caption{Possible Orderings for Receiving Message and
+Registering Handler}
 \label{fig:nodereceivecompare}
 \end{figure}
 

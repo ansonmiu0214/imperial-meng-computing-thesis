@@ -8,9 +8,10 @@ Let $T_1, T_2$ be local types.
 Suppose $\tmerge{T_1}{T_2}$ exists.
 
 \[
+\forall l, T'_1, T'_2. ~ \left(
 (\treduce{T_1}{T'_1}{l}) \wedge (\treduce{T_2}{T'_2}{l})
 	\Longrightarrow
-(\tmerge{T'_1}{T'_2}) \text{ exists}
+(\tmerge{T'_1}{T'_2}) \text{ exists} \right)
 \]
 
 \label{lem:localltspreservemerge}
@@ -26,7 +27,9 @@ and $\treduce{T_2}{T'_2}{l}$.
 \begin{lemma}[Projection and Participation]
 
 \[
+\forall G, \mrole{p}.~ \left(
 \proj{G}{p} = \tend \Longleftrightarrow \mrole{p} \notin \pt{G}
+\right)
 \]
 
 \label{lem:projpt}
@@ -56,9 +59,9 @@ Let $G, G'$ be global types, and $\mrole{s}$ be a role.
 By induction on the structure of $G$.
 \end{proof}
 
-\begin{lemma}[???]
+\begin{lemma}[Encoding Preserves Participants]
 \[
-\forall \mrole{s}. ~ \pt{G} \subseteq \pt{\enc{G}{s}}
+\forall G, \mrole{s}. ~ \left( \pt{G} \subseteq \pt{\enc{G}{s}} \right)
 \]
 \label{lem:encpreservept}
 \end{lemma}

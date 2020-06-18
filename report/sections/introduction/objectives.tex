@@ -6,7 +6,7 @@ that \textit{provides communication safety guarantees in modern
 web programming} through multiparty session types.
 
 We tackle the limitations of the current
-state-of-the-art with two solutions:
+state of the art with two solutions:
 
 \subparagraph{S1: \codegen}
 We implement an end-to-end framework
@@ -32,7 +32,7 @@ theory that supports \textit{routed communication}.
 We prove that \newtheory also extends the communication safety
 properties of the canonical MPST theory, so
 processes that implement \newtheory also enjoy
-guarantees of \textbf{deadlock-freedom}, \textbf{channel linearity},
+guarantees of \textbf{deadlock-freedom}
 and the absence
 of \textbf{communication mismatches}.
 
@@ -42,11 +42,14 @@ By defining an encoding from canonical MPST theory
 to \newtheory, we show that we do not lose expressiveness
 using routed communication.
 We also extend \codegen to implement \newtheory.
+\codegen generates APIs that provide \textbf{channel linearity}
+by construction, and the extended
+implementation to support \newtheory enjoys the same benefits.
 \\
 
 By solution \textbf{S1}, we address the limitation \textbf{L1}.
 Our work provides the same communication safety guarantees
-as the current state-of-the-art, but 
+as the current state of the art, but 
 is compatible with modern web programming tools and idioms.
 Among the languages that compile to JavaScript,
 we select TypeScript as it is arguably the most intuitive
@@ -56,14 +59,15 @@ It provides developers
 with type-safety through its gradual, structural type system,
 and is also interoperable with existing JavaScript libraries
 that the developer may incorporate into their application.
-Whilst some \cite{MVU2020} point out this limits its usability for
+Whilst some \cite{MVU2020} point out that 
+this limits its usability for
 encoding multiparty session types, we believe that the language
 offers sufficient features that we can use to provide developers with
 communication safety guarantees whilst preserving a flexible, natural
 and idiomatic workflow.
 The TypeScript APIs we generate also support idioms commonly
 found in modern web development (such as callbacks and
-asynchronous operations), and provides an error handling
+asynchronous operations), and provide an error handling
 mechanism tailored to the dynamic web-based environment
 (where roles can disconnect prematurely).
 

@@ -23,8 +23,12 @@ which uses WebSocket transport.
 We introduce the extended syntax for types in 
 \cref{section:syntax}, and give semantics of our
 syntax extensions in \cref{section:lts}.
-We define a router-parameterised encoding
-for MPST into \newtheory in \cref{section:encoding}
+Regarding the extended semantics on routed session types,
+we prove the soundness and completeness of
+the extended semantics in \cref{section:newtraceeq}.
+In \cref{section:encoding},
+we define a router-parameterised encoding
+for canonical MPST theory into \newtheory
 and prove the preservation of well-formedness
 and communication.
 We proceed to extend \codegen to implement \newtheory
@@ -42,7 +46,9 @@ in \cref{chap:impl}.
 We have presented \newtheory, a variant of
 the canonical MPST theory to express \textit{routed communication}.
 We introduced extensions to syntax and semantics, and proved
-that our extended semantics preserve deadlock-freedom
-for well-formed protocols. We defined an encoding from the
+that our extended semantics are sound and complete,
+and preserve deadlock-freedom
+for well-formed protocols. 
+We defined an encoding from the
 canonical theory onto \newtheory, and proved the preservation
 of well-formedness and communication.

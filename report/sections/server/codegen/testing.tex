@@ -1,14 +1,14 @@
 \section{Testing}
-
-The usual unit testing practices from software engineering
-apply to our code generator -- the built-in \texttt{unittest} 
-package is more than sufficient for our use case. 
-Instead, we detail our methodology for \textit{system testing} -- 
-executing \fancyname{SessionTS} end-to-end and testing
+The challenge for testing \codegen
+is to verify that the generated code is valid
+TypeScript code.
+Here, we detail our methodology
+for \textit{system testing} -- 
+executing \codegen end-to-end and testing
 the generated code.
 
 We implement a test suite on top of \texttt{unittest} APIs
-for verifying that \fancyname{SessionTS}
+for verifying that \codegen
 generates \textit{valid TypeScript code}. This is especially useful as
 our templates contain both TypeScript syntax and Jinja markup, 
 so we cannot easily make sure that each template generates valid code,
@@ -53,7 +53,7 @@ and expecting a zero exit code (\cref{line:testtscrc}).
 As the generated TypeScript code makes assumptions about the
 environment in which it is used (for example, having the \texttt{ws}
 WebSocket package installed on server-side endpoints), we require a
-sandbox environment to type-check the generated code. 
+\textit{sandbox environment} to type-check the generated code. 
 The sandbox contains the minimal boilerplate required
 for testing -- this involves having the WebSocket package installed
 for server-side endpoints, the React.js framework (\cref{chap:react})

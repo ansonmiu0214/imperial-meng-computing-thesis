@@ -5,7 +5,7 @@ We define the labelled transition system (LTS) semantics
 over global types (\cref{subsection:newltsglobal}) 
 and local types (\cref{subsection:newltslocal})
 for \newtheory,
-building upon the work of Deni\'elou and Yoshida in
+building upon the work of Deni\'elou and Yoshida
 \cite{characterisation}.
 We show the soundness and completeness of projection
 with respect to the LTSs through proving the
@@ -47,14 +47,14 @@ l ::= & & \text{Labels} \\
 \end{figure}
 
 \begin{itemize}
-\item \textbf{Routed send:}
+\item \textbf{Routed Send:}
 
 The label $\via{s}{\aout{p}{q}{j}}$ represents the
 \textit{sending} (performed by $\role{p}$)
 of a message labelled $j$ to $\role{q}$ through
 the intermediate router $\role{s}$.
 
-\item \textbf{Routed receive:}
+\item \textbf{Routed Receive:}
 
 The label $\via{s}{\ain{p}{q}{j}}$ represents the
 \textit{reception} (initiated by $\role{q}$) 
@@ -112,7 +112,7 @@ We add a similar construct
 {$\gtransroute{p}{q}{s}{j}{l_i: G_i}{i \in I}$}
 to represent that the message $l_j$ has
 been sent from $\role{p}$ to the router $\role{s}$
-but not yet routed to $\role{q}$.
+\textit{but not yet routed to $\role{q}$}.
 We extend the projection operator to 
 support this new construct.
 
@@ -127,6 +127,19 @@ support this new construct.
 \end{cases}
 \]
 
+Because the router $\role{s}$ holds
+Because the router holds a ``global perspective''
+on the routed communication, we also need to
+represent the intermediate state (at which the message is 
+being routed by the router) within the grammar
+of \textit{local types}.
+We extend the grammar of local types with the construct
+$\routertrans{p}{q}{j}{l_i: T_i}{i \in I}$
+to represent that, from the local perspective of
+the router, the message $l_j$
+has been received from $\role{p}$ \textit{but not yet routed
+to $\role{q}$}.
+
 Because routed communication is treated differently
 from direct send and receive actions, the notion
 of asynchrony differs between the two types of communication
@@ -138,7 +151,7 @@ We define the LTS semantics
 over global types,
 denoted by $\treduce{G}{G'}{l}$,
 in \cref{fig:newglobal}.
-We highlight and explain the new rules.
+We highlight and explain the new rules.\\
 
 \begin{figure}[!h]
 
@@ -285,21 +298,6 @@ we show this in \cref{subsection:encodepreservecomm}.
 
 \subsection{LTS Semantics over Local Types}
 \label{subsection:newltslocal}
-
-The LTS semantics over local types
-need to be extended for routed communication.
-Because the router holds a ``global perspective''
-on the routed communication, we also need to
-represent the intermediate state (at which the message is 
-being routed by the router) within the grammar
-of local types.
-Similar to \cref{subsection:newltsglobal}, we add 
-the construct 
-$\routertrans{p}{q}{j}{l_i: T_i}{i \in I}$
-to represent that, from the local perspective of
-the router, the message $l_j$
-has been received from $\role{p}$ but not yet routed
-to $\role{q}$.
 
 We define the LTS semantics 
 over local types,

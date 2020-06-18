@@ -104,7 +104,7 @@ by case analysis on the label $l$.
 
 \item $l = \aout{p}{q}{j}$
 
-Then $\treduce{T_\mrole{p}}{T'_\mrole{p}}{l}$ 
+Then $\treduce{T_\mrole{p}}{T'_\mrole{p}}{l}~$ 
 because $\role{p}$
 initiates the action, so
 $T'_\mrole{p'} = T_{\mrole{p'}}$ 
@@ -119,7 +119,7 @@ are untouched for all $\mroles{p'}{q'} \neq \mroles{p}{q}$.
 
 \item $l = \ain{p}{q}{j}$
 
-Then $\treduce{T_\mrole{q}}{T'_\mrole{q}}{l}$ 
+Then $\treduce{T_\mrole{q}}{T'_\mrole{q}}{l}~$ 
 because $\role{q}$
 initiates the action, so
 $T'_\mrole{p'} = T_{\mrole{p'}}$ 
@@ -135,7 +135,7 @@ are untouched for all $\mroles{p'}{q'} \neq \mroles{p}{q}$.
 
 \item \hl{$l = \via{s}{\aout{p}{q}{j}}$}
 
-Then $\treduce{T_\mrole{p}}{T'_\mrole{p}}{l}$ 
+Then $\treduce{T_\mrole{p}}{T'_\mrole{p}}{l}~$ 
 because $\role{p}$
 initiates the action.
 Because the send action is routed, we also need 
@@ -151,7 +151,7 @@ are untouched for all $\mroles{p'}{q'} \neq \mroles{p}{q}$.
 
 \item \hl{$l = \via{s}{\ain{p}{q}{j}}$}
 
-Then $\treduce{T_\mrole{q}}{T'_\mrole{q}}{l}$ 
+Then $\treduce{T_\mrole{q}}{T'_\mrole{q}}{l}~$ 
 because $\role{q}$
 initiates the action.
 Because the receive action is routed, we also need
@@ -324,9 +324,9 @@ Then $s = \projconf{G}$ where
 T_\mrole{p} = & \tselproxy{p'}{s}{l_i: \proj{G_i}{p}}{i \in I} \\
 T_\mrole{p'} = & \tbraproxy{p}{s}{l_i: \proj{G_i}{p'}}{i \in I} \\
 T_\mrole{s} = & \router{p}{p'}{l_i: \proj{G_i}{s}}{i \in I}\\
-T_\mrole{r} = & \underset{i \in I}{\MERGEOP}\proj{G_i}{r} 
+T_\mrole{r} = & \underset{i \in I}{\MERGEOP}~\proj{G_i}{r} 
 	\text{ for } \mrole{r} \notin \{ \mrole{p},\mrole{p'},\mrole{s} \}\\
-\{ w_{\mroles{q}{q'}} \}_{\qqinP} = & \projconf{G_1}_{\{\vec\epsilon\}} \\
+\{ w_{\mroles{q}{q'}} \}_{\qqinP} = & \projconf{G_i}_{\{\vec\epsilon\}} \text{ for some } i \in I \\
 \end{array}
 \]
 
@@ -341,8 +341,8 @@ We have
 \\
 \hat{T'_\mrole{r}} = & \proj{G_j}{r} 
 	\text{ for } \mrole{r} \notin \{ \mrole{p'},\mrole{s} \}\\
-\{ \hat{w'}_{\mroles{q}{q'}} \}_{\qqinP} = & \projconf{G_1}_
-	{\{ \vec\epsilon \}[w_{\mroles{p}{p'}} \mapsto w_{\mroles{p}{p'}} \cdot j]} \\
+\{ \hat{w'}_{\mroles{q}{q'}} \}_{\qqinP} = & \projconf{G_i}_
+	{\{ \vec\epsilon \}[w_{\mroles{p}{p'}} \mapsto w_{\mroles{p}{p'}} \cdot j]} \text{ for some } i \in I \\
 \end{array}
 \]
 
@@ -375,7 +375,7 @@ For $\mrole{q} \notin \{ \mrole{p}, \mrole{p'}, \mrole{s} \}$,
 we have
 
 \[
-T'_\mrole{q} = \underset{i \in I}{\MERGEOP}\proj{G_i}{q}
+T'_\mrole{q} = \underset{i \in I}{\MERGEOP}~\proj{G_i}{q}
 	\subtype \proj{G_j}{q}
 	= \hat{T_\mrole{q}}
 \]
@@ -505,13 +505,14 @@ over configurations, which is defined by
 case analysis on the possible labels $l$.
 
 For each transition $\treduce{s}{s'}{l}$,
-we take the global type $G$ such that $s = \projconf{G}$,
+we take the configuration $s$ from the reduction rule,
+infer the structure of the global type $G$ such that $s = \projconf{G}$,
 derive $\treduce{s}{s'}{l}$ and $\treduce{G}{G'}{l}$
 under the respective LTSs, 
 and show that $s' \subtype \projconf{G'}$.
 
 The proofs for $l = \aout{p}{q}{j}$ and $l = \ain{p}{q}{j}$
-are the same as in \cite{characterisation}.
+are the same as in Appendix A.1 of \cite{characterisation}.
 We focus on the new labels introduced for routing.
 
 \begin{itemize}
@@ -667,7 +668,9 @@ $\tilde{T'}_\mrole{s} \subtype (\proj{\tilde{G'}}{s})$.
 
 \begin{theorem}[Trace Equivalence]
 Let $G$ be a global type with participants 
-$\mathcal{P} = \pt{G}$.
+$\mathcal{P} = \pt{G}$, 
+and let $\vec T = \{ \proj{G}{p} \}_{\pinP}$ be the local
+types projected from $G$.
 Then $G \approx (\vec T, \vec \epsilon)$.
 
 \label{th:traceeq}

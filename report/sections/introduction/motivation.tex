@@ -33,7 +33,7 @@ The \trole{Traveller} queries the \trole{FlightServer}
 about prices to a particular destination.
 If there is still availability, 
 the \trole{FlightServer} will \textit{reserve a seat}
-responds with the price,
+and respond with the price,
 to which the \trole{Traveller} confirms or rejects the purchase;
 the latter choice will notify the \trole{FlightServer}
 to \textit{release the seat}.
@@ -146,11 +146,11 @@ providing communication safety guarantees,
 but requires the developer to compromise by adapting
 to programming paradigms and practices that are not
 conventional for modern web programming.
-Developers that use \cite{MVU2020} are required
+Fowler \cite{MVU2020} requires developers
 to implement their web applications in a \textit{functional} 
 paradigm using the \textit{Links} 
 web programming language \cite{LINKS}.
-\cite{PureScript2019} also endorses
+King et al. \cite{PureScript2019} also endorses
 functional web programming by requiring developers to
 write PureScript \cite{PureScript} applications, but also
 enforces user interfaces to be written using 
@@ -163,7 +163,8 @@ It is also unclear whether these tools support idiomatic
 practices in event-driven programming, such as callbacks
 and asynchronous implementations.
 Whilst communication safety guarantees provided by
-\cite{PureScript2019,MVU2020} are based on
+Fowler \cite{MVU2020} and King et al. \cite{PureScript2019}
+are based on
 canonical MPST theory, they are not contextualised
 for the dynamic web-based environment.
 Going back to the flight booking service as an example,
@@ -178,7 +179,7 @@ in modern web programming.
 \subparagraph{L2: 
 Limited expressiveness of communication protocols}
 
-The current state-of-the-art leverage the WebSocket protocol
+The current state of the art leverage the WebSocket protocol
 as the communication transport between roles, which is
 simple to reason about and straightforward to relate
 to session type theory.
@@ -198,6 +199,6 @@ runs on the browser; the \trole{Traveller} first asks
 for a quote from the \trole{TravelAgent} before 
 carrying out the usual interactions with the \trole{FlightServer},
 so the \trole{Traveller} can compare between both options.
-The current state-of-the-art cannot implement this 
+The current state of the art cannot implement this 
 extended flight booking service, as the described
-communication interactions is no longer server-centric.
+communication interactions are no longer server-centric.

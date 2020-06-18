@@ -117,8 +117,7 @@ new Svr(
 	cancellation		// Error handler
 );
 \end{lstlisting}
-\captionof{lstlisting}{Implementing \tprotocol{Noughts and Crosses} Game Server using
-\codegen}
+\captionof{lstlisting}{Implementing \tprotocol{Noughts and Crosses} Game Server}
 \label{lst:gamesvr}
 \end{figure}
 
@@ -183,8 +182,6 @@ to the table cell.
 	{row.map((cell, y) => {
 		if (cell === Cells.VACANT) {
 			const sendPoint = (event: React.MouseEvent) => {
-				// Don't refresh the screen
-				event.preventDefault();
 				return { x, y };
 			});
 			const SelectPoint = this.pros.Pos('onClick', sendPoint);

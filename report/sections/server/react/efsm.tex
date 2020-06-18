@@ -124,7 +124,7 @@ from the \tprotocol{Adder} protocol in \cref{lst:adderclientsenddev}.
 Component state is an implementation detail 
 that is not related to EFSM execution, so we allow
 the developer to customise this through specifying an 
-interface (\cref{line:clientsendstatestate}).
+interface (\cref{line:clientsendstatestate}) as the generic type.
 
 \begin{figure}[!h]
 \begin{lstlisting}[language=javascript,tabsize=2]
@@ -168,7 +168,7 @@ and an event handler which must return the payload
 -- \textit{appropriately typed with respect to the Scribble protocol} -- 
 for sending the \tmsg{ADD} message.
 Swapping \cref{line:clientsendpayload1,line:clientsendpayload2}
-will result in a compile-time type error due to invalid 
+will result in a compile time type error due to invalid 
 payload types, which is the intended behaviour.
 
 We will define the factory API implementation in a way that
@@ -210,7 +210,7 @@ Contrary to our discussions about modelling dependent types in
 \cref{subsection:nodeefsmimplementation}, we can do this here
 because: \textbf{(1)} we are using index type queries instead
 of conditional types, and \textbf{(2)} we know the type
-of \texttt{ev} at compile-time from the developer's implementation,
+of \texttt{ev} at compile time from the developer's implementation,
 so we are not resolving index type queries with union types.
 
 \begin{figure}[!h]
@@ -222,7 +222,8 @@ interface DOMAttributes<T> {
 	...
 };
 \end{lstlisting}
-\captionof{lstlisting}{Snippet of the \texttt{React.DOMAttributes} Interface}
+\captionof{lstlisting}{Snippet of the 
+\texttt{React.DOMAttributes} Interface}
 \label{lst:reactdomattrs}
 \end{figure}
 
@@ -326,7 +327,7 @@ abstract class S40<State> extends React.Component<Props, State> {
 }
 \end{lstlisting}
 \captionof{lstlisting}{Generated Type for \trole{Client} Send State
-in \tprotocol{Adder} protocol}
+in \tprotocol{Adder} Protocol}
 \label{lst:reactsendcomponent}
 \end{figure}
 
@@ -492,7 +493,7 @@ abstract class S42<S> extends React.Component<Props, S> {
 }
 \end{lstlisting}
 \captionof{lstlisting}{Generated Code for \trole{Client} 
-Receive State S42 in \tprotocol{Adder} protocol}
+Receive State S42 in \tprotocol{Adder} Protocol}
 \label{lst:reactreceivecomponent}
 \end{figure}
 

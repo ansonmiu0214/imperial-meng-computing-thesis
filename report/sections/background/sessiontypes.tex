@@ -22,7 +22,7 @@ to full-duplex communication channels via the WebSocket protocol
 \cite{WebSocketRFC}.
 
 The process algebra $\pi$-calculus 
-introduced by Milner in \cite{Milner1999} 
+introduced by Milner \cite{Milner1999} 
 formalises the message passing abstraction in terms of 
 the basic building blocks of sending and receiving processes.
 The composition of these primitives allow us to 
@@ -44,11 +44,12 @@ provided by the programming language.
 For example, King et al. \cite{PureScript2019} leveraged the 
 expressive type system of PureScript to perform 
 \textit{static} session type checking,
-whilst Neykova and Yoshida \cite{Python2017} 
+whilst Neykova \cite{Python2017} 
 introduced dynamic approaches to 
 check the conformance of Python programs 
 with respect to session types.
-We discuss these related work, among others, in \cref{section:bgrelated}.
+We discuss these related work, among others, 
+in \cref{section:bgrelated}.
 
 \subsection{Process Calculus}
 \label{subsection:picalculus}
@@ -58,7 +59,7 @@ where processes can execute in parallel and communicate
 via shared names.
 We first consider the \textit{asynchronous} 
 $\pi$-calculus introduced by 
-Honda and Tokoro in \cite{AsyncHonda}.
+Honda and Tokoro \cite{AsyncHonda}.
 Among the many flavours of the calculus 
 which vary depending on the application domain,
 we outline the variant as presented in \cite{C406Lecture}. 
@@ -150,12 +151,13 @@ that will never be executed.
 \subsection{Binary Session Types}
 \label{subsection:bgbst}
 
-A \textit{binary session} is a parallel composition 
-of two processes, each representing a distinct participant.
+A \textit{session} represents 
+the sequence of send and receive actions of 
+a single participant. 
+A \textit{binary session} describes a session
+with two distinct participants.
 In the context of web applications, a binary session may
 describe the interactions between client and server.
-Without loss of generality, a \text{session} represents 
-the sequence of send and receive actions of a single participant.
 
 We introduce a \text{synchronous} session calculus 
 in \cref{fig:sync},
@@ -182,7 +184,7 @@ alongside the payload to the branching process.
 \item \textbf{Labelled messages}: 
 A label identifier is attached to all messages; 
 the input process in \cref{fig:async}
-is generalised as a branching process that offers one branch.
+is generalised as a branching process offering one branch.
 \end{itemize}
 
 The \rulename{Comm} rule in the operational semantics 
@@ -206,12 +208,18 @@ The branching process binds the received values
 $v_1, \dots, v_n$ to the variables $x_1, \dots, x_n$.
 
 \begin{prooftree}
-\AxiomC{$\exists	j \in I. l_j = l$}
-\AxiomC{$\vec x_j = x_1, \dots, x_n$}
-\AxiomC{$e_1 \downarrow v_1 \dots e_n \downarrow v_n$}
+\AxiomC{$
+\exists j \in I. ~ \left( 
+l_j = l
+\qquad
+\vec x_j = x_1, \dots, x_n 
+\qquad
+e_1 \downarrow v_1 \dots e_n \downarrow v_n
+\right)
+$}
 \AxiomC{$\mrole{p} \neq \mrole{q}$}
 \RightLabel{\rulename{Comm}}
-\QuaternaryInfC{$
+\BinaryInfC{$
 \mrole{p} :: \sel{q}{l}{e_1 \dots e_n}.~P \mid 
 \mrole{q} :: \bra{p}{l_i(\vec x_i): Q_i}{i\in I} 
 ~\longrightarrow~ 
@@ -301,7 +309,6 @@ We derive the type of a process with a {typing judgement}
 of the form $\Gamma \vdash P: S$, which reads, 
 \textit{under the typing context $\Gamma$, 
 process $P$ has session type $S$}. 
-
 The \textit{typing context} records typing assumptions 
 used as part of the derivation: in the case of binary session types, 
 the context maps expressions to sorts, 
@@ -427,8 +434,8 @@ T_{\text{Client}} &=
 	\tend \\
 T_{\text{Server}} &= \tbraone{Client}{
 \begin{cases}
-	\tmsg{Succ(int)}: \tselone{Client}{\tmsg{Succ(int)}}. \tend \\
-	\tmsg{Quit()}:  \tend \\
+	\tmsg{Succ(int)} &: \tselone{Client}{\tmsg{Succ(int)}}.~\tend \\
+	\tmsg{Quit()} &:  \tend \\
 \end{cases}
 } \\
 \end{array}
@@ -440,9 +447,10 @@ as the client is selecting a branch offered by the server,
 where the session types for the continuations of 
 this branch for both participants are indeed dual.
 Regarding payload, the server is expecting \texttt{int},
-but the client sends \texttt{nat}, which is a subtype of \texttt{int}.
+but the client sends \texttt{nat},
+which is a \textit{subtype} of \texttt{int}.
 
-This motivates the concept of \textit{subtypes} in session types,
+This motivates the concept of subtyping in session types,
 which allows a process to be typed by its ``supertype'' when required. 
 $\subtype$\footnote{
 The $\subtype$ operator is also an 
@@ -693,11 +701,12 @@ shown in \cref{fig:merge}.
 	& 
 	\text{where } T''_k =
 	\begin{cases}
-	T_k & \text{if } k \in (I \setminus J) \\
-	T'_k & \text{if } k \in (J \setminus I) \\
-	\tmerge{T_k}{T'_k} & \text{otherwise} \\
+	T_k & \text{if } k \in I \setminus J \\
+	T'_k & \text{if } k \in J \setminus I \\
+	\tmerge{T_k}{T'_k} & \text{if } ~ k \in I \cap J \\
 	\end{cases}
 	& \\
+	& \text{otherwise undefined} &\\
 
 \end{array}
 \]

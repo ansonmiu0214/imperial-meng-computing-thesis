@@ -116,7 +116,7 @@ A seam is ``a place where one can alter the
 behaviour in the program without editing in that place''
 \cite{seam}. The developer implements handlers
 to define what message to send and how to process a received
-message, without access to the send and receive APIs
+message, without accessing the send and receive APIs
 that are used to execute the EFSM.
 We collect these APIs under the \texttt{Handler} namespace. 
 We introduce the generated handlers for sending and receiving states.
@@ -250,7 +250,7 @@ operator.
 \subsubsection{Distinguishing Handlers using Conditional Types}
 \label{subsubsection:dependenttypes}
 
-We attempt to address this by defining an enum of state identifiers
+We \textit{attempt} to address this by defining an enum of state identifiers
 for each type of state (i.e. an enum for send states, 
 an enum for receive states)
 upon which to execute the EFSM. 
@@ -311,12 +311,13 @@ using Conditional Types}
 \label{lst:conditionaltransitionfunction}
 \end{figure}
 
-Unfortunately, this approach does not work for the simple fact that
+Unfortunately, this approach \textbf{does not work}
+for the simple fact that
 conditional types were not designed to be exploited in this manner.
 The main limitation of conditional types is its 
-\textit{distributivity} when the type ``parameter'' is an
+\textit{distributivity} when the type parameter is an
 union type (which is the case for enums, as
-\texttt{S = SendState.S53 | SendState.S54| ...}), where
+\texttt{S = SendState.S53 | SendState.S54 | ...}), where
 
 \begin{lstlisting}[language=javascript,numbers=none]
 (T1 | T2) extends U ? X : Y
@@ -413,5 +414,5 @@ for Server-Side Endpoints}
 
 We discuss our runtime implementation shortly 
 (\cref{section:noderuntime}), where we disclose more details regarding
-the role of the \texttt{Implemenation} wrapper API in
+the role of the \texttt{Implementation} wrapper API in
 the runtime.

@@ -377,19 +377,20 @@ global types in the canonical MPST theory.
 
 \begin{theorem}[Encoding Preserves Semantics]
 Let $G, G'$ be global types
-such that $\treduce{G}{G'}{l}$.
-Also take arbitrary role $\mrole{s}$.
+such that $\treduce{G}{G'}{l}$ for some label $l$.
 
 \[
+\forall l, \mrole{s}. ~ \left(
 \treduce{G}{G'}{l}
 	\Longrightarrow
-\treducelong{\enc{G}{s}}{\enc{G'}{s}}{\enc{l}{s}}
+\treducelong{\enc{G}{s}}{\enc{G'}{s}}{\enc{l}{s}} \right)
 \]
 
 \end{theorem}
 
 \begin{proof}
 By induction on the structure of $\treduce{G}{G'}{l}$.
+Take arbitrary router role $\mrole{s}$.
 
 \begin{itemize}
 

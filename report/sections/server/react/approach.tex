@@ -25,15 +25,15 @@ web applications, so this makes our workflow beneficial in an
 industrial context. 
 The framework defines a way for data to flow
 between UI elements, and empowers the UI to subscribe and
-``react'' to data changes.
+``react'' to data changes;
+we introduce the framework in \cref{subsection:react}.
 We aim to implement similar behaviour with respect to the EFSM:
 the UI should react to EFSM state transitions,
 so we can \textbf{statically} ensure that the
 channel actions ``present'' on the browser at any given time
 are those permitted by the current EFSM state.
-We introduce the framework in \cref{subsection:react}.
 
-When executing \fancyname{SessionTS} to generate code
+When executing \reactcodegen to generate code
 for the \trole{Client} endpoint specifying the
 \texttt{browser} target, the developer obtains the following 
 groups of files:
