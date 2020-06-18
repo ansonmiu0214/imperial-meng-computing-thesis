@@ -1,9 +1,10 @@
-\section{Syntax}
+\section{Syntax for Global and Local Types}
 \label{section:syntax}
 
 We extend the syntax for global types
 in \cref{subsection:newglobal} and
-local types in \cref{subsection:newlocal}.
+local types in \cref{subsection:newlocal}
+to express routed communication.
 The same conventions introduced in \cref{subsection:bgmpst}
 apply here: 
 we omit message payload types,
@@ -19,13 +20,13 @@ respectively.
 \subsection{Global Types}
 \label{subsection:newglobal}
 
+Global types range over $G, G', G_i, \dots$
 As motivated by \cref{section:routerchallenges},
 we need to handle \textit{routed communication} separately
 from normal send and receive actions.
 We define the syntax of global types for \newtheory 
 in \cref{fig:newsyntaxglobal}, and explain the 
 new construct for expressing routed communication.
-Global types range over $G, G', G_i, \dots$
 
 \begin{figure}[!h]
 \doublespacing
@@ -47,7 +48,8 @@ G ::= & & \text{Global Types} \\
 
 The new construct $\groute{p}{q}{s}{l_i: G_i}{i \in I}$ reads, 
 \textit{
-``the communication $\gcomm{p}{q}{l_i: G_i}{i \in I}$
+``the communication interaction 
+from $\role{p}$ to $\role{q}$
 is routed by $\role{s}$''
 }.
 To be more verbose,
@@ -59,7 +61,7 @@ selection $l_i$ made by $\role{q}$ via $\role{s}$,
 and the communication system proceeds with continuation $G_i$.
 We refer to $\role{s}$ hereafter as the \textit{router}.
 $\role{s}$ ranges over the set of roles 
-$\role{p},\role{q},\role{r},\role{s},\dots$,
+$\role{p},\role{q},\role{r},\dots$,
 but we use $\role{s}$ by convention as the server endpoint
 is usually the router.
 Just as it is assumed that $\role{p} \neq \role{q}$ for
@@ -67,8 +69,9 @@ direct communication,
 we also assume that
 $\role{p} \neq \role{q} \neq \role{s}$ for routed communication.
 
-We also extend the definition of the participants function,
-$\pt{G}$, in \cref{def:newpt}, to formalise that the router 
+We inherit the definitions of the participants function, $\pt{G}$,
+introduced in \cref{table:pt}; we extend it in \cref{def:newpt}
+to formalise that the router 
 participates in the routed communication.
 
 \begin{definition}[Participants]
@@ -92,6 +95,7 @@ interactions specified by $G$, written $\pt{G}$, is:
 \subsection{Local Types}
 \label{subsection:newlocal}
 
+Local types range over $T, T', T_i, \dots$
 Local types are obtained from global types via
 \textit{projection}, so we also need new
 constructs to express routed communication
@@ -104,7 +108,6 @@ We define the syntax of local types for \newtheory
 in \cref{fig:newsyntaxlocal}, and walk through
 the new constructs below from the perspective of
 some arbitrary role $\role{r}$.
-Local types range over $T, T', T_i, \dots$
 
 \begin{figure}[!h]
 \doublespacing
@@ -119,9 +122,9 @@ T ::= &  & \text{Local Types} \\
 \mid & \router{p}{q}{l_i: T_i}{i \in I}
 & \text{\hl{Routing Communication}} \\
 \mid & \tselproxy{p}{q}{l_i: T_i}{i \in I}
-& \text{\hl{Proxy Selection}} \\
+& \text{\hl{Routed Selection}} \\
 \mid & \tbraproxy{p}{q}{l_i: T_i}{i \in I}
-& \text{\hl{Proxy Branching}} \\
+& \text{\hl{Routed Branching}} \\
 \end{array}
 \]
 \singlespacing
@@ -140,44 +143,46 @@ $\role{r}$ routes the message $l_i$ sent by $\role{p}$
 to the intended recipient $\role{q}$ and proceeds 
 with continuation $T_i$.
 
-\item \textbf{Proxy selection:}
+\item \textbf{Routed slection:}
 
 If $\role{r}$ has local type $\tselproxy{p}{q}{l_i: T_i}{i \in I}$,
 $\role{r}$ is making a selection from the
 \textit{intended recipient} $\role{p}$,
-but the selection is sent to the intermediate proxy $\role{q}$. 
+but the selection is sent to the intermediate router $\role{q}$.,
+instead of to $\role{p}$ directly.
 $\role{r}$ sends their internal choice $l_i$ to $\role{q}$
 and proceeds with continuation $T_i$.
 
-\item \textbf{Proxy branching:}
+\item \textbf{Routed branching:}
 
 If $\role{r}$ has local type $\tbraproxy{p}{q}{l_i: T_i}{i \in I}$,
 $\role{r}$ is offering a choice to the
 \textit{intended sender} $\role{p}$,
-but the message is received from the intermediate proxy $\role{q}$.
+but the message is received from the intermediate router $\role{q}$,
+instead of from $\role{p}$ directly.
 $\role{r}$ receives the external choice $l_i$ from $\role{q}$
 and proceeds with continuation $T_i$.
 
 \end{itemize}
 
-As a general comment, the new local types of proxy selection
-and proxy branching should ``behave'' as normal selection and
+As a general comment, the new local types of routed selection
+and routed branching should ``behave'' as normal selection and
 receive types with respect to their intended recipient and sender
-respectively. We keep track of the proxy role in the syntax
+respectively. We keep track of the router role in the syntax
 to allow us to distinguish between routing communications
 from normal send and receive interactions.
 
 \subsection{Projection}
 \label{subsection:newprojection}
 
-We extend the projection operator to be defined
-on routed communication. Given the explanations of the
-new routing constructs for both global and local types,
-\cref{def:newprojection} should be self-explanatory.
+In \cref{def:newprojection},
+we extend the projection operator
+to be defined
+on routed communication.
 
 \begin{definition}[Projection]
 The projection of $G$ onto $\role{r}$,
-written $\proj{G}{r}$, is defined as:
+written $\proj{G}{r}$, is extended as:
 
 \doublespacing
 \[
@@ -214,12 +219,13 @@ all continuations must be ``compatible'',
 namely they can be merged using the
 the \textit{merging operator}, $\mergeop$.
 As the merging operator is defined on local
-types, we extend the merging operator to be defined
+types, we extend the merging operator 
+(introduced in \cref{fig:merge}) to be defined
 on the extended syntax in \cref{def:newmerge}.
 
 \begin{definition}[Merging Operator]
 The merging operator $\mergeop$ on local types
-is:
+is extended as:
 
 \doublespacing
 \[
@@ -237,6 +243,7 @@ is:
 T_k & \text{if} ~ k \in I \setminus J \\
 T'_k & \text{if} ~ k \in J \setminus I \\
 \tmerge{T_k}{T'_k} & \text{if} ~ k \in I \cap J \\
+\text{otherwise} & \text{undefined}
 \end{cases} \\
 \end{array}
 \]
@@ -245,8 +252,8 @@ T'_k & \text{if} ~ k \in J \setminus I \\
 \label{def:newmerge}
 \end{definition}
 
-Recall that proxy selection and proxy
-branching behave in the same way as their ``non-proxified''
+Recall that routed selection and routed
+branching behave in the same way as their ``non-routed''
 counterparts -- the merging operator reflects this
 similarity.
 
@@ -256,7 +263,7 @@ similarity.
 Recall that well-formedness is a predicate defined 
 \textit{solely} on the global type
 in canonical MPST theory: a global type $G$ is well-formed
-if a projection exists for all its participants.
+if a projection is defined for all its participants.
 
 \[
 \wf{G} \iff 
@@ -270,10 +277,10 @@ well-formed \textit{with respect to the role $\role{s}$
 acting as the router}.
 
 We need to define the characteristics that $\role{s}$
-must display in $G$ to prove that it is the \textit{only}
+must display in $G$ to prove that it is a
 router. 
 We formalise this as an \textit{inductively} defined relation,
-$\centroid{G}{s}$, which reads \textit{``$\role{s}$ is the
+$\centroid{G}{s}$, which reads \textit{``$\role{s}$ is a
 centroid in $G$''}.
 The intuition is that $\role{s}$ is at the centre
 of all communication interactions.
@@ -322,14 +329,8 @@ centroid of $G$.
 
 \begin{itemize}
 \item 
-\rulename{$\centroidop$-End}, 
-\rulename{$\centroidop$-RecVar}, 
-\rulename{$\centroidop$-Rec}:
-Trivial.
-
-\item 
 \rulename{$\centroidop$-Comm}:
-For normal communication, $\role{s}$ must
+For direct communication, $\role{s}$ must
 be a participant and the centroid of all continuations.
 
 \item 
@@ -354,6 +355,9 @@ is well-formed with respect to the router $\role{s}$.
 \wedge
 \centroid{G}{s}
 \]
+
+We also assume that $G$ has no free type variables
+and is guarded/contractive.
 
 \label{def:newwf}
 \end{definition}

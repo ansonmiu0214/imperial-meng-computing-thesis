@@ -220,10 +220,16 @@ and introduce additional rules in
 \projconf{
 \groute{p}{p'}{s}{l_i: G_i}{i \in I}
 }_{\{ w_{\mroles{q}{q'}} \}_{\qqinP}} 
-	& = & \projconf{G_1}_{
+	& = & \projconf{G_i}_{
 	\{ w_{\mroles{q}{q'}} \}_{\qqinP}
-	} \\
-	
+	} \text{ for any } i \in I\\
+
+\text{since}& & \forall i, j \in I. ~ 
+\projconf{G_i}_{
+	\{ w_{\mroles{q}{q'}} \}_{\qqinP}
+} = \projconf{G_j}_{
+	\{ w_{\mroles{q}{q'}} \}_{\qqinP}
+} \\
 \end{array}
 \]
 \singlespacing
@@ -1117,6 +1123,10 @@ i.e. $\wfnew{G}{s}$.
 (G = \tend) \vee \exists G', l. ~ (\treduce{G}{G'}{l})
 \]
 
+\label{lem:progresswf}
+\end{lemma}
+
+\begin{proof}
 The following is logically equivalent.
 
 \[
@@ -1125,11 +1135,7 @@ The following is logically equivalent.
 \exists G', l. ~ (\treduce{G}{G'}{l})
 \]
 
-\label{lem:progresswf}
-\end{lemma}
-
-\begin{proof}
-By induction on the structure of $G$.
+We prove this by induction on the structure of $G$.
 
 We do not consider $G = \tend$ by assumption.
 
@@ -1193,11 +1199,12 @@ Suppose $G$ is well-formed with respect to some router $\mrole{s}$,
 i.e. $\wfnew{G}{s}$.
 
 \[
+\forall G'. ~ \left(
 G \to^* G'
 	\Longrightarrow
 (G' = \tend) \vee \exists G'', l. ~ 
 	(\treduce{G'}{G''}{l})
-\]
+\right)\]
 
 \end{theorem}
 

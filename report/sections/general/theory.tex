@@ -12,9 +12,6 @@ in \cite{LessIsMore}
 and extend it
 with constructs for communication actions
 that are routed through a participant.
-We introduce the extended syntax for types in 
-\cref{section:syntax}, and give semantics of our
-syntax extensions in \cref{section:lts}.
 
 \newtheory provide the theoretical basis
 for allowing developers to implement
@@ -23,6 +20,9 @@ protocols with browser-to-browser interactions
 introduced in \cref{section:twobuyer})
 over a server-centric network topology
 which uses WebSocket transport.
+We introduce the extended syntax for types in 
+\cref{section:syntax}, and give semantics of our
+syntax extensions in \cref{section:lts}.
 We define a router-parameterised encoding
 for MPST into \newtheory in \cref{section:encoding}
 and prove the preservation of well-formedness
@@ -38,3 +38,11 @@ in \cref{chap:impl}.
 
 \input{sections/general/theory/encoding}
 
+\section{Summary}
+We have presented \newtheory, a variant of
+the canonical MPST theory to express \textit{routed communication}.
+We introduced extensions to syntax and semantics, and proved
+that our extended semantics preserve deadlock-freedom
+for well-formed protocols. We defined an encoding from the
+canonical theory onto \newtheory, and proved the preservation
+of well-formedness and communication.

@@ -93,3 +93,42 @@ and Local Types]
 \begin{proof}
 By induction on the structure of $G$.
 \end{proof}
+
+\begin{lemma}[Local Type Encoding Preserves Equality of Projection]
+\[
+\forall G_1, G_2, \mrole{r}, \mrole{s}. ~ \left(
+(\proj{G_1}{r}) = (\proj{G_2}{r}) \wedge \mrole{r} \neq \mrole{s}
+	\Longrightarrow
+\proj{\enc{G_1}{s}}{r} = \proj{\enc{G_2}{s}}{r}
+\right)
+\]
+
+\label{lem:encprojeq}
+\end{lemma}
+
+\begin{proof} By consequence from \cref{lem:enclink}.
+
+Take $G_1, G_2, \mrole{r}, \mrole{s}$ arbitrarily. 
+Assume $(\proj{G_1}{r}) = (\proj{G_2}{r})$ and $\mrole{r} \neq \mrole{s}$.
+
+We need to show $\proj{\enc{G_1}{s}}{r} = \proj{\enc{G_2}{s}}{r}$,
+but by \cref{lem:enclink}, it is sufficient to show
+\[
+\enclocal{\proj{G_1}{r}}{r}{s} = \enclocal{\proj{G_2}{r}}{r}{s}
+\]
+
+Define an ``inner'' function $f(z) = \enclocal{z}{r}{s}$.
+
+By definition, $\forall x, y. (x = y \Longrightarrow f(x) = f(y))$.
+
+We have $(\proj{G_1}{r}) = (\proj{G_2}{r})$ by assumption,
+so we can conclude.
+
+\begin{align*}
+(\proj{G_1}{r}) = (\proj{G_2}{r}) 
+&\Longrightarrow f(\proj{G_1}{r}) = f(\proj{G_2}{r})  \\
+&\Longrightarrow
+\enclocal{\proj{G_1}{r}}{r}{s} = \enclocal{\proj{G_2}{r}}{r}{s}
+\end{align*}
+
+\end{proof}

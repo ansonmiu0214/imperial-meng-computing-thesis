@@ -1,7 +1,7 @@
 \section{Labelled Transition System (LTS) Semantics}
 \label{section:lts}
 
-We define labelled transition system (LTS) semantics
+We define the labelled transition system (LTS) semantics
 over global types (\cref{subsection:newltsglobal}) 
 and local types (\cref{subsection:newltslocal})
 for \newtheory,
@@ -102,8 +102,8 @@ In order to define LTS over global types for
 asynchronous communication, we need to
 represent intermediate states (i.e. messages in transit)
 within the grammar of global types.
-
-\cite{characterisation} added the construct
+Deni\'elou and Yoshida \cite{characterisation}
+added the construct
 {$\gtrans{p}{q}{j}{l_i: G_i}{i \in I}$}
 to represent that the message $l_j$ has been
 sent by $\role{p}$ but not yet received by $\role{q}$.
@@ -113,17 +113,30 @@ We add a similar construct
 to represent that the message $l_j$ has
 been sent from $\role{p}$ to the router $\role{s}$
 but not yet routed to $\role{q}$.
+We extend the projection operator to 
+support this new construct.
+
+\[
+\proj{\gtransroute{p}{q}{s}{j}{l_i: G_i}{i \in I}}{r} = \begin{cases}
+\tbraproxy{p}{s}{l_i: \proj{G_i}{r}}{i \in I} 
+	& \text{if } \mrole{r} = \mrole{q} \\
+\routertrans{p}{q}{j}{l_i: \proj{G_i}{r}}{i \in I}
+	& \text{if } \mrole{r} = \mrole{s} \\
+\proj{G_j}{r}
+	& \text{otherwise} \\
+\end{cases}
+\]
 
 Because routed communication is treated differently
-from normal send and receive actions, the notion
+from direct send and receive actions, the notion
 of asynchrony differs between the two types of communication
 too. This definition allows us to extend
-the LTS semantics defined in \cite{characterisation}
+the LTS semantics from \cite{characterisation}
 more naturally.
 
 We define the LTS semantics 
 over global types,
-defined by $\treduce{G}{G'}{l}$,
+denoted by $\treduce{G}{G'}{l}$,
 in \cref{fig:newglobal}.
 We highlight and explain the new rules.
 
@@ -273,9 +286,24 @@ we show this in \cref{subsection:encodepreservecomm}.
 \subsection{LTS Semantics over Local Types}
 \label{subsection:newltslocal}
 
+The LTS semantics over local types
+need to be extended for routed communication.
+Because the router holds a ``global perspective''
+on the routed communication, we also need to
+represent the intermediate state (at which the message is 
+being routed by the router) within the grammar
+of local types.
+Similar to \cref{subsection:newltsglobal}, we add 
+the construct 
+$\routertrans{p}{q}{j}{l_i: T_i}{i \in I}$
+to represent that, from the local perspective of
+the router, the message $l_j$
+has been received from $\role{p}$ but not yet routed
+to $\role{q}$.
+
 We define the LTS semantics 
 over local types,
-defined by $\treduce{T}{T'}{l}$,
+denoted by $\treduce{T}{T'}{l}$,
 in \cref{fig:newlocal}.
 We highlight and explain the new rules.
 
@@ -427,7 +455,7 @@ from the perspective of role $\role{p}$.
 analogue to \rulename{Lr1} and \rulename{Lr2}
 for sending and receiving messages respectively.
 The exception is that the new rules pattern-match
-on the proxy role $\role{s}$ on the local type
+on the router role $\role{s}$ on the local type
 and the routed label.
 
 \end{itemize}
@@ -462,10 +490,10 @@ $\proj{G_1}{s}$ and $\proj{G_2}{s}$
 to see why this constraint is needed.
 
 \begin{align*}
-G_1 &= \gcommone{s}{r}{\tmsg{M1}}: \grouteone{r}{q}{s}{\tmsg{M2}} \tend \\
+G_1 &= \gcommone{s}{r}{\tmsg{M1}}.~ \grouteone{r}{q}{s}{\tmsg{M2}}.~ \tend \\
 \proj{G_1}{s} &= \tselone{r}{\tmsg{M1}}. ~ 
 	\routerone{r}{q}{\tmsg{M2}}{\tend} \\~\\
-G_2 &= \gcommone{s}{r}{\tmsg{M1}}: \grouteone{p}{r}{s}{\tmsg{M2}} \tend \\
+G_2 &= \gcommone{s}{r}{\tmsg{M1}}.~ \grouteone{p}{r}{s}{\tmsg{M2}}.~ \tend \\
 \proj{G_2}{s} &= \tselone{r}{\tmsg{M1}}. ~ 
 	\routerone{p}{r}{\tmsg{M2}}{\tend} \\
 \end{align*}

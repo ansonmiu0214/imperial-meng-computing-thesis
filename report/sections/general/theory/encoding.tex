@@ -4,9 +4,9 @@
 We present an encoding from canonical MPST theory
 to \newtheory.
 This encoding is \textit{parameterised} by the router role 
-(conventionally denoted as $\mrole{s}$);
+(conventionally denoted as $\role{s}$);
 the intuition is that we encode all communication interactions
-to involve $\mrole{s}$.
+to involve $\role{s}$.
 For example, as motivated in \cref{chap:p2p},
 we can encode the \tprotocol{Two Buyer} protocol
 into routed multiparty session types with respect to the
@@ -84,6 +84,10 @@ the router role is the centroid of the encoded communication.
 \label{lem:enccenter}
 \end{lemma}
 
+\begin{proof}
+By induction on the structure of $G$.
+\end{proof}
+
 We now define the encoding on local types in \cref{def:enclocal}.
 Local types express communication from the perspective of a 
 particular role, say $\role{q}$. 
@@ -130,7 +134,7 @@ the router role $\mrole{s}$, or $\enclocal{T}{q}{s}$, is defined as:
 Similarly, if the original communication does not involve
 the router from a local perspective, the local endpoint
 will carry out the communication through the router
-$\trole{s}$ as a proxy in the encoded local type.
+$\trole{s}$ in the encoded local type.
 This is expressed in both \rulename{Enc-L-Sel}
 and \rulename{Enc-L-Bra}.
 
@@ -160,53 +164,6 @@ for the interested reader.
 This correspondence lets us prove a more useful 
 lemma about how our encoding preserves the equality of projections,
 as presented in \cref{lem:encprojeq}.
-
-\begin{lemma}
-\[
-\forall G_1, G_2, \mrole{r}, \mrole{s}. ~ \left(
-(\proj{G_1}{r}) = (\proj{G_2}{r}) \wedge \mrole{r} \neq \mrole{s}
-	\Longrightarrow
-\proj{\enc{G_1}{s}}{r} = \proj{\enc{G_2}{s}}{r}
-\right)
-\]
-
-\label{lem:encprojeq}
-\end{lemma}
-
-\begin{proof} By consequence from \cref{lem:enclink}.
-
-Take $G_1, G_2, \mrole{r}, \mrole{s}$ arbitrarily. 
-Assume $(\proj{G_1}{r}) = (\proj{G_2}{r})$ and $\mrole{r} \neq \mrole{s}$.
-
-We need to show $\proj{\enc{G_1}{s}}{r} = \proj{\enc{G_2}{s}}{r}$,
-but by \cref{lem:enclink}, it is sufficient to show
-\[
-\enclocal{\proj{G_1}{r}}{r}{s} = \enclocal{\proj{G_2}{r}}{r}{s}
-\]
-
-Define an ``inner'' function $f(z) = \enclocal{z}{r}{s}$.
-
-By definition, $\forall x, y. (x = y \Longrightarrow f(x) = f(y))$.
-
-We have $(\proj{G_1}{r}) = (\proj{G_2}{r})$ by assumption,
-so we can conclude.
-
-\begin{align*}
-(\proj{G_1}{r}) = (\proj{G_2}{r}) 
-&\Longrightarrow f(\proj{G_1}{r}) = f(\proj{G_2}{r})  \\
-&\Longrightarrow
-\enclocal{\proj{G_1}{r}}{r}{s} = \enclocal{\proj{G_2}{r}}{r}{s}
-\end{align*}
-
-%\[
-%(\proj{G_1}{r}) = (\proj{G_2}{r}) 
-%\Longrightarrow
-%f(\proj{G_1}{r}) = f(\proj{G_2}{r}) 
-%\Longrightarrow
-%\enclocal{\proj{G_1}{r}}{r}{s} = \enclocal{\proj{G_2}{r}}{r}{s}
-%\]
-
-\end{proof}
 
 We also encode LTS actions using the same idea. 
 This is presented in \cref{def:enclts}, and is required for
@@ -629,3 +586,109 @@ The encoded transition is possible using \rulename{Gr9}.
 \end{itemize}
 
 \end{proof}
+
+We motivated the risk of over-serialising communication
+with a naive routing definition in \cref{section:routerchallenges}.
+We revisit the example and show that our encoding
+preserves valid traces in the original communication.
+
+\begin{example}[Encoding Preserves Semantics]
+Consider the global type
+\[
+G = \gcommone{p}{q}{\tmsg{M1}} . ~
+	\gcommone{s}{q}{\tmsg{M2}} . ~\tend
+\]
+
+We apply our encoding with respect to the router role $\role{s}$
+\[
+\enc{G}{s} = \grouteone{p}{q}{s}{\tmsg{M1}}.~
+	\gcommone{s}{q}{\tmsg{M2}}. ~ \tend
+\]
+
+Recall that $l = \aout{s}{q}{\tmsg{M2}}$ can reduce $G$.
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{Gr1}}
+\UnaryInfC{$
+\treduce
+	{\left(\gcommone{s}{q}{\tmsg{M2}}.~ \tend\right)}
+	{\tend}
+	{l}
+$}
+\AxiomC{$\subj{l} = \mrole{s} \notin \{ \mrole{p}, \mrole{q} \}$}
+\RightLabel{\rulename{Gr4}}
+\BinaryInfC{$
+\treducelong
+	{\left(\gcommone{p}{q}{\tmsg{M1}} . ~
+		\gcommone{s}{q}{\tmsg{M2}} . ~\tend\right)}
+	{\left(\gcommone{p}{q}{\tmsg{M1}} . ~
+	\gtransone{s}{q}{\tmsg{M2}} . ~\tend\right)}
+	{l}
+$}
+\end{prooftree}
+
+We show that $\enc{l}{s} = l$ can reduce $\enc{G}{s}$.
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\rulename{Gr8}}
+\UnaryInfC{$
+\treduce
+	{\left(\gcommone{s}{q}{\tmsg{M2}}.~ \tend\right)}
+	{\tend}
+	{l}
+$}
+\AxiomC{$\subj{l} = \mrole{s} \notin \{ \mrole{p}, \mrole{q} \}$}
+\RightLabel{\rulename{Gr4}}
+\BinaryInfC{$
+\treducelong
+	{\left(\grouteone{p}{q}{s}{\tmsg{M1}} . ~
+		\gcommone{s}{q}{\tmsg{M2}} . ~\tend\right)}
+	{\left(\grouteone{p}{q}{s}{\tmsg{M1}} . ~
+	\gtransone{s}{q}{\tmsg{M2}} . ~\tend\right)}
+	{l}
+$}
+\end{prooftree}
+
+$\aout{s}{q}{\tmsg{M2}}$ is a prefix of a valid
+execution trace for $G$, given below.
+
+\[
+\treducelong
+	{\treducelong
+		{\treducelong
+			{\treducelong
+				{G}
+				{}
+				{\aout{s}{q}{\tmsg{M2}}}}
+			{}
+			{\aout{p}{q}{\tmsg{M1}}}}
+		{}
+		{\ain{p}{q}{\tmsg{M1}}}}
+	{\tend}
+	{\ain{s}{q}{\tmsg{M2}}}
+\]
+
+Interested readers can verify
+that the encoded trace (given below) 
+is a valid execution trace for
+$\enc{G}{s}$.
+
+\[
+\treducelong
+	{\treducelong
+		{\treducelong
+			{\treducelong
+				{\enc{G}{s}}
+				{}
+				{\aout{s}{q}{\tmsg{M2}}}}
+			{}
+			{\via{s}{\aout{p}{q}{\tmsg{M1}}}}}
+		{}
+		{\via{s}{\ain{p}{q}{\tmsg{M1}}}}}
+	{\tend}
+	{\ain{s}{q}{\tmsg{M2}}}
+\]
+
+\end{example}

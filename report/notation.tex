@@ -147,13 +147,16 @@
 \newcommand{\trecvar}{\textnormal{\texttt{t}}}
 \newcommand{\trec}[1]{\mu\trecvar.{#1}}
 \newcommand{\gcommone}[3]{
-\mrole{#1} \to \mrole{#2}. ~ {#3}
+\mrole{#1} \to \mrole{#2}: ~ {#3} ~
 }
 \newcommand{\gcomm}[4]{
 \mrole{#1} \to \mrole{#2} : \left\{ {#3} \right\}_{#4}
 }
 \newcommand{\gtrans}[5]{
 \mrole{#1} \rightsquigarrow \mrole{#2}. ~ {#3} : \left\{ {#4} \right\}_{#5}
+}
+\newcommand{\gtransone}[3]{
+\mrole{#1} \rightsquigarrow \mrole{#2} :  ~ {#3} ~
 }
 \newcommand{\wf}[1]{
 \textnormal{\texttt{wellFormed}}\left(#1\right)
@@ -174,13 +177,16 @@
 
 % NEW GLOBAL TYPES
 \newcommand{\grouteone}[4]{
-\mrole{#1} \xrightarrow[\mrole{#3}]{} \mrole{#2}. ~ {#4} :
+\mrole{#1} \xrightarrow[\mrole{#3}]{} \mrole{#2}: ~ {#4} ~
 }
 \newcommand{\groute}[5]{
 \mrole{#1} \xrightarrow[\mrole{#3}]{} \mrole{#2} : \left\{ {#4} \right\}_{#5}
 }
 \newcommand{\gtransroute}[6]{
 \mrole{#1} \underset{\mrole{#3}}{\rightsquigarrow} \mrole{#2}. ~ {#4} : \left\{ {#5} \right\}_{#6}
+}
+\newcommand{\gtransrouteone}[4]{
+\mrole{#1} \underset{\mrole{#3}}{\rightsquigarrow} \mrole{#2}: ~ {#4} ~
 }
 \newcommand{\wfnew}[2]{
 \textnormal{\texttt{wellFormed}}\left(#1, \mrole{#2}\right)
@@ -214,7 +220,7 @@ T_{\mrole{#1}}
 \mrole{#1} \hookrightarrow \mrole{#2}: \left\{{#3}\right\}_{#4}
 }
 \newcommand{\routerone}[4]{
-\texttt{route}\left(\mrole{#1} \hookrightarrow \mrole{#2}: {#3}.~{#4}\right)
+\mrole{#1} \hookrightarrow \mrole{#2}: {#3}~.~{#4}
 }
 \newcommand{\routertrans}[5]{
 \mrole{#1} \looparrowright \mrole{#2}. ~ {#3} : \left\{{#4}\right\}_{#5}
