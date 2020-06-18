@@ -22,12 +22,13 @@ is completely transparent to the developer,
 which shows the elegance of our solution.
 
 \begin{figure}[!h]
-\begin{lstlisting}[language=javascript]
+\begin{lstlisting}[language=javascript,tabsize=2]
 new Implementation.Initial({
-	[Labels.S32.title]: (title) => {
+	[Labels.S32.title]: async (title) => {
+		const quote = await db.getQuote(title);
 		return new Implementation.S34([
-			Labels.S34.quote, [100], new Implementation.S35([
-				Labels.S35.quote, [100], new Implementation.S36({
+			Labels.S34.quote, [quote], new Implementation.S35([
+				Labels.S35.quote, [quote], new Implementation.S36({
 					[Labels.S36.buy]: () => {
 						return new Implementation.Terminal();
 					},

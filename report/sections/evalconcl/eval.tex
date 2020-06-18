@@ -3,11 +3,13 @@
 
 In this chapter, we
 evaluate the expressiveness
-and performance of our generated APIs.
-
-%TODO: add when finalised
-%with respect to the main objective
-%of \dots
+and performance of our generated APIs
+with respect to the main objective of
+our project in
+providing
+developers with a development workflow
+that offers communication safety guarantees in modern
+web programming through multiparty session types.
 
 \subsubsection{Expressiveness}
 To evaluate the expressiveness
@@ -70,3 +72,25 @@ and comment on our findings in \cref{section:benchmarks}.
 %\input{sections/evalconcl/eval/atm} 
 
 \input{sections/evalconcl/eval/benchmarks}
+
+\section{Summary}
+We have demonstrated
+the expressiveness of our generated APIs
+through implementing two web services describing
+multiparty sessions. We highlighted how our
+approach towards session-typed GUI programming
+prevents channel reuse and 
+makes it intuitive to implement the game board
+of \tprotocol{Noughts and Crosses}.
+We also showed
+that the extensions added to \nodecodegen
+and \reactcodegen
+to support \newtheory
+are transparent to the developer.
+
+Through performance benchmarks against a
+baseline implementation of the \tprotocol{Ping Pong}
+protocol, we analysed the overhead of our implementation
+and reasoned that this overhead will minimise when compared
+with baseline implementations of more complex, multiparty
+protocols involving routed communication.

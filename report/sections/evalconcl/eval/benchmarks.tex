@@ -1,10 +1,19 @@
 \section{Performance Benchmarks}
 \label{section:benchmarks}
 
-Whilst web applications implementing our generated APIs enjoy
-communication safety guarantees, the presence of the session runtime acts
-as an additional layer of abstraction between the application logic and the
-WebSocket transport, which is likely to present a performance trade-off.
+Whilst web applications implementing 
+our generated APIs enjoy
+communication safety guarantees, 
+the presence of the session runtime acts
+as an additional layer of abstraction between 
+the application logic and the
+WebSocket transport, which presents
+a performance trade-off; we observe an
+increase in the time taken to perform
+each channel action, as a result of
+the session runtime intercepting channel actions
+and performing additional logic to ensure
+that the endpoint conforms to the protocol.
 
 \begin{figure}[!ht]
 \begin{lstlisting}[language=Scribble]
@@ -124,10 +133,11 @@ for the experiments.
 
 \end{itemize}
 
-The interested reader may follow the instructions under
-\texttt{benchmarks/README.md} in the project repository \cite{repo}
-to run the benchmarks and visualise the logs using the interactive
-notebook in the same directory.
+Code is available at
+\url{https://github.com/ansonmiu0214/SessionTS-Benchmarks}.
+Interested readers may follow the \texttt{README.md}
+to run the benchmarks and visualise the logs using the 
+interactive notebook in the same directory.
 
 We run the experiments under a network of latency 0.165ms
 (64 bytes ping), and repeat each experiment 20 times.
@@ -137,9 +147,8 @@ equipped with Intel i7-4850HQ CPU (2.3 GHz, 4 cores, 8 threads),
 Node.js runtime version 12.12.0, and
 TypeScript compiler version 3.7.4.
 We standardise all packages used in the front- and back-end
-implementations across experiments. Details can be found in their
-corresponding \texttt{package.json} manifests 
-(\cref{section:evalbenchmarkpackagejson}).
+implementations across experiments. Details can be found in
+\cref{section:evalbenchmarkpackagejson}.
 
 The benchmark compares three implementations of 
 the \tprotocol{Ping Pong} protocol:
@@ -215,6 +224,9 @@ Aside from these factors, all three implementations generally share
 similar characteristics in their protocol execution.
 
 \subsection{Overhead}
+The execution time is the total time taken
+for the \trole{Client} to connect to the \trole{Server}
+and complete the parameterised number of round trips.
 We compare the total execution time (\textit{Exec. Time}) 
 and execution time per round trip (\textit{Exec. Time / Ping-Pong}) -- 
 averaged over 20 repeated experiments -- across the three implementations,
@@ -357,9 +369,7 @@ socket.onmessage = ({ data }) => {
 				payload: [count],
 			}));
 		}
-	} else {
-		throw new Error(`Unrecognised label: ${label}`);
-	}
+	} else { throw new Error(`Unrecognised label: ${label}`); }
 }
 \end{lstlisting}
 \caption{\texttt{bare} implementation of \tprotocol{Ping Pong} \trole{Svr}}
@@ -369,15 +379,17 @@ socket.onmessage = ({ data }) => {
 \begin{subfigure}[b]{\textwidth}
 \centering
 \begin{lstlisting}[language=javascript,tabsize=2]
-// NOTE: `Implementation' namespace omitted for brevity.
-
-const logic = new S14({
+const logic = new Implementat.S14({
 	PING: (count) => {
 		console.timeLog(LABEL, ++count);
 		if (count === MSGS) {
-			return new S16([Labels.S16.BYE, [count], new S15()]);
+			return new Implementation.S16([
+				Labels.S16.BYE, [count], new Implementation.S15()
+			]);
 		} else {
-			return new S16([Labels.S16.PONG, [count], logic]);
+			return new Implementation.S16([
+				Labels.S16.PONG, [count], logic
+			]);
 		}
  	}
 });
@@ -389,3 +401,4 @@ const logic = new S14({
 implementations for \tprotocol{Ping Pong} \trole{Svr}}
 \label{fig:nodepingpong}
 \end{figure}
+
