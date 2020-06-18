@@ -160,7 +160,7 @@ $\{~\tmsg{Add}, \tmsg{Res}, \tmsg{Quit}, \tmsg{Terminate}~\}$.
 The set of message payload data types that the endpoint
 sends or expects to receive.
 For \cref{fig:bgadderfsm}, this is singleton set
-$\{~\texttt{number}~\}$.
+$\{~\texttt{int}~\}$.
 
 \item \textbf{Actions:}
 The set of send and receive actions permitted for the endpoint.
@@ -214,9 +214,11 @@ the application is accepted by the EFSM, which means it
 conforms to the communication structure of the global protocol;
 
 \item \textbf{Channel linearity:}
-Each transition in the EFSM represents a channel resource.
-When the application transitions from some state $S$
-to some successor state $S'$, it must no longer
+Each transition in the EFSM represents one channel resource.
+The application transitions from some state $S$
+to some successor state $S'$
+once \textit{and only once},
+after which it must no longer
 be able to access a reference (e.g. have an alias) to $S$.
 \end{itemize}
 
@@ -225,8 +227,8 @@ API generation that differ
 by how they leverage features in the target language
 to guarantee the above properties.
 
-\subsubsection{Hybrid Session Verification in Java}
-Hu and Yoshida implemented a workflow in \cite{Hybrid2016}
+\subsubsection{Hybrid Session Verification in Java \cite{Hybrid2016}}
+Hu and Yoshida implemented a workflow
 that performs \textit{hybrid} verification of 
 communication protocol conformance for Java applications.
 The ``hybrid'' concept is composed of the two main components below:
@@ -254,8 +256,8 @@ and invoke the IO action more than once. Java does not
 have a linear type system, and hence cannot statically
 verify linear usage; this means linearity checks need to be
 done at runtime.
-Each state keeps track of its usage in a private boolean flag a
-nd throws an exception when the instance method is called twice.
+Each state keeps track of its usage in a private boolean flag 
+and throws an exception when the instance method is called twice.
 Similarly, the \texttt{SessionEndpoint} class keeps track of 
 whether the connection is open or close,
 and throws an exception when program execution exits the 
@@ -274,9 +276,9 @@ the generated APIs complement the
 imperative style of application code written in Java
 
 
-\subsubsection{Runtime Monitors in Python}
+\subsubsection{Runtime Monitors in Python \cite{Python2017} }
 Neykova targeted the MPST methodology 
-for Python programs in \cite{Python2017} 
+for Python programs
 and proposed to generate \textit{runtime monitors} 
 from the EFSM.
 These monitors expose APIs for sending and receiving messages,
@@ -309,8 +311,8 @@ so channel linearity is trivially guaranteed here.
 We discuss the current state-of-the-art proposals
 for session-typed web development.
 
-\subsubsection{API Generation in PureScript}
-King et al. presented an approach in \cite{PureScript2019}
+\subsubsection{API Generation in PureScript \cite{PureScript2019}}
+King et al. presented an approach
 for integrating \textit{multiparty} session types 
 into web development using 
 the PureScript language \cite{PureScript},
@@ -351,7 +353,7 @@ the developer cannot instantiate an invalid transition
 (e.g. \lstonelineps{Send Svr S1 S3 Bool}, 
 since \texttt{S1} uniquely determines the other type parameters. 
 PureScript statically resolves these type constraints at
-compile-time.
+compile time.
 
 \subparagraph{Channel linearity by construction}
 Whilst PureScript does not support linear types,
@@ -373,7 +375,8 @@ Not doing so would make channel linearity violation possible
 (e.g. by binding a send transition to a button click event,
 the button may still be active after the transition is complete;
 clicking on it again will reuse the channel resource).
-Whilst \cite{PureScript2019} supports multiparty session types,
+Whilst King et al. \cite{PureScript2019} supports 
+multiparty session types,
 the communication protocol must describe all interactions
 to go through a centralised server role to respect the
 network topology enforced by WebSocket transport.
@@ -385,9 +388,10 @@ provide communication safety guarantees, but
 this type of workflow is not compatible with 
 modern web programming practices and compromises on usability.
 
-\subsubsection{Session-Typed GUI Programming using Links}
+\subsubsection{Session-Typed GUI Programming 
+using Links \cite{MVU2020}}
 Fowler presented the first formal integration
-of session typing and GUI programming in \cite{MVU2020}.
+of session typing and GUI programming .
 His work formalised the \textit{Model-View-Update} (MVU)
 architectural pattern for GUI development.
 An MVU application features a \textit{model} encapsulating application
@@ -411,7 +415,7 @@ The core MVU calculus is also extended with \textit{commands}
 and \textit{linearity} required to express communication
 actions in session type theory.
 
-\cite{MVU2020} is implemented using
+Fowler's proposal \cite{MVU2020} is implemented using
 the \textit{Links} web programming language
 \cite{LINKS}. Links is a strict, typed, functional language
 that can be used to write full-stack web applications;
@@ -422,7 +426,8 @@ language can monitor linear channel usage.
 Links also supports error handling for session types,
 as introduced in \cite{Exceptional}; 
 given side-effects must be made explicit
-in functional programming, \cite{Exceptional} introduces
+in functional programming,
+Fowler et al. \cite{Exceptional} introduces
 a \textit{session cancellation} operator to ensure
 that channel resources are closed after handling
 side-effects, such as errors.

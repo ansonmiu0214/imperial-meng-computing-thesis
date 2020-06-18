@@ -24,8 +24,7 @@ to full-duplex communication channels via the WebSocket protocol
 The process algebra $\pi$-calculus 
 introduced by Milner in \cite{Milner1999} 
 formalises the message passing abstraction in terms of 
-the basic building blocks of sending and receiving processes,
-along with inductively defined continuation processes. 
+the basic building blocks of sending and receiving processes.
 The composition of these primitives allow us to 
 describe more complex communication sessions.
 \textit{Session types} define the typing discipline 
@@ -42,12 +41,13 @@ in existing programming languages across different paradigms.
 Implementations of the latter approach differ by 
 how they leverage the design philosophy and features 
 provided by the programming language.
-For example, King et al. leveraged the 
+For example, King et al. \cite{PureScript2019} leveraged the 
 expressive type system of PureScript to perform 
-\textit{static} session type checking in \cite{PureScript2019},
-whilst Neykova and Yoshida introduced dynamic approaches to 
+\textit{static} session type checking,
+whilst Neykova and Yoshida \cite{Python2017} 
+introduced dynamic approaches to 
 check the conformance of Python programs 
-with respect to session types in \cite{Python2017}.
+with respect to session types.
 We discuss these related work, among others, in \cref{section:bgrelated}.
 
 \subsection{Process Calculus}
@@ -79,6 +79,13 @@ processes executing simultaneously.
 \item $!P$ represents the parallel composition of 
 \textit{infinite} instances of $P$; 
 more specifically, $!P \equiv P \mid {!P}$.
+
+$\equiv$ represents the \textit{structural congruence} 
+equivalence relation
+on processes, meaning that $!P$ is indistinguishable from 
+$P \mid {!P}$. We inherit the definition of structural congruence from
+\cite{C406Lecture}.
+
 \item $(\nu a)~P$ represents a name restriction 
 where any occurrence of $a$ in $P$ is local
  and will not interfere with other names outside the scope of $P$.
@@ -109,9 +116,10 @@ u,v ::= & & \text{Identifiers} \\
 \end{figure}
 
 The operational semantics model the interaction 
-between parallel processes. 
-Whilst \cite{C406Lecture} presents the full operational semantics, 
-we highlight the \rulename{Comm} reduction rule which 
+between parallel processes.
+We inherit the full operational semantics presented by
+Yoshida \cite{C406Lecture}, and
+highlight the \rulename{Comm} reduction rule which 
 specifically models message passing:
 if the parallel composition of an input process and output process 
 share the same name, the composition reduces to the 
@@ -322,7 +330,7 @@ $}
 
 \begin{prooftree}
 \AxiomC{$
-\forall i \in I \left(
+\forall i \in I.\left(
 \vec x_i = x_1, \dots, x_n
 \qquad
 \vec U_i = U_1, \dots, U_n
@@ -566,7 +574,7 @@ as used in the literature.} as
 \[
 \begin{array}{rl}
 \mathcal{M} ::= & \ptprocess{p_1}{P_1} ~\mid~
-\ptprocess{p_2}{P_1} ~\mid~\dots~\mid
+\ptprocess{p_2}{P_1} ~\mid~\dots~\mid~
 \ptprocess{p_n}{P_n}
 \end{array}
 \]
@@ -576,14 +584,14 @@ particularly with respect to duality.
 The same notion of duality does not extend to the 
 decomposition of multiparty interactions into 
 multiple binary sessions: 
-\cite{C406Lecture} and \cite{MPST} both present 
+Yoshida and Lorenzo \cite{MPST} presents
 counterexamples of well-typed binary sessions that, 
 when composed to represent a multiparty session, 
 results in communication errors thus 
 violating guarantees of well-typed sessions.
 
-Honda et al. presents {multiparty session types} 
-in \cite{MPAST} to extend the 
+Honda et al. \cite{MPAST} presents {multiparty session types} 
+to extend the 
 binary session typing discipline for 
 sessions involving more than 2 participants, 
 whilst redefining the notion of compatibility 
@@ -633,8 +641,9 @@ More formally, projection can be interpreted as a
 ${\upharpoonright} :: G \times \mrole{p} \rightharpoonup S$,
 as the projection for a participant may be undefined for 
 an ill-formed global type; 
-\cite{C406Lecture} presents examples of where this is the case, 
-and \cite{MPST} presents the formal definition of projection.
+Yoshida \cite{C406Lecture} presents examples of where this is the case, 
+and Yoshida and Lorenzo \cite{MPST} 
+presents the formal definition of projection.
 We focus on the definition of projection for the 
 message exchange global type given below:
 
@@ -660,7 +669,8 @@ It is a partial function on local types allows us to construct
 a projection that is compatible with the projections on
 the continuations.
 We use the \textit{inductive} definition presented by
-Scalas and Yoshida in \cite{LessIsMore}, shown in \cref{fig:merge}.
+Scalas and Yoshida in \cite{LessIsMore} Definition 3.3,
+shown in \cref{fig:merge}.
 
 \begin{figure}[!h]
 \doublespacing
