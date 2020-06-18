@@ -23,26 +23,6 @@ and $\treduce{T_2}{T'_2}{l}$.
 
 \end{proof}
 
-\begin{lemma}[Encoding on Global Types Preserves Merge]
-Take global types $G_1, G_2$
-and roles $\mrole{r}, \mrole{s}$ such that $\mrole{r} \neq \mrole{s}$.
-Suppose $\proj{G_1}{r}$ and $\proj{G_2}{r}$ exist.
-
-\[
-\tmerge{(\proj{G_1}{r})}{(\proj{G_2}{r})} \text{ exists}
-	\Longrightarrow
-\tmerge{(\proj{\enc{G_1}{s}}{r})}{(\proj{\enc{G_2}{s}}{r})} 
-	\text{ exists}
-\]
-
-\label{lem:encglobalpreservemerge}
-\end{lemma}
-
-\begin{proof}
-By induction on the structure of $\tmerge{T_1}{T_2}$.
-
-\end{proof}
-
 \begin{lemma}[Projection and Participation]
 
 \[
@@ -76,6 +56,53 @@ Let $G, G'$ be global types, and $\mrole{s}$ be a role.
 By induction on the structure of $G$.
 \end{proof}
 
+\begin{lemma}[???]
+\[
+\forall \mrole{s}. ~ \pt{G} \subseteq \pt{\enc{G}{s}}
+\]
+\label{lem:encpreservept}
+\end{lemma}
+
+\begin{proof}
+The following is logically equivalent.
+
+\[
+\forall \mrole{r}, \mrole{s}. ~ \left(
+\mrole{r} \in \pt{G} \Longrightarrow \mrole{r} \in \pt{\enc{G}{s}}
+\right)
+\]
+
+We prove this by induction on the structure of $G$.
+\end{proof}
+
+\begin{lemma}[Encoding Preserves Privacy]
+The encoding on global types will not introduce
+non-server roles that were not participants of the 
+original communication.
+
+\[
+\forall \mrole{r}, \mrole{s}, G. ~ \left(
+\mrole{r} \neq \mrole{s} \wedge \mrole{r} \notin \pt{G}
+\Longrightarrow \mrole{r} \notin \pt{\enc{G}{s}}
+\right)
+\]
+\label{lem:encprivacy}
+\end{lemma}
+
+\begin{proof}
+The following is logically equivalent.
+\[
+\forall \mrole{r}, \mrole{s}, G. ~ \left(
+\mrole{r} \neq \mrole{s} \wedge \mrole{r} \notin \pt{G}
+\Longrightarrow \mrole{r} \notin \pt{\enc{G}{s}}
+\right)
+\]
+
+We prove this by induction on the structure of $G$,
+assuming that $\mrole{r} \neq \mrole{s}$ for arbitrary
+roles $\mrole{r}$, $\mrole{s}$.
+\end{proof}
+
 \begin{lemma}[Correspondence between Encodings on Global Types
 and Local Types]
 
@@ -91,7 +118,8 @@ and Local Types]
 \end{lemma}
 
 \begin{proof}
-By induction on the structure of $G$.
+By induction on the structure of $G$,
+\cref{lem:encpreservept,lem:encprivacy}.
 \end{proof}
 
 \begin{lemma}[Local Type Encoding Preserves Equality of Projection]
@@ -130,5 +158,26 @@ so we can conclude.
 &\Longrightarrow
 \enclocal{\proj{G_1}{r}}{r}{s} = \enclocal{\proj{G_2}{r}}{r}{s}
 \end{align*}
+
+\end{proof}
+
+\begin{lemma}[Encoding on Global Types Preserves Merge]
+Take global types $G_1, G_2$
+and roles $\mrole{r}, \mrole{s}$ such that $\mrole{r} \neq \mrole{s}$.
+Suppose $\proj{G_1}{r}$ and $\proj{G_2}{r}$ exist.
+
+\[
+\tmerge{(\proj{G_1}{r})}{(\proj{G_2}{r})} \text{ exists}
+	\Longrightarrow
+\tmerge{(\proj{\enc{G_1}{s}}{r})}{(\proj{\enc{G_2}{s}}{r})} 
+	\text{ exists}
+\]
+
+\label{lem:encglobalpreservemerge}
+\end{lemma}
+
+\begin{proof}
+By induction on the structure of $\tmerge{T_1}{T_2}$,
+\cref{lem:projpt,lem:encprojeq}
 
 \end{proof}
