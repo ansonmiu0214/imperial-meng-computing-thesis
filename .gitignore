@@ -32,6 +32,7 @@ build/
 *.pdf
 !**/figures/*.pdf
 !**/final_report.pdf
+!**/presentation.pdf
 
 ## Bibliography auxiliary files (bibtex/biblatex/biber):
 *.bbl
